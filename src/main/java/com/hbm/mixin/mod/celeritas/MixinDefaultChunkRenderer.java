@@ -73,32 +73,32 @@ public abstract class MixinDefaultChunkRenderer {
     }
 
     @Dynamic
-    @Redirect(method = "fillCommandBuffer",
+    @Redirect(method = "render",
             at = @At(value = "FIELD",
                     opcode = Opcodes.GETFIELD,
                     target = "Lorg/embeddedt/embeddium/impl/render/viewport/CameraTransform;intX:I"),
             require = 1)
-    private static int hbm$useUnsafeIntX(CameraTransform camera) {
+    private int hbm$useUnsafeIntX(CameraTransform camera) {
         return CeleritasCameraTransformAccess.getIntX(camera);
     }
 
     @Dynamic
-    @Redirect(method = "fillCommandBuffer",
+    @Redirect(method = "render",
             at = @At(value = "FIELD",
                     opcode = Opcodes.GETFIELD,
                     target = "Lorg/embeddedt/embeddium/impl/render/viewport/CameraTransform;intY:I"),
             require = 1)
-    private static int hbm$useUnsafeIntY(CameraTransform camera) {
+    private int hbm$useUnsafeIntY(CameraTransform camera) {
         return CeleritasCameraTransformAccess.getIntY(camera);
     }
 
     @Dynamic
-    @Redirect(method = "fillCommandBuffer",
+    @Redirect(method = "render",
             at = @At(value = "FIELD",
                     opcode = Opcodes.GETFIELD,
                     target = "Lorg/embeddedt/embeddium/impl/render/viewport/CameraTransform;intZ:I"),
             require = 1)
-    private static int hbm$useUnsafeIntZ(CameraTransform camera) {
+    private int hbm$useUnsafeIntZ(CameraTransform camera) {
         return CeleritasCameraTransformAccess.getIntZ(camera);
     }
 }

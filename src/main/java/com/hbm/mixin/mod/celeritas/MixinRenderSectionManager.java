@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinRenderSectionManager {
 
     @Dynamic
-    @Redirect(method = "update",
+    @Redirect(method = "updateCameraPosition",
             at = @At(value = "FIELD",
                     opcode = Opcodes.GETFIELD,
                     target = "Lorg/embeddedt/embeddium/impl/render/viewport/CameraTransform;x:D"),
@@ -23,7 +23,7 @@ public abstract class MixinRenderSectionManager {
     }
 
     @Dynamic
-    @Redirect(method = "update",
+    @Redirect(method = "updateCameraPosition",
             at = @At(value = "FIELD",
                     opcode = Opcodes.GETFIELD,
                     target = "Lorg/embeddedt/embeddium/impl/render/viewport/CameraTransform;y:D"),
@@ -33,7 +33,7 @@ public abstract class MixinRenderSectionManager {
     }
 
     @Dynamic
-    @Redirect(method = "update",
+    @Redirect(method = "updateCameraPosition",
             at = @At(value = "FIELD",
                     opcode = Opcodes.GETFIELD,
                     target = "Lorg/embeddedt/embeddium/impl/render/viewport/CameraTransform;z:D"),
