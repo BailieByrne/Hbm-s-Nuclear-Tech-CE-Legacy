@@ -333,7 +333,7 @@ public class EntityBullet extends Entity implements IProjectile {
 			//vec31 = new Vec3d(this.posX - this.motionX, this.posY - this.motionY, this.posZ - this.motionZ);
 			//Drillgon200: Ok that was retarded and completely breaks turrets.
 			
-			RayTraceResult RayTraceResult = this.world.rayTraceBlocks(vec31, vec3, false, true, false);
+			RayTraceResult RayTraceResult = Library.rayTraceBlocksForProjectile(this.world, vec31, vec3, false, true, false);
 			vec31 = new Vec3d(this.posX, this.posY, this.posZ);
 			vec3 = new Vec3d(this.posX + this.motionX, this.posY + this.motionY, this.posZ + this.motionZ);
 

@@ -7,6 +7,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.passive.EntityBat;
+import net.minecraft.entity.passive.EntityWaterMob;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -53,7 +54,7 @@ public class TileEntityLandmine extends TileEntity implements ITickable {
 		List<Entity> list = world.getEntitiesWithinAABBExcludingEntity(null, box);
 
 		for (Entity entity : list) {
-			if (entity instanceof EntityBat) continue;
+			if (entity instanceof EntityBat || entity instanceof EntityWaterMob) continue;
 
 			if (waitingForPlayer) {
 				if (entity instanceof EntityPlayer) {

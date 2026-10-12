@@ -116,6 +116,8 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
                     .inputItems(new OreDictStack(ANY_HARDPLASTIC.ingot(), 2), new OreDictStack(BSCCO.wireDense()), new ComparableStack(ModItems.pellet_charged), new OreDictStack(GOLD.wireFine(), 8)));
             this.register(new GenericRecipe("ass.atomicClock").setup(300, 1_000).outputItems(DictFrame.fromOne(ModItems.circuit, EnumCircuitType.ATOMIC_CLOCK))
                     .inputItems(new OreDictStack(ANY_PLASTIC.ingot(), 2), new ComparableStack(ModItems.circuit, 3, EnumCircuitType.CHIP), new OreDictStack(SR.dust(), 1)));
+            this.register(new GenericRecipe("ass.flashdrive").setup(100, 250).outputItems(DictFrame.fromOne(ModItems.drive, EnumDriveType.FLASH_EMPTY))
+                    .inputItems(new OreDictStack(ANY_PLASTIC.ingot(), 2), new ComparableStack(ModItems.circuit, 1, EnumCircuitType.CHIP), new OreDictStack(GOLD.plate())));
 
             // alternates
             this.register(new GenericRecipe("ass.analogAlt").setupNamed(200, 250).outputItems(DictFrame.fromOne(ModItems.circuit, EnumCircuitType.ANALOG))

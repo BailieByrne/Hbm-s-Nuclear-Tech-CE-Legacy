@@ -257,7 +257,7 @@ public class EntityBulletBase extends Entity implements IProjectile {
 		// entity detection
 		Vec3d vecOrigin = new Vec3d(this.posX, this.posY, this.posZ);
 		Vec3d vecDestination = new Vec3d(this.posX + this.motionX * this.config.velocity, this.posY + this.motionY * this.config.velocity, this.posZ + this.motionZ * this.config.velocity);
-		RayTraceResult movement = this.world.rayTraceBlocks(vecOrigin, vecDestination, false, true, false);
+		RayTraceResult movement = Library.rayTraceBlocksForProjectile(this.world, vecOrigin, vecDestination, false, true, false);
 		vecOrigin = new Vec3d(this.posX, this.posY, this.posZ);
 		vecDestination = new Vec3d(this.posX + this.motionX * this.config.velocity, this.posY + this.motionY * this.config.velocity, this.posZ + this.motionZ * this.config.velocity);
 
