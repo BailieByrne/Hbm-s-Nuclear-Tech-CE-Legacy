@@ -2,6 +2,7 @@ package com.hbm.inventory.container;
 
 import com.cleanroommc.bogosorter.api.ISortableContainer;
 import com.cleanroommc.bogosorter.api.ISortingContextBuilder;
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.items.tool.ItemLeadBox;
 import com.hbm.util.InventoryUtil;
@@ -15,7 +16,7 @@ import net.minecraftforge.fml.common.Optional;
 import net.minecraftforge.items.SlotItemHandler;
 
 @Optional.Interface(iface = "com.cleanroommc.bogosorter.api.ISortableContainer", modid = "bogosorter")
-public class ContainerLeadBox extends Container implements ISortableContainer {
+public class ContainerLeadBox extends Container implements IAutoRoutingContainer, ISortableContainer {
 
     private ItemLeadBox.InventoryLeadBox box;
     private boolean isMainHand;
@@ -76,5 +77,10 @@ public class ContainerLeadBox extends Container implements ISortableContainer {
     @Optional.Method(modid = "bogosorter")
     public void buildSortingContext(ISortingContextBuilder builder) {
         builder.addSlotGroup(0, box.getSlots(), 5);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

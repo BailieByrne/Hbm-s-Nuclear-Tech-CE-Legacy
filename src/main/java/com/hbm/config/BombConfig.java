@@ -39,10 +39,16 @@ public class BombConfig {
 	public static int limitExplosionLifespan = 0;
 	public static boolean disableNuclear = false;
 	public static boolean enableNukeClouds = true;
-	public static boolean enableNukeNBTSaving = true;
 	public static boolean chunkloading = true;
 	public static int explosionAlgorithm = 2;
 	public static int maxThreads = -1;
+	public static int blastChunksInFlight = 0;
+
+	/** Resolved at use; zero selects the native processor-based admission depth. */
+	public static int chunksInFlight() {
+		int configured = blastChunksInFlight;
+		return configured > 0 ? configured : Math.max(64, Runtime.getRuntime().availableProcessors() * 8);
+	}
 	
 	public static void loadFromConfig(Configuration config) {
 		Property propGadget = config.get(CommonConfig.CATEGORY_NUKES, "3.00_gadgetRadius", 150);
@@ -160,10 +166,6 @@ public class BombConfig {
 		enableNukeCloudsP.setComment("WARNING: AN OLD CONFIG OPTION. Allows for nuclear explosion to even happen.");
 		enableNukeClouds = enableNukeCloudsP.getBoolean(true);
 
-		Property enableNukeNBTSavingP = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.09_enableNukeNBTSaving", true);
-		enableNukeNBTSavingP.setComment("If true then nukes will save the blocks they want to destroy so they can resume work rather then restart after a crash/reload. For big nukes this can take a while tho.");
-		enableNukeNBTSaving = enableNukeNBTSavingP.getBoolean();
-
 		Property chunkloadingP = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.10_enableChunkLoading", true);
 		chunkloadingP.setComment("Allows mk5 explosion to generate new chunks.");
 		chunkloading = chunkloadingP.getBoolean(true);
@@ -175,6 +177,10 @@ public class BombConfig {
 		Property maxThreadsP = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.11.1_explosionMaxThreads", -1);
 		maxThreadsP.setComment("Configures the maximum thread count for the threaded DDA explosion algorithm.\n -N = CPU count - N, 0 = CPU count, N = N");
 		maxThreads = maxThreadsP.getInt();
+
+		Property chunksInFlightP = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.11.2_blastChunksInFlight", 0);
+		chunksInFlightP.setComment("Maximum blast chunk requests in flight. 0 selects max(64, CPU count * 8).");
+		blastChunksInFlight = chunksInFlightP.getInt();
 
 	}
 }

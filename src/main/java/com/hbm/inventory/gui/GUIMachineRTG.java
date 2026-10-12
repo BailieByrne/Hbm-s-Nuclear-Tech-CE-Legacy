@@ -31,9 +31,9 @@ public class GUIMachineRTG extends GuiInfoContainer {
 	public void drawScreen(int mouseX, int mouseY, float f) {
 		super.drawScreen(mouseX, mouseY, f);
 
-		this.drawElectricityInfo(this, mouseX, mouseY, guiLeft + 146, guiTop + 11, 16, 50, rtg.power, rtg.maxPower);
+		this.drawElectricityInfo(this, mouseX, mouseY, guiLeft + 146, guiTop + 9, 16, 51, rtg.power, rtg.maxPower);
 		String[] heatText = I18nUtil.resolveKeyArray("desc.gui.rtg.heat", rtg.heat);
-		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 124, guiTop + 11, 16, 50, mouseX, mouseY, heatText);
+		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 124, guiTop + 9, 16, 51, mouseX, mouseY, heatText);
 
 		List<ItemRTGPellet> pellets = List.copyOf(ItemRTGPellet.pelletMap.keySet());
 		String[] pelletText = new String[pellets.size() + 1];
@@ -64,12 +64,12 @@ public class GUIMachineRTG extends GuiInfoContainer {
 		drawTexturedModalRect(guiLeft, guiTop, 0, 0, xSize, ySize);
 
 		if (rtg.hasHeat()) {
-			int i = rtg.getHeatScaled(50);
+            int i = rtg.getHeatScaled(51);
 			drawTexturedModalRect(guiLeft + 124, guiTop + 61 - i, 176, 61 - i, 16, i);
 		}
 
 		if (rtg.hasPower()) {
-			int i = (int) rtg.getPowerScaled(50);
+            int i = (int) rtg.getPowerScaled(51);
 			drawTexturedModalRect(guiLeft + 146, guiTop + 61 - i, 192, 61 - i, 16, i);
 		}
 

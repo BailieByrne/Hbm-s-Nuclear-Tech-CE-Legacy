@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.lib.Library;
@@ -14,7 +15,7 @@ import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.function.Predicate;
 
-public class ContainerCompactLauncher extends Container {
+public class ContainerCompactLauncher extends Container implements IAutoRoutingContainer {
 
 	private TileEntityCompactLauncher nukeBoy;
 
@@ -61,4 +62,9 @@ public class ContainerCompactLauncher extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return nukeBoy.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

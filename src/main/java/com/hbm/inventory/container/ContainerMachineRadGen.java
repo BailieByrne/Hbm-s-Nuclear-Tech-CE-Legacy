@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.tileentity.machine.TileEntityMachineRadGen;
@@ -12,7 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineRadGen extends Container {
+public class ContainerMachineRadGen extends Container implements IAutoRoutingContainer {
 
 	private TileEntityMachineRadGen radGen;
 
@@ -54,4 +55,9 @@ public class ContainerMachineRadGen extends Container {
 	public boolean canInteractWith(@NotNull EntityPlayer player) {
 		return radGen.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

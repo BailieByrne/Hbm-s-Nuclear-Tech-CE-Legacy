@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.items.machine.IItemFluidIdentifier;
@@ -14,10 +15,17 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerBarrel extends Container {
+public class ContainerBarrel extends Container implements IAutoRoutingContainer {
 
-	private TileEntityBarrel barrel;
-    private final TransferStrategy transferStrategy = TransferStrategy.builder(6)
+	public final TileEntityBarrel barrel;
+    private final TransferStrategy transferStrategy;
+	private int mode;
+
+	public ContainerBarrel(InventoryPlayer invPlayer, TileEntityBarrel tedf) {
+		mode = 0;
+
+		barrel = tedf;
+        transferStrategy = TransferStrategy.builder(6)
                                                                       .rule(0, 2,
                                                                               s -> s.getItem() instanceof IItemFluidIdentifier)
                                                                       .rule(2, 4,
@@ -30,12 +38,6 @@ public class ContainerBarrel extends Container {
                                                                       .playerFallbackMode(
                                                                               TransferStrategy.PlayerFallbackMode.REBALANCE_SECTIONS)
                                                                       .build();
-	private int mode;
-
-	public ContainerBarrel(InventoryPlayer invPlayer, TileEntityBarrel tedf) {
-		mode = 0;
-
-		barrel = tedf;
 
 		this.addSlotToContainer(new SlotItemHandler(tedf.inventory, 0, 8, 17));
 		this.addSlotToContainer(SlotFiltered.takeOnly(tedf.inventory, 1, 8, 53));
@@ -88,4 +90,9 @@ public class ContainerBarrel extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return barrel.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

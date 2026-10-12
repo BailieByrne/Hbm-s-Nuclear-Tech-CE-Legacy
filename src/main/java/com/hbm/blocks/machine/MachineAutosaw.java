@@ -69,7 +69,11 @@ public class MachineAutosaw extends BlockContainer
       float hitY,
       float hitZ) {
 
-    if (!world.isRemote && !player.isSneaking()) {
+    if (world.isRemote) return player.isSneaking()
+        || player.getHeldItem(hand).getItem() instanceof IItemFluidIdentifier identifier
+        && TileEntityMachineAutosaw.acceptedFuels.contains(identifier.getType(world, pos.getX(), pos.getY(), pos.getZ(), player.getHeldItem(hand)));
+
+    if (!player.isSneaking()) {
 
       if (!player.getHeldItem(hand).isEmpty()
           && player.getHeldItem(hand).getItem() instanceof IItemFluidIdentifier) {

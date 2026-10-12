@@ -87,7 +87,7 @@ public class FluidTankNTM implements IFluidHandler, IFluidTank, Cloneable {
     public byte getRedstoneComparatorPower() {
         if(getFill() == 0) return 0;
         double frac = (double) getFill() / (double) getMaxFill() * 15D;
-        return (byte) (MathHelper.clamp((int) frac, 1, 15));
+        return (byte) (MathHelper.clamp((int) frac + 1, 0, 15));
     }
     public FluidTankNTM withPressure(int pressure) {
         if (this.pressure != pressure) this.setFill(0);

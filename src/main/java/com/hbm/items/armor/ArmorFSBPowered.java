@@ -33,7 +33,6 @@ public class ArmorFSBPowered extends ArmorFSB implements IBatteryItem {
 		this.chargeRate = chargeRate;
 		this.consumption = consumption;
 		this.drain = drain;
-		this.setMaxDamage(1);
 	}
 
 	public static String getColor(long a, long b){
@@ -117,7 +116,7 @@ public class ArmorFSBPowered extends ArmorFSB implements IBatteryItem {
                 stack.setTagCompound(new NBTTagCompound());
                 stack.getTagCompound().setLong("charge", ((ArmorFSBPowered) stack.getItem()).getMaxCharge(stack));
             }
-            return stack.getTagCompound().getLong("charge");
+            return Math.min(stack.getTagCompound().getLong("charge"), getMaxCharge(stack));
         }
 
     	return 0;
@@ -159,16 +158,6 @@ public class ArmorFSBPowered extends ArmorFSB implements IBatteryItem {
     {
         this.dischargeBattery(stack, damage * consumption);
     }
-
-	@Override
-	public int getItemEnchantability() {
-		return 0;
-	}
-
-	@Override
-	public boolean isEnchantable(ItemStack stack) {
-		return false;
-	}
 
 	@Override
 	public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {

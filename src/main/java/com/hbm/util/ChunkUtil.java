@@ -13,8 +13,11 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongCollection;
+import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.Block;
@@ -174,6 +177,373 @@ public final class ChunkUtil {
      * Heuristic threshold: switch to dense path when sub-chunk updates exceed roughly 1/3 of 4096.
      */
     private static final int DENSE_THRESHOLD = 4096 / 3;
+    private static final java.util.Map<WorldServer, BlastTickets> BLAST_TICKETS = new java.util.IdentityHashMap<>();
+    private static final ThreadLocal<int[]> TL_CARVED = ThreadLocal.withInitial(() -> new int[4096]);
+
+    private static final class BlastTickets {
+        final Long2IntOpenHashMap references = new Long2IntOpenHashMap();
+        final Long2ObjectOpenHashMap<net.minecraftforge.common.ForgeChunkManager.Ticket> byChunk = new Long2ObjectOpenHashMap<>();
+        final java.util.List<net.minecraftforge.common.ForgeChunkManager.Ticket> tickets = new java.util.ArrayList<>();
+    }
+
+    @ServerThread
+    public static @Nullable Chunk liveChunkNow(WorldServer world, long packed) {
+        return world.getChunkProvider().loadedChunks.get(packed);
+    }
+
+    /** Always queues; addScheduledTask executes inline when already on the server thread. */
+    public static void queueServerTask(WorldServer world, Runnable task) {
+        net.minecraft.server.MinecraftServer server = world.getMinecraftServer();
+        synchronized (server.futureTaskQueue) {
+            server.futureTaskQueue.add(com.google.common.util.concurrent.ListenableFutureTask.create(task, null));
+        }
+    }
+
+    @ThreadSafeMethod
+    public static @Nullable ExtendedBlockStorage[] getLoadedSections(NonBlockingHashMapLong<Chunk> mirror, long packed) {
+        Chunk chunk = mirror.get(packed);
+        return chunk == null ? null : chunk.getBlockStorageArray();
+    }
+
+    @ServerThread
+    public static void addBlastTicket(WorldServer world, long packed) {
+        if (!tryAddBlastTicket(world, packed))
+            throw new IllegalStateException("Nuclear blast exhausted Forge chunk-ticket budget");
+    }
+
+    /** False is native admission backpressure; it does not record or partially acquire a lease. */
+    @ServerThread
+    public static boolean tryAddBlastTicket(WorldServer world, long packed) {
+        assert world.getMinecraftServer().isCallingFromMinecraftThread();
+        BlastTickets leases = BLAST_TICKETS.computeIfAbsent(world, ignored -> new BlastTickets());
+        if (leases.references.containsKey(packed)) {
+            leases.references.addTo(packed, 1);
+            return true;
+        }
+        net.minecraftforge.common.ForgeChunkManager.Ticket selected = null;
+        for (net.minecraftforge.common.ForgeChunkManager.Ticket ticket : leases.tickets) {
+            int depth = ticket.getChunkListDepth();
+            if (depth <= 0 || ticket.getChunkList().size() < depth) { selected = ticket; break; }
+        }
+        if (selected == null) {
+            if (net.minecraftforge.common.ForgeChunkManager.ticketCountAvailableFor(MainRegistry.instance, world) == 0) {
+                if (leases.references.isEmpty()) BLAST_TICKETS.remove(world);
+                return false;
+            }
+            selected = net.minecraftforge.common.ForgeChunkManager.requestTicket(MainRegistry.instance, world,
+                    net.minecraftforge.common.ForgeChunkManager.Type.NORMAL);
+            if (selected == null) throw new IllegalStateException("Nuclear blast exhausted Forge chunk-ticket budget");
+            selected.getModData().setBoolean("hbmBlastTemporary", true);
+            leases.tickets.add(selected);
+        }
+        net.minecraftforge.common.ForgeChunkManager.forceChunk(selected,
+                new ChunkPos(Library.getChunkPosX(packed), Library.getChunkPosZ(packed)));
+        leases.byChunk.put(packed, selected);
+        leases.references.put(packed, 1);
+        return true;
+    }
+
+    /** Admits a distinct chunk neighborhood as a unit, preventing competing partial neighborhoods. */
+    @ServerThread
+    public static boolean tryAddBlastTickets(WorldServer world, long[] chunks) {
+        assert world.getMinecraftServer().isCallingFromMinecraftThread();
+        BlastTickets leases = BLAST_TICKETS.get(world);
+        int needed = 0;
+        for (int i = 0; i < chunks.length; i++) {
+            for (int j = 0; j < i; j++) assert chunks[i] != chunks[j];
+            if (leases == null || !leases.references.containsKey(chunks[i])) needed++;
+        }
+        long capacity = 0;
+        if (leases != null) for (net.minecraftforge.common.ForgeChunkManager.Ticket ticket : leases.tickets) {
+            int depth = ticket.getChunkListDepth();
+            if (depth <= 0) { capacity = Long.MAX_VALUE; break; }
+            capacity += depth - ticket.getChunkList().size();
+        }
+        int available = net.minecraftforge.common.ForgeChunkManager.ticketCountAvailableFor(MainRegistry.instance, world);
+        int depth = net.minecraftforge.common.ForgeChunkManager.getMaxChunkDepthFor(Tags.MODID);
+        if (capacity != Long.MAX_VALUE && available > 0) {
+            capacity = depth <= 0 ? Long.MAX_VALUE : capacity + (long) available * depth;
+        }
+        if (needed > capacity) return false;
+        int acquired = 0;
+        try {
+            for (long packed : chunks) {
+                if (!tryAddBlastTicket(world, packed)) {
+                    while (acquired > 0) releaseChunkAsync(world, chunks[--acquired]);
+                    return false;
+                }
+                acquired++;
+            }
+            return true;
+        } catch (RuntimeException | Error failure) {
+            while (acquired > 0) {
+                try { releaseChunkAsync(world, chunks[--acquired]); }
+                catch (RuntimeException | Error cleanup) { failure.addSuppressed(cleanup); }
+            }
+            throw failure;
+        }
+    }
+
+    /** Forge publishes forced-chunk changes synchronously. */
+    @ServerThread
+    public static void flushChunkTickets(WorldServer world) {
+        assert world.getMinecraftServer().isCallingFromMinecraftThread();
+    }
+
+    @ServerThread
+    public static java.util.concurrent.CompletableFuture<Chunk> blastChunkFuture(WorldServer world, long packed) {
+        assert world.getMinecraftServer().isCallingFromMinecraftThread();
+        java.util.concurrent.CompletableFuture<Chunk> result = new java.util.concurrent.CompletableFuture<>();
+        int x = Library.getChunkPosX(packed), z = Library.getChunkPosZ(packed);
+        // Forge queues disk reads for generated chunks. New terrain generation remains server-thread work.
+        Runnable callback = () -> {
+            if (result.isCancelled()) return;
+            try { result.complete(world.getChunkProvider().provideChunk(x, z)); }
+            catch (Throwable failure) { result.completeExceptionally(failure); }
+        };
+        world.getChunkProvider().loadChunk(x, z, callback);
+        if (!result.isDone()) result.whenComplete((chunk, failure) -> {
+            if (result.isCancelled()) {
+                assert world.getMinecraftServer().isCallingFromMinecraftThread();
+                net.minecraftforge.common.chunkio.ChunkIOExecutor.dropQueuedChunkLoad(world, x, z, callback);
+            }
+        });
+        return result;
+    }
+
+    @ServerThread
+    public static void releaseChunkAsync(WorldServer world, long packed) {
+        assert world.getMinecraftServer().isCallingFromMinecraftThread();
+        BlastTickets leases = BLAST_TICKETS.get(world);
+        int count = leases.references.get(packed);
+        assert count > 0;
+        if (count > 1) { leases.references.put(packed, count - 1); return; }
+        leases.references.remove(packed);
+        net.minecraftforge.common.ForgeChunkManager.Ticket ticket = leases.byChunk.remove(packed);
+        net.minecraftforge.common.ForgeChunkManager.unforceChunk(ticket,
+                new ChunkPos(Library.getChunkPosX(packed), Library.getChunkPosZ(packed)));
+        if (ticket.getChunkList().isEmpty()) {
+            net.minecraftforge.common.ForgeChunkManager.releaseTicket(ticket);
+            leases.tickets.remove(ticket);
+        }
+        if (leases.references.isEmpty()) BLAST_TICKETS.remove(world);
+        Chunk chunk = liveChunkNow(world, packed);
+        if (chunk != null && !world.getPersistentChunks().containsKey(chunk.getPos())
+                && world.getPlayerChunkMap().getEntry(chunk.x, chunk.z) == null) {
+            world.getChunkProvider().queueUnload(chunk);
+        }
+    }
+
+    private static void releaseBlastTickets(WorldServer world) {
+        BlastTickets leases = BLAST_TICKETS.remove(world);
+        if (leases != null) for (net.minecraftforge.common.ForgeChunkManager.Ticket ticket : leases.tickets)
+            net.minecraftforge.common.ForgeChunkManager.releaseTicket(ticket);
+    }
+
+    /** Carves only private, server-captured sections; block entities are removed after publication. */
+    @ThreadSafeMethod
+    public static boolean carveSnapshot(WorldServer world, int chunkX, int chunkZ, int subY,
+                                        SectionSnapshot snapshot, BitMask mask, LongCollection edges,
+                                        Long2ObjectMap<IBlockState> modified) {
+        ExtendedBlockStorage source = snapshot.sections[subY];
+        if (source == null || source.isEmpty()) return false;
+        NonBlockingHashMapLong<Chunk> loaded = chunkMap.get(world.provider.getDimension());
+        int[] carved = TL_CARVED.get();
+        int count = 0;
+        for (int index = mask.nextSetBit(0); index >= 0 && index < 4096; index = mask.nextSetBit(index + 1)) {
+            int x = Library.getLocalX(index), y = Library.getLocalY(index), z = Library.getLocalZ(index);
+            IBlockState old = source.get(x, y, z);
+            if (old.getBlock() == Blocks.AIR) continue;
+            long packed = Library.blockPosToLong((chunkX << 4) | x, (subY << 4) | y, (chunkZ << 4) | z);
+            modified.put(packed, old);
+            if (old.getBlock().hasTileEntity(old)) continue;
+            if (snapshotTouchesEdge(loaded, chunkX, chunkZ, subY, source, x, y, z, mask)) edges.add(packed);
+            carved[count++] = index;
+        }
+        if (count == 0) return false;
+        ExtendedBlockStorage result;
+        if (count == source.blockRefCount) {
+            result = new ExtendedBlockStorage(subY << 4, world.provider.hasSkyLight());
+        } else {
+            result = source;
+            for (int i = 0; i < count; i++) {
+                int index = carved[i];
+                result.set(Library.getLocalX(index), Library.getLocalY(index), Library.getLocalZ(index), AIR_DEFAULT_STATE);
+            }
+        }
+        snapshot.sections[subY] = result;
+        snapshot.changed(subY);
+        return true;
+    }
+
+    private static boolean snapshotTouchesEdge(NonBlockingHashMapLong<Chunk> loaded, int cx, int cz, int sy,
+                                               ExtendedBlockStorage source, int x, int y, int z, BitMask mask) {
+        return snapshotNeighbor(loaded, cx, cz, sy, source, x - 1, y, z, mask)
+                || snapshotNeighbor(loaded, cx, cz, sy, source, x + 1, y, z, mask)
+                || snapshotNeighbor(loaded, cx, cz, sy, source, x, y - 1, z, mask)
+                || snapshotNeighbor(loaded, cx, cz, sy, source, x, y + 1, z, mask)
+                || snapshotNeighbor(loaded, cx, cz, sy, source, x, y, z - 1, mask)
+                || snapshotNeighbor(loaded, cx, cz, sy, source, x, y, z + 1, mask);
+    }
+
+    private static boolean snapshotNeighbor(NonBlockingHashMapLong<Chunk> loaded, int cx, int cz, int sy,
+                                            ExtendedBlockStorage source, int x, int y, int z, BitMask mask) {
+        if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16) {
+            return !mask.get(Library.packLocal(x, y, z)) && source.get(x, y, z).getBlock() != Blocks.AIR;
+        }
+        if (x < 0) { cx--; x = 15; } else if (x >= 16) { cx++; x = 0; }
+        if (z < 0) { cz--; z = 15; } else if (z >= 16) { cz++; z = 0; }
+        if (y < 0) { sy--; y = 15; } else if (y >= 16) { sy++; y = 0; }
+        if (sy < 0 || sy >= 16) return false;
+        // A future admission can reveal a supported neighbor: retain the boundary notification.
+        if (loaded == null) return true;
+        Chunk neighbor = loaded.get(ChunkPos.asLong(cx, cz));
+        if (neighbor == null) return true;
+        ExtendedBlockStorage section = getEbsVolatile(neighbor.getBlockStorageArray(), sy);
+        return section != null && !section.isEmpty() && section.get(x, y, z).getBlock() != Blocks.AIR;
+    }
+
+    @ServerThread
+    public static void dispatchRemovalHook(WorldServer world, BlockPos pos, IBlockState oldState, IBlockState newState) {
+        if (oldState.getBlock() != newState.getBlock()) oldState.getBlock().breakBlock(world, pos, oldState);
+    }
+
+    @ServerThread
+    public static boolean postCarveBlockUpdate(WorldServer world, Chunk chunk, BlockPos pos,
+                                               IBlockState oldState, IBlockState newState) {
+        dispatchRemovalHook(world, pos, oldState, newState);
+        newState.getBlock().onBlockAdded(world, pos, newState);
+        int localX = pos.getX() & 15, localZ = pos.getZ() & 15;
+        if (pos.getY() == chunk.getHeightValue(localX, localZ) - 1)
+            chunk.relightBlock(localX, pos.getY(), localZ);
+        if (CompatDynamicTrees.isTreePart(oldState.getBlock()))
+            CompatDynamicTrees.destroyOrphanedNeighbors(world, pos.toImmutable());
+        return oldState.getLightOpacity(world, pos) != newState.getLightOpacity(world, pos)
+                || oldState.getLightValue(world, pos) != newState.getLightValue(world, pos);
+    }
+
+    @ServerThread
+    public static boolean lightChanged(World world, BlockPos pos, IBlockState before, IBlockState after) {
+        return before.getLightOpacity(world, pos) != after.getLightOpacity(world, pos)
+                || before.getLightValue(world, pos) != after.getLightValue(world, pos);
+    }
+
+    /** Forge and Cleanroom lighting checks require a loaded radius of sixteen blocks. */
+    @ServerThread
+    public static boolean lightNeighborhoodLoaded(WorldServer world, LongList positions) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int i = 0; i < positions.size(); i++) {
+            Library.fromLong(pos, positions.getLong(i));
+            if (!world.isAreaLoaded(pos, 16, false)) return false;
+        }
+        return true;
+    }
+
+    @ServerThread
+    public static long[] lightNeighborhood(LongList positions) {
+        LongLinkedOpenHashSet chunks = new LongLinkedOpenHashSet();
+        for (int i = 0; i < positions.size(); i++) {
+            long position = positions.getLong(i);
+            int x = Library.getBlockPosX(position), z = Library.getBlockPosZ(position);
+            for (int cx = (x - 16) >> 4; cx <= (x + 16) >> 4; cx++)
+                for (int cz = (z - 16) >> 4; cz <= (z + 16) >> 4; cz++) chunks.add(ChunkPos.asLong(cx, cz));
+        }
+        return chunks.toLongArray();
+    }
+
+    /** Returns null only for temporarily occupied capacity; configured impossibility fails before publication. */
+    @ServerThread
+    public static @Nullable LightChunkLease tryLightChunkLease(WorldServer world, long[] chunks, int reservedTickets) {
+        assert world.getMinecraftServer().isCallingFromMinecraftThread();
+        int tickets = net.minecraftforge.common.ForgeChunkManager.getMaxTicketLengthFor(Tags.MODID) - reservedTickets;
+        int depth = net.minecraftforge.common.ForgeChunkManager.getMaxChunkDepthFor(Tags.MODID);
+        long capacity = tickets <= 0 ? 0 : depth <= 0 ? Long.MAX_VALUE : (long) tickets * depth;
+        if (chunks.length > capacity)
+            throw new IllegalStateException("Fallout lighting needs " + chunks.length + " neighboring chunks, but Forge allows "
+                    + capacity + " chunk slots after reserving " + reservedTickets + " entity tickets");
+        if (!tryAddBlastTickets(world, chunks)) return null;
+        LightChunkLease lease = new LightChunkLease(world, chunks);
+        try {
+            for (long chunk : chunks) {
+                lease.futures[lease.started] = blastChunkFuture(world, chunk);
+                lease.started++;
+            }
+            return lease;
+        } catch (RuntimeException | Error failure) {
+            try { lease.close(); } catch (RuntimeException | Error cleanup) { failure.addSuppressed(cleanup); }
+            throw failure;
+        }
+    }
+
+    public static final class LightChunkLease implements AutoCloseable {
+        private final WorldServer world;
+        private final long[] chunks;
+        private final java.util.concurrent.CompletableFuture<?>[] futures;
+        private int started;
+        private boolean closed;
+
+        private LightChunkLease(WorldServer world, long[] chunks) {
+            this.world = world;
+            this.chunks = chunks;
+            this.futures = new java.util.concurrent.CompletableFuture<?>[chunks.length];
+        }
+
+        @ServerThread
+        public boolean isReady() {
+            for (int i = 0; i < started; i++) {
+                if (!futures[i].isDone()) return false;
+                if (liveChunkNow(world, chunks[i]) != futures[i].join())
+                    throw new IllegalStateException("Fallout lighting neighbor changed while leased");
+            }
+            return true;
+        }
+
+        @Override
+        @ServerThread
+        public void close() {
+            if (closed) return;
+            closed = true;
+            Throwable failure = null;
+            for (int i = 0; i < started; i++) {
+                try { futures[i].cancel(false); }
+                catch (RuntimeException | Error cleanup) {
+                    if (failure == null) failure = cleanup; else failure.addSuppressed(cleanup);
+                }
+            }
+            for (long chunk : chunks) {
+                try { releaseChunkAsync(world, chunk); }
+                catch (RuntimeException | Error cleanup) {
+                    if (failure == null) failure = cleanup; else failure.addSuppressed(cleanup);
+                }
+            }
+            if (failure instanceof RuntimeException) throw (RuntimeException) failure;
+            if (failure instanceof Error) throw (Error) failure;
+        }
+    }
+
+    /** 1.12 publishes lighting on the server thread rather than through a threaded light-engine future. */
+    @ServerThread
+    public static java.util.concurrent.CompletableFuture<?> updateLight(WorldServer world, Chunk chunk,
+                                                                       LongList positions, long sectionMask) {
+        assert world.getMinecraftServer().isCallingFromMinecraftThread();
+        chunk.resetRelightChecks();
+        for (int i = 0; i < positions.size(); i++) world.checkLight(BlockPos.fromLong(positions.getLong(i)));
+        chunk.markDirty();
+        return java.util.concurrent.CompletableFuture.completedFuture(null);
+    }
+
+    @ServerThread
+    public static void broadcastWholesaleResend(WorldServer world, long packed,
+                                                 java.util.concurrent.CompletableFuture<?> lighting) {
+        lighting.thenRunAsync(() -> {
+            Chunk fresh = liveChunkNow(world, packed);
+            if (fresh == null) return;
+            fresh.markDirty();
+            net.minecraft.server.management.PlayerChunkMapEntry entry = world.getPlayerChunkMap().getEntry(
+                    Library.getChunkPosX(packed), Library.getChunkPosZ(packed));
+            if (entry != null) entry.sendPacket(new net.minecraft.network.play.server.SPacketChunkData(fresh, 0xFFFF));
+        }, command -> world.getMinecraftServer().addScheduledTask(command));
+    }
 
     /**
      * Global reference count across all dimensions indicating how many concurrent tasks are active.
@@ -274,6 +644,7 @@ public final class ChunkUtil {
     public static void onWorldUnload(WorldEvent.Unload event) {
         World world = event.getWorld();
         if (world.isRemote) return;
+        releaseBlastTickets((WorldServer) world);
         int key = world.provider.getDimension();
         if (GeneralConfig.enableExtendedLogging)
             MainRegistry.logger.info("Dimension {} unloaded with {} active tasks. refCounter = {}", key, activeTask.get(key), refCounter);
@@ -285,6 +656,7 @@ public final class ChunkUtil {
     // which decrements activeTask. If we cleared activeTask before that (as in FMLServerStoppingEvent),
     // the counter goes negative and the next acquireMirrorMap() takes the wrong branch → NPE.
     public static void onServerStopped() {
+        for (WorldServer world : new java.util.ArrayList<>(BLAST_TICKETS.keySet())) releaseBlastTickets(world);
         chunkMap.clear();
         activeTask.clear();
         if (GeneralConfig.enableExtendedLogging)
@@ -304,7 +676,8 @@ public final class ChunkUtil {
     public static BlockStateContainer copyOf(BlockStateContainer srcData) {
         int bits = srcData.bits;
         IBlockStatePalette srcPalette = srcData.palette;
-        BlockStateContainer copied = UnsafeHolder.allocateInstance(BlockStateContainer.class);
+        BlockStateContainer copied = CompatValkyrienChunkData.ACTIVE
+                ? new BlockStateContainer() : UnsafeHolder.allocateInstance(BlockStateContainer.class);
         copied.bits = bits;
 
         if (bits <= 4) {
@@ -340,6 +713,8 @@ public final class ChunkUtil {
         long[] srcLongs = srcStorage.getBackingLongArray();
         long[] dstLongs = copied.storage.getBackingLongArray();
         System.arraycopy(srcLongs, 0, dstLongs, 0, srcLongs.length);
+        if (CompatValkyrienChunkData.ACTIVE) CompatValkyrienChunkData.copy(srcData, copied);
+        SectionPalette.resized(copied);
         return copied;
     }
 

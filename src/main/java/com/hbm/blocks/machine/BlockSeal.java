@@ -28,6 +28,7 @@ public class BlockSeal extends Block implements IBomb {
 	
 	public BlockSeal(Material materialIn, String s) {
 		super(materialIn);
+		this.setDefaultState(this.blockState.getBaseState().withProperty(ACTIVATED, false));
 		this.setTranslationKey(s);
 		this.setRegistryName(s);
 		

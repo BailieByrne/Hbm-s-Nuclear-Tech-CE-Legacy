@@ -129,8 +129,8 @@ public class TileEntityLaunchPad extends TileEntityLaunchPadBase {
         if (!designatorStack.isEmpty() && designatorStack.getItem() instanceof IDesignatorItem) {
             NBTTagCompound nbt = designatorStack.hasTagCompound() ? designatorStack.getTagCompound() :
                     new NBTTagCompound();
-            nbt.setInteger("pos.getX()", args.checkInteger(0));
-            nbt.setInteger("pos.getZ()", args.checkInteger(1));
+            nbt.setInteger("xCoord", args.checkInteger(0));
+            nbt.setInteger("zCoord", args.checkInteger(1));
             designatorStack.setTagCompound(nbt);
             return new Object[]{true};
         }

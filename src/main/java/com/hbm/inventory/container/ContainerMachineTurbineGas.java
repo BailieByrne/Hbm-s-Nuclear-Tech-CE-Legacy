@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.fluid.FluidType;
 import com.hbm.inventory.fluid.Fluids;
@@ -14,7 +15,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachineTurbineGas extends Container {
+public class ContainerMachineTurbineGas extends Container implements IAutoRoutingContainer {
 	
 	private TileEntityMachineTurbineGas turbinegas;
 	
@@ -37,6 +38,15 @@ public class ContainerMachineTurbineGas extends Container {
 			this.addSlotToContainer(new Slot(invPlayer, i, 8 + i * 18, 199)); //shit in the hotbar
 		}
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        if (stack.getItem() instanceof IBatteryItem) return slot == 0;
+        if (slot != 1 || !(stack.getItem() instanceof IItemFluidIdentifier identifier)) return false;
+        FluidType type = identifier.getType(turbinegas.getWorld(), turbinegas.getPos().getX(),
+                turbinegas.getPos().getY(), turbinegas.getPos().getZ(), stack);
+        return type == Fluids.GAS || type == Fluids.PETROLEUM || type == Fluids.LPG;
+    }
 	
 	@Override
 	public ItemStack transferStackInSlot(EntityPlayer player, int index) { //shit for shift clicking that works and idk how

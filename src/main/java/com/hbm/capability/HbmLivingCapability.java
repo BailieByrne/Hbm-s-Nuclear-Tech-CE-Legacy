@@ -285,8 +285,8 @@ public class HbmLivingCapability {
 
 		@Override
         public void saveNBTData(NBTTagCompound tag) {
-            // Versioned payload (v1): doubles
-            tag.setString("fmt", "v1");
+            // Versioned payload (v2): current radiation state and double digamma.
+            tag.setString("fmt", "v2");
             tag.setDouble("rads", this.rads);
             tag.setDouble("neutrons", this.neutrons);
             tag.setDouble("envRads", this.envRads);
@@ -308,21 +308,21 @@ public class HbmLivingCapability {
 
 		@Override
         public void loadNBTData(NBTTagCompound tag) {
-            final boolean isV1 = tag.hasKey("fmt") && "v1".equals(tag.getString("fmt"));
-            if (isV1) {
+            final String format = tag.getString("fmt");
+            if ("v2".equals(format)) {
                 this.rads = tag.getDouble("rads");
                 this.neutrons = tag.getDouble("neutrons");
                 this.envRads = tag.getDouble("envRads");
                 this.radBuf = tag.getDouble("radBuf");
-                this.digamma = tag.getDouble("digamma");
             } else {
-                // Legacy payload (floats)
-                this.rads = tag.getFloat("rads");
-                this.neutrons = tag.getFloat("neutrons");
-                this.envRads = tag.getFloat("envRads");
-                this.radBuf = tag.getFloat("radBuf");
-                this.digamma = tag.getFloat("digamma");
+                // Retire radiation state written by the previous numeric pipeline.
+                this.rads = 0D;
+                this.neutrons = 0D;
+                this.envRads = 0D;
+                this.radBuf = 0D;
             }
+            this.digamma = "v1".equals(format) || "v2".equals(format)
+                    ? tag.getDouble("digamma") : tag.getFloat("digamma");
             setAsbestos(tag.getInteger("asbestos"));
             setBlacklung(tag.getInteger("blacklung"));
             setBombTimer(tag.getInteger("bombtimer"));

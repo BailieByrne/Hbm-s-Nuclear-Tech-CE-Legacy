@@ -32,6 +32,7 @@ public class EntityDeliveryDrone extends EntityDroneBase implements IInventory, 
 
     protected boolean chunkLoading = false;
     private Ticket loaderTicket;
+    private boolean awaitingTicketRestore;
 
     public EntityDeliveryDrone(World world) {
         super(world);
@@ -77,6 +78,21 @@ public class EntityDeliveryDrone extends EntityDroneBase implements IInventory, 
     }
 
     @Override
+    public void onUpdate() {
+        if(!world.isRemote && chunkLoading) {
+            if(awaitingTicketRestore) {
+                awaitingTicketRestore = false;
+                // Give Forge's restored-ticket callback one update before resuming flight.
+                if(loaderTicket == null) return;
+            }
+            if(loaderTicket == null) {
+                setChunkLoading();
+            }
+        }
+        super.onUpdate();
+    }
+
+    @Override
     public double getSpeed() {
         return this.dataManager.get(IS_EXPRESS) ? 0.375 * 3 : 0.375;
     }
@@ -110,6 +126,7 @@ public class EntityDeliveryDrone extends EntityDroneBase implements IInventory, 
     @Override
     protected void readEntityFromNBT(NBTTagCompound nbt) {
         super.readEntityFromNBT(nbt);
+        awaitingTicketRestore = true;
 
         NBTTagList list = nbt.getTagList("Items", 10);
         this.inventory = new ItemStackHandler(this.getSizeInventory());
@@ -248,6 +265,11 @@ public class EntityDeliveryDrone extends EntityDroneBase implements IInventory, 
             ForgeChunkManager.releaseTicket(loaderTicket);
             this.loaderTicket = null;
         }
+    }
+
+    @Override
+    public boolean shouldBootstrapChunkLoader() {
+        return chunkLoading && loaderTicket == null && !awaitingTicketRestore;
     }
 
     @Override

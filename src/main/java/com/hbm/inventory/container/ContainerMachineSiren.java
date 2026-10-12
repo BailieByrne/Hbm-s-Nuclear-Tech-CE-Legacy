@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.machine.TileEntityMachineSiren;
 import com.hbm.util.InventoryUtil;
@@ -10,7 +11,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachineSiren extends Container {
+public class ContainerMachineSiren extends Container implements IAutoRoutingContainer {
 
 	private TileEntityMachineSiren siren;
 
@@ -48,4 +49,9 @@ public class ContainerMachineSiren extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return siren.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

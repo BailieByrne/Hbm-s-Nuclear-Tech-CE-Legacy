@@ -289,7 +289,7 @@ public enum HbmEffectNT {
                 vec.rotateYawSelf(360F / count);
             }
         });
-        Smoke_FoamSplash.setHandler((world, _, _, _, data) -> {
+        Smoke_FoamSplash.setHandler((world, x, y, z, data) -> {
             Random rand = world.rand;
             int count = Math.max(1, data.getInteger("count"));
             double strength = data.getDouble("range");
@@ -299,15 +299,14 @@ public enum HbmEffectNT {
             for (int i = 0; i < count; i++) {
 
                 vec.rotateYawSelf((float) Math.toRadians(rand.nextFloat() * 360F));
-                // TODO
-    /*ParticleFoam fx = new ParticleFoam(man, world, x + vec.xCoord, y, z + vec.zCoord);
-    fx.maxAge = 50;
-    fx.motionY = 0;
-    fx.motionX = 0;
-    fx.motionZ = 0;
-    Minecraft.getMinecraft().effectRenderer.addEffect(fx);
+                ParticleFoam fx = new ParticleFoam(world, x + vec.x, y, z + vec.z);
+                fx.maxAge = 50;
+                fx.motionY = 0;
+                fx.motionX = 0;
+                fx.motionZ = 0;
+                Minecraft.getMinecraft().effectRenderer.addEffect(fx);
 
-    vec.rotateYawSelf(360 / count);*/
+                vec.rotateYawSelf(360 / count);
             }
         });
         DebugDrone.setHandler((world, x, y, z, data) -> {
@@ -1475,6 +1474,12 @@ public enum HbmEffectNT {
             float height = e.height;
             int gW = (int) (width / 0.25F);
             int gH = (int) (height / 0.25F);
+            int count = (int) (gW * 1.5 * gH);
+            if (data.hasKey("cDiv")) {
+                int divisor = data.getInteger("cDiv");
+                if (divisor <= 0) throw new IllegalArgumentException("Giblet count divisor must be positive: " + divisor);
+                count = (int) Math.ceil(count / (double) divisor);
+            }
 
             boolean blowMeIntoTheGodDamnStratosphere = rand.nextInt(15) == 0;
             double mult = 1D;
@@ -1482,12 +1487,10 @@ public enum HbmEffectNT {
             if (blowMeIntoTheGodDamnStratosphere)
                 mult *= 10;
 
-            for (int i = -(gW / 2); i <= gW; i++) {
-                for (int j = 0; j <= gH; j++) {
-                    Minecraft.getMinecraft().effectRenderer.addEffect(new ParticleGiblet(world, x, y, z,
-                            rand.nextGaussian() * 0.25 * mult, rand.nextDouble() * mult,
-                            rand.nextGaussian() * 0.25 * mult, gibType));
-                }
+            for (int i = 0; i < count; i++) {
+                Minecraft.getMinecraft().effectRenderer.addEffect(new ParticleGiblet(world, x, y, z,
+                        rand.nextGaussian() * 0.25 * mult, rand.nextDouble() * mult,
+                        rand.nextGaussian() * 0.25 * mult, gibType));
             }
         });
     }

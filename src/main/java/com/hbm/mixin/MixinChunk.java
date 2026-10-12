@@ -22,7 +22,7 @@ public abstract class MixinChunk {
     @Final
     private World world;
 
-    // HBM packet handlers run on the network thread (BufPacket).
+    // Native chunk mutation hooks require the client thread.
     @Unique
     private boolean hbm$clientThread() {
         return world.isRemote && Minecraft.getMinecraft().isCallingFromMinecraftThread();

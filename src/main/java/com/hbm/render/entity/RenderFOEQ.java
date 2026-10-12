@@ -8,7 +8,6 @@ import com.hbm.util.RenderUtil;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
 import org.lwjgl.opengl.GL11;
@@ -43,7 +42,7 @@ public class RenderFOEQ extends Render<EntityBurningFOEQ> {
         final float prevB = RenderUtil.getCurrentColorBlue();
         final float prevA = RenderUtil.getCurrentColorAlpha();
 
-        GlStateManager.translate((float) x, (float) y - 10F, (float) z);
+        GlStateManager.translate((float) x, (float) y - 75F, (float) z);
         GlStateManager.rotate(e.prevRotationYaw + (e.rotationYaw - e.prevRotationYaw) * partialTicks - 90.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(180F, 0F, 0F, 1F);
         GlStateManager.rotate(e.prevRotationPitch + (e.rotationPitch - e.prevRotationPitch) * partialTicks, 0.0F, 0.0F, 1.0F);
@@ -55,7 +54,7 @@ public class RenderFOEQ extends Render<EntityBurningFOEQ> {
         ResourceManager.sat_foeq_burning.renderAll();
 
         if (prevTex2D) GlStateManager.disableTexture2D();
-        if (prevCull) GlStateManager.disableCull();
+        GlStateManager.disableCull();
         if (!prevBlend) GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 
@@ -90,6 +89,7 @@ public class RenderFOEQ extends Render<EntityBurningFOEQ> {
         GlStateManager.tryBlendFuncSeparate(prevSrc, prevDst, prevSrcAlpha, prevDstAlpha);
         if (!prevBlend) GlStateManager.disableBlend();
         if (prevCull) GlStateManager.enableCull();
+        else GlStateManager.disableCull();
         if (prevTex2D) GlStateManager.enableTexture2D();
         if (!prevLighting) GlStateManager.disableLighting();
         GlStateManager.color(prevR, prevG, prevB, prevA);
@@ -98,11 +98,7 @@ public class RenderFOEQ extends Render<EntityBurningFOEQ> {
     }
 
     @Override
-    public void doRenderShadowAndFire(Entity entityIn, double x, double y, double z, float yaw, float partialTicks) {
-    }
-
-    @Override
     protected ResourceLocation getEntityTexture(EntityBurningFOEQ entity) {
-        return ResourceManager.sat_foeq_tex;
+        return ResourceManager.sat_foeq_burning_tex;
     }
 }

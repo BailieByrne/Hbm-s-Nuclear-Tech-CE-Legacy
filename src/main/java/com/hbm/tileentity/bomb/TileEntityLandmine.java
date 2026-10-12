@@ -6,8 +6,7 @@ import com.hbm.lib.HBMSoundHandler;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.passive.EntityBat;
-import net.minecraft.entity.passive.EntityWaterMob;
+import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -46,6 +45,8 @@ public class TileEntityLandmine extends TileEntity implements ITickable {
 			height *= 2;
 		}
 
+		if (!world.isAirBlock(pos.up())) return;
+
 		AxisAlignedBB box = new AxisAlignedBB(
 				pos.getX() - range, pos.getY() - height, pos.getZ() - range,
 				pos.getX() + range + 1, pos.getY() + height, pos.getZ() + range + 1
@@ -54,7 +55,8 @@ public class TileEntityLandmine extends TileEntity implements ITickable {
 		List<Entity> list = world.getEntitiesWithinAABBExcludingEntity(null, box);
 
 		for (Entity entity : list) {
-			if (entity instanceof EntityBat || entity instanceof EntityWaterMob) continue;
+			if (entity.isCreatureType(EnumCreatureType.WATER_CREATURE, false)) continue;
+			if (entity.isCreatureType(EnumCreatureType.AMBIENT, false)) continue;
 
 			if (waitingForPlayer) {
 				if (entity instanceof EntityPlayer) {
@@ -86,12 +88,14 @@ public class TileEntityLandmine extends TileEntity implements ITickable {
 	@Override
 	public void readFromNBT(NBTTagCompound compound) {
 		isPrimed = compound.getBoolean("primed");
+		waitingForPlayer = compound.getBoolean("waiting");
 		super.readFromNBT(compound);
 	}
 	
 	@Override
 	public NBTTagCompound writeToNBT(NBTTagCompound compound) {
 		compound.setBoolean("primed", isPrimed);
+		compound.setBoolean("waiting", waitingForPlayer);
 		return super.writeToNBT(compound);
 	}
 	

@@ -24,6 +24,7 @@ public class AudioWrapperClientStartStop extends AudioWrapperClient {
 		this.world = world;
 		this.start = start;
 		this.stop = stop;
+		this.cat = cat;
 	}
 	
 	@Override

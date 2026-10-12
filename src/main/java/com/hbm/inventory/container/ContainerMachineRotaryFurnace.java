@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.items.machine.IItemFluidIdentifier;
 import com.hbm.tileentity.machine.TileEntityMachineRotaryFurnace;
@@ -13,7 +14,7 @@ import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineRotaryFurnace extends Container {
+public class ContainerMachineRotaryFurnace extends Container implements IAutoRoutingContainer {
 
     private final TileEntityMachineRotaryFurnace furnace;
 
@@ -64,5 +65,10 @@ public class ContainerMachineRotaryFurnace extends Container {
     @Override
     public boolean canInteractWith(@NotNull EntityPlayer player) {
         return furnace.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

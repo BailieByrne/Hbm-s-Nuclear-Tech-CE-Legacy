@@ -149,6 +149,28 @@ public abstract class TileEntityLockableBase extends TileEntityLoadedBase {
         } else if(hand == 2){
             player.getHeldItemOffhand().shrink(1);
             canPick = true;
+        } else {
+            ItemStack held = player.getHeldItemMainhand();
+            if (held.getItem() == ModItems.pin) {
+                for (int slot = 0; slot < player.inventory.mainInventory.size(); slot++) {
+                    ItemStack candidate = player.inventory.mainInventory.get(slot);
+                    if (candidate.getItem() == ModItems.screwdriver || candidate.getItem() == ModItems.screwdriver_desh) {
+                        held.shrink(1);
+                        canPick = true;
+                        break;
+                    }
+                }
+            } else if (held.getItem() == ModItems.screwdriver || held.getItem() == ModItems.screwdriver_desh) {
+                for (int slot = 0; slot < player.inventory.mainInventory.size(); slot++) {
+                    ItemStack candidate = player.inventory.mainInventory.get(slot);
+                    if (candidate.getItem() == ModItems.pin) {
+                        candidate.shrink(1);
+                        player.inventoryContainer.detectAndSendChanges();
+                        canPick = true;
+                        break;
+                    }
+                }
+            }
         }
 
         if(canPick) {

@@ -225,6 +225,11 @@ public class TileEntityMachineCoker extends TileEntityMachineBase implements IFl
     }
 
     @Override
+    public boolean isItemValidForSlot(int slot, ItemStack stack) {
+        return false;
+    }
+
+    @Override
     public boolean canExtractItem(int slot, ItemStack stack, int side) {
         return true;
     }

@@ -648,12 +648,6 @@ public class CraftingManager {
 		addRecipeAuto(new ItemStack(ModBlocks.machine_tape_drive), "PPP", "CCC", "PPP", 'P', ANY_PLASTIC.ingot(), 'C', DictFrame.fromOne(ModItems.circuit, EnumCircuitType.PCB) );
 		addRecipeAuto(new ItemStack(ModBlocks.machine_keyforge), "PCP", "WSW", "WSW", 'P', STEEL.plate(), 'S', W.ingot(), 'C', ModItems.padlock, 'W', KEY_PLANKS );
 		addRecipeAuto(new ItemStack(ModItems.sat_chip), "WWW", "CIC", "WWW", 'W', MINGRADE.wireFine(), 'C', DictFrame.fromOne(ModItems.circuit, EnumCircuitType.ADVANCED), 'I', ANY_PLASTIC.ingot() );
-		addShapelessAuto(new ItemStack(ModItems.satellite, 1, EnumSatType.SPY.ordinal()), ModBlocks.sat_mapper );
-		addShapelessAuto(new ItemStack(ModItems.satellite, 1, EnumSatType.SCANNER.ordinal()), ModBlocks.sat_scanner );
-		addShapelessAuto(new ItemStack(ModItems.satellite, 1, EnumSatType.RADAR.ordinal()), ModBlocks.sat_radar );
-		addShapelessAuto(new ItemStack(ModItems.satellite, 1, EnumSatType.DEATH_RAY.ordinal()), ModBlocks.sat_laser );
-		addShapelessAuto(new ItemStack(ModItems.satellite, 1, EnumSatType.XENIUM_RESONATOR.ordinal()), ModBlocks.sat_resonator );
-		addShapelessAuto(new ItemStack(ModItems.satellite, 1, EnumSatType.RELAY.ordinal()), ModBlocks.sat_foeq );
 		addShapelessAuto(new ItemStack(ModItems.geiger_counter), ModBlocks.geiger );
 		addRecipeAuto(new ItemStack(ModItems.sat_interface), "ISI", "PCP", "PAP", 'I', STEEL.ingot(), 'S', STAR.ingot(), 'P', ModItems.plate_polymer, 'C', ModItems.sat_chip, 'A', DictFrame.fromOne(ModItems.circuit, EnumCircuitType.ADVANCED) );
 		addRecipeAuto(new ItemStack(ModItems.sat_coord), "SII", "SCA", "SPP", 'I', STEEL.ingot(), 'S', STAR.ingot(), 'P', ModItems.plate_polymer, 'C', ModItems.sat_chip, 'A', DictFrame.fromOne(ModItems.circuit, EnumCircuitType.ADVANCED) );
@@ -942,7 +936,7 @@ public class CraftingManager {
 		addRecipeAuto(new ItemStack(ModBlocks.charger, 16), "G", "S", "C", 'G', Blocks.GLOWSTONE, 'S', STEEL.block(), 'C', ModItems.coil_copper_torus );
 		addRecipeAuto(new ItemStack(ModBlocks.refueler), "SS", "HC", "SS", 'S', TI.plate(), 'H', DictFrame.fromOne(ModItems.part_generic, EnumPartType.PISTON_HYDRAULIC), 'C', DictFrame.fromOne(ModItems.circuit, EnumCircuitType.BASIC) );
 		addRecipeAuto(new ItemStack(ModBlocks.press_preheater), "CCC", "SLS", "TST", 'C', CU.plate(), 'S', Blocks.STONE, 'L', Fluids.LAVA.getDict(1000), 'T', W.ingot() );
-		addRecipeAuto(new ItemStack(ModItems.fluid_identifier_multi), "D", "C", "P", 'D', "dye", 'C', DictFrame.fromOne(ModItems.circuit, EnumCircuitType.ANALOG), 'P', IRON.plate() );
+		addRecipeAuto(new ItemStack(ModItems.fluid_identifier_multi), "D", "C", "P", 'D', "dye", 'C', DictFrame.fromOne(ModItems.circuit, EnumCircuitType.VACUUM_TUBE), 'P', IRON.plate() );
 
 		addShapelessAuto(ItemBattery.getEmptyBattery(ModItems.anchor_remote), DIAMOND.gem(), ModItems.ducttape, DictFrame.fromOne(ModItems.circuit, EnumCircuitType.BASIC) );
 		addRecipeAuto(new ItemStack(ModBlocks.teleanchor), "ODO", "EAE", "ODO", 'O', Blocks.OBSIDIAN, 'D', DIAMOND.gem(), 'E', ModItems.powder_magic, 'A', ModItems.gem_alexandrite );

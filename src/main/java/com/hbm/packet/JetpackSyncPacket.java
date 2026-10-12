@@ -47,11 +47,12 @@ public class JetpackSyncPacket extends PrecompiledPacket {
 			if(ctx.side == Side.SERVER) {
 				ctx.getServerHandler().player.server.addScheduledTask(() -> {
 					EntityPlayer player = ctx.getServerHandler().player;
-					JetpackInfo info = JetpackHandler.get(player);
-					if(info == null) {
-						JetpackHandler.put(player, new JetpackInfo(false));
-					}
-					JetpackHandler.put(player, message.info);
+					JetpackInfo info = message.info;
+					if(!player.isEntityAlive() || !JetpackHandler.hasJetpack(player)
+							|| message.playerId != player.getEntityId()
+							|| !Float.isFinite(info.thrust) || info.thrust < 0F || info.thrust > 2F
+							|| info.jetpackFlyTime < -1 || info.failureTicks < 0 || info.failureTicks > 80) return;
+					JetpackHandler.put(player, info);
 				});
 			} else {
 				handleMessageClient(message, ctx);

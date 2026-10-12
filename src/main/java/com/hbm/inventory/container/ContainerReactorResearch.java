@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.items.machine.ItemPlateFuel;
 import com.hbm.tileentity.machine.TileEntityReactorResearch;
@@ -11,7 +12,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerReactorResearch extends Container {
+public class ContainerReactorResearch extends Container implements IAutoRoutingContainer {
 
     private TileEntityReactorResearch reactor;
 
@@ -59,5 +60,10 @@ public class ContainerReactorResearch extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return reactor.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

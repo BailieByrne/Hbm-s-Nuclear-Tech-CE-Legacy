@@ -1,5 +1,6 @@
 package com.hbm.tileentity.network;
 
+import com.hbm.lib.ItemStackHandlerWrapper;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ISidedInventory;
@@ -9,8 +10,11 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -37,9 +41,15 @@ public abstract class TileEntityRequestNetworkContainer extends TileEntityReques
     public ItemStackHandler inventory;
 
     private String customName;
+    private final SidedItemHandler[] itemHandlers = new SidedItemHandler[EnumFacing.VALUES.length + 1];
 
     public TileEntityRequestNetworkContainer(int scount) {
-        inventory = new ItemStackHandler(scount);
+        inventory = new ItemStackHandler(scount) {
+            @Override
+            protected void onContentsChanged(int slot) {
+                markDirty();
+            }
+        };
     }
 
     @Override public int getSizeInventory() { return inventory.getSlots(); }
@@ -69,7 +79,59 @@ public abstract class TileEntityRequestNetworkContainer extends TileEntityReques
 
     @Override public boolean canInsertItem(int slot, ItemStack itemStack, EnumFacing side) { return this.isItemValidForSlot(slot, itemStack); }
     @Override public boolean canExtractItem(int slot, ItemStack itemStack, EnumFacing side) { return false; }
-    @Override public int[] getSlotsForFace(EnumFacing side) { return new int[] {}; }
+    @Override public int[] getSlotsForFace(EnumFacing side) { return getAccessibleSlotsFromSide(side); }
+
+    @Override
+    public boolean hasCapability(Capability<?> capability, @Nullable EnumFacing facing) {
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) return getItemHandler(facing).hasSlots;
+        return super.hasCapability(capability, facing);
+    }
+
+    @Override
+    public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing) {
+        if (capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
+            SidedItemHandler handler = getItemHandler(facing);
+            if (handler.hasSlots) return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.cast(handler);
+        }
+        return super.getCapability(capability, facing);
+    }
+
+    private SidedItemHandler getItemHandler(@Nullable EnumFacing side) {
+        int index = side == null ? EnumFacing.VALUES.length : side.ordinal();
+        SidedItemHandler handler = itemHandlers[index];
+        if (handler == null) {
+            handler = new SidedItemHandler(side, getSlotsForFace(side));
+            itemHandlers[index] = handler;
+        }
+        return handler;
+    }
+
+    private final class SidedItemHandler extends ItemStackHandlerWrapper {
+        private final EnumFacing side;
+        private final boolean hasSlots;
+
+        private SidedItemHandler(@Nullable EnumFacing side, int[] slots) {
+            super(inventory, slots);
+            this.side = side;
+            this.hasSlots = slots.length > 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return super.isItemValid(slot, stack) && canInsertItem(slot, stack, side);
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return canInsertItem(slot, stack, side) ? super.insertItem(slot, stack, simulate) : stack;
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return canExtractItem(slot, inventory.getStackInSlot(slot), side)
+                    ? super.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+        }
+    }
 
     @Override
     public void setInventorySlotContents(int slot, ItemStack stack) {

@@ -11,7 +11,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
-import net.minecraft.world.gen.structure.template.TemplateManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
@@ -34,13 +33,7 @@ public class OfficeFeatures {
             super();
         }
 
-        @Override
-        protected void writeStructureToNBT(@NotNull NBTTagCompound tagCompound) {
-        }
 
-        @Override
-        protected void readStructureFromNBT(@NotNull NBTTagCompound tagCompound, @NotNull TemplateManager p_143011_2_) {
-        }
 
         public LargeOffice(Random rand, int minX, int minZ) {
             super(rand, minX, 64, minZ, 14, 5, 12);
@@ -243,13 +236,7 @@ public class OfficeFeatures {
             super();
         }
 
-        @Override
-        protected void writeStructureToNBT(@NotNull NBTTagCompound tagCompound) {
-        }
 
-        @Override
-        protected void readStructureFromNBT(@NotNull NBTTagCompound tagCompound, @NotNull TemplateManager p_143011_2_) {
-        }
 
         public LargeOfficeCorner(Random rand, int minX, int minZ) {
             super(rand, minX, 64, minZ, 11, 15, 14);

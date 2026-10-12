@@ -1,5 +1,8 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
+
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.items.machine.IItemFluidIdentifier;
 import com.hbm.tileentity.machine.TileEntityICF;
@@ -10,7 +13,13 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerICF extends Container {
+public class ContainerICF extends Container implements IAutoRoutingContainer {
+
+    private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(12)
+            .rule(5, 6, stack -> true)
+            .genericMachineRange(0, 5)
+            .ruleDispatchMode(TransferStrategy.RuleDispatchMode.FALLTHROUGH_ON_FAILURE)
+            .build();
 
     protected TileEntityICF icf;
 
@@ -74,5 +83,11 @@ public class ContainerICF extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return icf.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        if (stack.getItem() instanceof IItemFluidIdentifier) return slot == 11;
+        return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

@@ -38,7 +38,7 @@ public class ItemKitNBT extends Item {
 
             for(ItemStack item : stacks) {
                 if(item != null && !item.isEmpty()) {
-                    playerIn.inventory.addItemStackToInventory(item.copy());
+                    playerIn.inventory.placeItemBackInInventory(worldIn, item.copy());
                 }
             }
         }
@@ -50,7 +50,7 @@ public class ItemKitNBT extends Item {
         if(!container.isEmpty()) {
 
             if(stack.getCount() > 0) {
-                playerIn.inventory.addItemStackToInventory(container.copy());
+                playerIn.inventory.placeItemBackInInventory(worldIn, container.copy());
             } else {
                 stack = container.copy();
             }

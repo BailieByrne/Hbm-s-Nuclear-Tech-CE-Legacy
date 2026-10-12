@@ -54,24 +54,26 @@ public class AcidBlock extends BlockFluidClassic implements IFluidFog {
 
     @Override
     public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
+        super.updateTick(world, pos, state, rand);
+
         reactToBlocks(world, pos.east());
         reactToBlocks(world, pos.west());
         reactToBlocks(world, pos.up());
         reactToBlocks(world, pos.down());
         reactToBlocks(world, pos.south());
         reactToBlocks(world, pos.north());
-        super.updateTick(world, pos, state, rand);
     }
 
     @Override
     public void neighborChanged(IBlockState state, World world, BlockPos pos, Block neighborBlock, BlockPos neighbourPos) {
+        super.neighborChanged(state, world, pos, neighborBlock, neighbourPos);
+
         reactToBlocks(world, pos.east());
         reactToBlocks(world, pos.west());
         reactToBlocks(world, pos.up());
         reactToBlocks(world, pos.down());
         reactToBlocks(world, pos.south());
         reactToBlocks(world, pos.north());
-        super.neighborChanged(state, world, pos, neighborBlock, neighbourPos);
     }
 
     public void reactToBlocks(World world, BlockPos pos) {
@@ -83,6 +85,11 @@ public class AcidBlock extends BlockFluidClassic implements IFluidFog {
     @Override
     public int tickRate(World world) {
         return 5;
+    }
+
+    @Override
+    public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+        return (int) ((quantaPerBlock - state.getValue(LEVEL) - 1) / quantaPerBlockFloat * maxScaledLight);
     }
 
     @Override

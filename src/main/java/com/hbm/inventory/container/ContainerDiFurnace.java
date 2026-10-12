@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.tileentity.machine.TileEntityDiFurnace;
@@ -13,7 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerDiFurnace extends Container {
+public class ContainerDiFurnace extends Container implements IAutoRoutingContainer {
   private final TileEntityDiFurnace diFurnace;
     private final TransferStrategy transferStrategy;
 
@@ -74,4 +75,9 @@ public class ContainerDiFurnace extends Container {
   public boolean canInteractWith(@NotNull EntityPlayer player) {
     return diFurnace.isUsableByPlayer(player);
   }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.recipes.ElectrolyserMetalRecipes;
 import com.hbm.inventory.slot.SlotBattery;
@@ -16,7 +17,7 @@ import net.minecraft.item.ItemStack;
 
 import java.util.function.Predicate;
 
-public class ContainerElectrolyserMetal extends Container {
+public class ContainerElectrolyserMetal extends Container implements IAutoRoutingContainer {
 
     private TileEntityElectrolyser electrolyser;
     private static final Predicate<ItemStack> INPUT_FILTER = itemStack ->
@@ -68,5 +69,10 @@ public class ContainerElectrolyserMetal extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return electrolyser.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

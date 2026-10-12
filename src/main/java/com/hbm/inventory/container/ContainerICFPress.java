@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.items.ModItems;
@@ -13,7 +14,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerICFPress extends Container {
+public class ContainerICFPress extends Container implements IAutoRoutingContainer {
 
     private final TileEntityICFPress press;
 
@@ -66,5 +67,10 @@ public class ContainerICFPress extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return press.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

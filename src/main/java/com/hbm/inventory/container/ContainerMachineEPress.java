@@ -1,5 +1,8 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
+
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.inventory.slot.SlotUpgrade;
@@ -16,7 +19,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineEPress extends Container {
+public class ContainerMachineEPress extends Container implements IAutoRoutingContainer {
+
+    private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(5)
+            .rule(0, 1, Library::isBattery)
+            .rule(4, 5, stack -> stack.getItem() instanceof ItemMachineUpgrade)
+            .rule(1, 2, stack -> stack.getItem() instanceof ItemStamp)
+            .genericMachineRange(2, 3)
+            .build();
 
     private final TileEntityMachineEPress ePress;
 
@@ -129,5 +139,10 @@ public class ContainerMachineEPress extends Container {
         if (id == 0) {
             ePress.progress = data;
         }
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

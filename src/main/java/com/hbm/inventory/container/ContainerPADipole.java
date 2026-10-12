@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.lib.Library;
@@ -12,7 +13,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerPADipole extends Container {
+public class ContainerPADipole extends Container implements IAutoRoutingContainer {
 
     private final TileEntityPADipole quadrupole;
 
@@ -48,5 +49,10 @@ public class ContainerPADipole extends Container {
     @Override
     public ItemStack transferStackInSlot(EntityPlayer player, int index) {
         return InventoryUtil.transferStack(this.inventorySlots, index, this.TRANSFER_STRATEGY, player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

@@ -9,6 +9,7 @@ import com.hbm.main.MainRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
@@ -116,6 +117,11 @@ public class EntityArtilleryShell extends EntityThrowableNT implements IChunkLoa
     @Override
     public void onUpdate() {
         if (!world.isRemote) {
+            if (awaitingTicketRestore) {
+                awaitingTicketRestore = false;
+                // Wait for Forge's ticket callback without flying beyond the loaded area.
+                if (loaderTicket == null) return;
+            }
             requestChunkLoaderTicketIfNeeded();
             // Calculate direction vector to target
             double deltaX = this.targetX - this.posX;
@@ -125,22 +131,22 @@ public class EntityArtilleryShell extends EntityThrowableNT implements IChunkLoa
             // Calculate horizontal distance
             double horizontalDist = Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
             
-            // Calculate time to target based on current horizontal velocity
-            double currentHorizontalSpeed = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
-            if (currentHorizontalSpeed < 0.1) currentHorizontalSpeed = 1.0; // Default if too slow
-            
-            double timeToTarget = horizontalDist / currentHorizontalSpeed;
-            
-            // Calculate required vertical velocity accounting for gravity (corrected formula)
-            // Using physics formula: y = y0 + v0*t + 0.5*a*t^2
-            // Solving for v0: v0 = (y - y0 - 0.5*a*t^2)/t
-            double gravity = getGravityVelocity();
-            double idealY = (deltaY + 0.5 * gravity * timeToTarget * timeToTarget) / timeToTarget;
-            
-            // Apply a small correction to vertical velocity (gentle adjustment)
-            this.motionY += (idealY - this.motionY) * 0.1;
-            
             if (horizontalDist > 0.5) {
+                // Calculate time to target based on current horizontal velocity
+                double currentHorizontalSpeed = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
+                if (currentHorizontalSpeed < 0.1) currentHorizontalSpeed = 1.0; // Default if too slow
+
+                double timeToTarget = horizontalDist / currentHorizontalSpeed;
+
+                // Calculate required vertical velocity accounting for gravity (corrected formula)
+                // Using physics formula: y = y0 + v0*t + 0.5*a*t^2
+                // Solving for v0: v0 = (y - y0 - 0.5*a*t^2)/t
+                double gravity = getGravityVelocity();
+                double idealY = (deltaY + 0.5 * gravity * timeToTarget * timeToTarget) / timeToTarget;
+
+                // Apply a small correction to vertical velocity (gentle adjustment)
+                this.motionY += (idealY - this.motionY) * 0.1;
+
                 // Ideal direction to target
                 double idealX = deltaX / horizontalDist;
                 double idealZ = deltaZ / horizontalDist;
@@ -237,6 +243,11 @@ public class EntityArtilleryShell extends EntityThrowableNT implements IChunkLoa
     }
 
     @Override
+    public boolean shouldBootstrapChunkLoader() {
+        return loaderTicket == null && !awaitingTicketRestore;
+    }
+
+    @Override
     public void init(Ticket ticket) {
         if(!world.isRemote && ticket != null) {
             if(loaderTicket == null) {
@@ -311,6 +322,17 @@ public class EntityArtilleryShell extends EntityThrowableNT implements IChunkLoa
     @Override
     public void readEntityFromNBT(NBTTagCompound nbt) {
         super.readEntityFromNBT(nbt);
+        // Vanilla clamps saved motion above 10, below artillery launch speeds.
+        NBTTagList savedMotion = nbt.getTagList("Motion", 6);
+        double savedMotionX = savedMotion.getDoubleAt(0);
+        double savedMotionY = savedMotion.getDoubleAt(1);
+        double savedMotionZ = savedMotion.getDoubleAt(2);
+        if (!Double.isFinite(savedMotionX) || !Double.isFinite(savedMotionY) || !Double.isFinite(savedMotionZ)) {
+            throw new IllegalArgumentException("Artillery shell saved motion must be finite");
+        }
+        this.motionX = savedMotionX;
+        this.motionY = savedMotionY;
+        this.motionZ = savedMotionZ;
         awaitingTicketRestore = true;
 
         this.dataManager.set(TYPE, nbt.getInteger("type"));
@@ -372,10 +394,6 @@ public class EntityArtilleryShell extends EntityThrowableNT implements IChunkLoa
 
     private void requestChunkLoaderTicketIfNeeded() {
         if(world.isRemote || loaderTicket != null) return;
-        if(awaitingTicketRestore) {
-            awaitingTicketRestore = false;
-            return;
-        }
         init(ForgeChunkManager.requestTicket(MainRegistry.instance, world, ForgeChunkManager.Type.ENTITY));
     }
 }

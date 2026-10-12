@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ContainerMachineBattery extends Container {
 
-    public TileEntityMachineBattery machineBattery;
+    public final TileEntityMachineBattery machineBattery;
 
     public ContainerMachineBattery(InventoryPlayer invPlayer, TileEntityMachineBattery tile) {
 

@@ -10,12 +10,11 @@ import net.minecraft.item.ItemStack;
 
 public class ContainerCoreEmitter extends Container {
 
-    private TileEntityCoreEmitter nukeBoy;
+    public final TileEntityCoreEmitter nukeBoy;
 
     public ContainerCoreEmitter(EntityPlayer player, TileEntityCoreEmitter tedf) {
         InventoryPlayer invPlayer = player.inventory;
-        if (player instanceof EntityPlayerMP)
-            nukeBoy = tedf;
+        nukeBoy = player instanceof EntityPlayerMP ? tedf : null;
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {

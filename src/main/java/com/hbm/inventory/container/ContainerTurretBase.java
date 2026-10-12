@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.items.machine.ItemTurretBiometry;
@@ -14,9 +15,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerTurretBase extends Container {
+public class ContainerTurretBase extends Container implements IAutoRoutingContainer {
 
-  private final TileEntityTurretBaseNT turret;
+  public final TileEntityTurretBaseNT turret;
 
   private static final TransferStrategy TRANSFER_STRATEGY = TransferStrategy.builder(11)
                                                                             .rule(0, 1, ContainerTurretBase::isBiometry)
@@ -69,4 +70,9 @@ public class ContainerTurretBase extends Container {
   public boolean canInteractWith(@NotNull EntityPlayer player) {
     return turret.isUseableByPlayer(player);
   }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

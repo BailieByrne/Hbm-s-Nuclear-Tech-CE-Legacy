@@ -27,6 +27,8 @@ public class GeneralConfig {
 	public static boolean enableSkyboxes = true;
 	public static boolean enableImpactWorldProvider = true;
 	public static boolean enableKeybindOverlap = true;
+	public static boolean enableSoundExtension = true;
+	public static int normalSoundChannels = 200;
 	public static boolean enableFluidContainerCompat = true;
 	public static Set<String> leadSafeForgeContainerWhitelist = new ObjectOpenHashSet<>();
 	public static boolean enableMycelium = false;
@@ -241,6 +243,10 @@ public class GeneralConfig {
         decoToIngotRate = CommonConfig.createConfigInt(config, CommonConfig.CATEGORY_GENERAL, "1.39_decoToIngotConversionRate", "Chance of successful turning a deco block into an ingot. Default is 25%", 25);
 		enableThreadedAtmospheres = CommonConfig.createConfigBool(config, CommonConfig.CATEGORY_GENERAL, "1.40_threadedAtmospheres", "If enabled, will run atmosphere blobbing in a separate thread for performance", true);
 		enableKeybindOverlap = config.get(CommonConfig.CATEGORY_GENERAL, "1.42_enableKeybindOverlap", true, "If enabled, will handle keybinds that would otherwise be ignored due to overlapping.").getBoolean(true);
+		enableSoundExtension = config.get(CommonConfig.CATEGORY_GENERAL, "1.39_enableSoundExtension", true, "If enabled, will change the limit for how many sounds can play at once.").getBoolean(true);
+		normalSoundChannels = CommonConfig.createConfigInt(config, CommonConfig.CATEGORY_GENERAL, "1.41_normalSoundChannels",
+				"The amount of channels to create while 1.39_enableSoundExtension is enabled.\n" +
+				"Note that a value below 28 or above 200 can cause buggy sounds and issues with other mods running out of sound memory.", 100);
 		enableMachineGravity = config.get(CommonConfig.CATEGORY_GENERAL, "1.44_enableMachineGravity", false, "Requires large large machines to have a proper foundation, or else they tilt and break. Independent from the 528 version of this config, which does the same, but only works with 528 enabled.").getBoolean(false);
 		enableFluidContainersV2 = CommonConfig.createConfigBool(config, CommonConfig.CATEGORY_GENERAL, "1.99_CE_enableFluidContainersV2", "If enabled, 3 new enhanced version of base fluid barrels that supports partial fill and drain are added.", false);
 		leadSafeForgeContainerWhitelist = loadLeadSafeForgeContainerWhitelist(config);

@@ -73,6 +73,12 @@ public class AudioWrapperClient extends AudioWrapper {
 	}
 
 	@Override
+	public void setRefreshVolumeOnStart(boolean refresh) {
+		if(sound != null)
+			sound.setRefreshVolumeOnStart(refresh);
+	}
+
+	@Override
 	public void startSound() {
 		if(sound != null)
 			sound.start();
@@ -84,6 +90,11 @@ public class AudioWrapperClient extends AudioWrapper {
 			sound.stop();
 			sound.setKeepAlive(0);
 		}
+	}
+
+	@Override
+	public boolean isAudible() {
+		return sound != null && sound.isAudible();
 	}
 
 	@Override

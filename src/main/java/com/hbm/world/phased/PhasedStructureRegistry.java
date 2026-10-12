@@ -119,7 +119,7 @@ public final class PhasedStructureRegistry {
      */
     public static void onOverworldLoad(WorldServer world) {
         if (currentIdData != null) return;
-        currentIdData = new PhasedStructureIdData(world.getMinecraftServer());
+        currentIdData = new PhasedStructureIdData(world);
         buildDirectMappings();
         epoch = currentIdData.getEpoch();
     }

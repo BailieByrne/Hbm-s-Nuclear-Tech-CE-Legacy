@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.items.ModItems;
 import com.hbm.tileentity.bomb.TileEntityNukeSolinium;
@@ -11,7 +12,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerNukeSolinium extends Container {
+public class ContainerNukeSolinium extends Container implements IAutoRoutingContainer {
 
 	private TileEntityNukeSolinium nukeSol;
 
@@ -63,4 +64,9 @@ public class ContainerNukeSolinium extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return nukeSol.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

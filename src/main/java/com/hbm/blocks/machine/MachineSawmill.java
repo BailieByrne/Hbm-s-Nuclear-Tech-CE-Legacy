@@ -86,10 +86,7 @@ public class MachineSawmill extends BlockDummyable implements ILookOverlay, IToo
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
 
-        if(world.isRemote) {
-            return true;
-
-        } else if(!player.isSneaking()) {
+        if(!player.isSneaking()) {
             int[] corePos = this.findCore(world, pos.getX(), pos.getY(), pos.getZ());
 
             if(corePos == null)
@@ -99,6 +96,15 @@ public class MachineSawmill extends BlockDummyable implements ILookOverlay, IToo
 
             if(sawmill == null) {
                 return false;
+            }
+
+            if (world.isRemote) {
+                ItemStack held = player.getHeldItem(hand);
+                return !sawmill.hasBlade && held.getItem() == ModItems.sawblade
+                        || !sawmill.inventory.getStackInSlot(1).isEmpty()
+                        || !sawmill.inventory.getStackInSlot(2).isEmpty()
+                        || sawmill.inventory.getStackInSlot(0).isEmpty() && !held.isEmpty()
+                        && !sawmill.getOutput(held).isEmpty();
             }
 
             if(!sawmill.hasBlade && !player.getHeldItem(hand).isEmpty() && player.getHeldItem(hand).getItem() == ModItems.sawblade) {

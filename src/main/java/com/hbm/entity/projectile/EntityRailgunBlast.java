@@ -30,6 +30,11 @@ public class EntityRailgunBlast extends Entity implements IChunkLoader {
 	private Ticket loaderTicket;
 
 	@Override
+	public boolean shouldBootstrapChunkLoader() {
+		return loaderTicket == null && !awaitingTicketRestore;
+	}
+
+	@Override
 	public void init(Ticket ticket) {
 		if(!world.isRemote) {
 

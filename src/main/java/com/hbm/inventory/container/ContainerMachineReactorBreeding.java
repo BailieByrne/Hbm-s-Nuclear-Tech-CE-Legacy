@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.items.machine.ItemBreedingRod;
@@ -12,7 +13,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachineReactorBreeding extends Container {
+public class ContainerMachineReactorBreeding extends Container implements IAutoRoutingContainer {
 
 	private TileEntityMachineReactorBreeding reactor;
 
@@ -49,4 +50,9 @@ public class ContainerMachineReactorBreeding extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return reactor.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

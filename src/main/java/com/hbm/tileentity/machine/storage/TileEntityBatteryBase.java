@@ -89,7 +89,6 @@ public abstract class TileEntityBatteryBase extends TileEntityMachineBase implem
 
             byte comp = this.getComparatorPower();
             if(comp != this.lastRedstone) {
-                System.out.println(comp);
                 for(BlockPos port : this.getPortPos()) {
                     TileEntity tile = Compat.getTileStandard(world, port.getX(), port.getY(), port.getZ());
                     if(tile != null) tile.markDirty();
@@ -104,8 +103,8 @@ public abstract class TileEntityBatteryBase extends TileEntityMachineBase implem
     }
 
     public byte getComparatorPower() {
-        double frac = (double) this.getPower() / (double) this.getMaxPower() * 15D;
-        return (byte) (MathHelper.clamp((int) frac + 1, 0, 15)); //to combat eventual rounding errors with the FEnSU's stupid maxPower
+        double frac = (double) this.getPower() / (double) Math.max(this.getMaxPower(), 1) * 15D;
+        return (byte) (MathHelper.clamp((int) Math.round(frac), 0, 15)); //to combat eventual rounding errors with the FEnSU's stupid maxPower
     }
 
     @Override

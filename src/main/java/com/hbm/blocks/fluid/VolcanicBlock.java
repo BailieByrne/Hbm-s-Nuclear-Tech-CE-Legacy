@@ -121,7 +121,9 @@ public class VolcanicBlock extends BlockFluidClassic implements IFluidFog {
 			world.setBlockState(pos, stateFromEnum(basalt_ore, ASBESTOS));
 		else if(r == 3)
 			world.setBlockState(pos, stateFromEnum(basalt_ore, FLUORITE));
-		else if(r < 14 && canMakeGem)
+		else if(r == 4)
+			world.setBlockState(pos, stateFromEnum(basalt_ore, MOLYSITE));
+		else if(r < 15 && canMakeGem)
 			world.setBlockState(pos, stateFromEnum(basalt_ore, GEM));
 		else
 			world.setBlockState(pos, ModBlocks.basalt.getDefaultState());

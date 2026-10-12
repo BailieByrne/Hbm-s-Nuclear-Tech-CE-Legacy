@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotFiltered;
@@ -15,9 +16,9 @@ import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.function.Predicate;
 
-public class ContainerMicrowave extends Container {
+public class ContainerMicrowave extends Container implements IAutoRoutingContainer {
 
-    private TileEntityMicrowave microwave;
+    public final TileEntityMicrowave microwave;
 
 	private static final TransferStrategy TRANSFER_STRATEGY = TransferStrategy.builder(3)
                                                                               .rule(0, 2, Predicate.not(Library::isBattery))
@@ -56,4 +57,9 @@ public class ContainerMicrowave extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return microwave.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

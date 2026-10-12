@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ContainerCoreStabilizer extends Container {
 
-	private final TileEntityCoreStabilizer nukeBoy;
+	public final TileEntityCoreStabilizer nukeBoy;
 	private EntityPlayerMP player;
 	
 	public ContainerCoreStabilizer(EntityPlayer player, TileEntityCoreStabilizer tile) {

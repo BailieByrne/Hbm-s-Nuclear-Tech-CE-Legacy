@@ -1,6 +1,7 @@
 package com.hbm.inventory.container;
 
 import com.hbm.inventory.FluidContainerRegistry;
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.inventory.fluid.Fluids;
@@ -14,7 +15,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerReactorZirnox extends Container {
+public class ContainerReactorZirnox extends Container implements IAutoRoutingContainer {
 
     private TileEntityReactorZirnox zirnox;
 
@@ -80,5 +81,10 @@ public class ContainerReactorZirnox extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return zirnox.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

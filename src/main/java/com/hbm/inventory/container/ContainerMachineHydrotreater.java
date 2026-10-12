@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotFiltered;
@@ -15,7 +16,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachineHydrotreater extends Container {
+public class ContainerMachineHydrotreater extends Container implements IAutoRoutingContainer {
 
     private TileEntityMachineHydrotreater hydrotreater;
 
@@ -80,5 +81,10 @@ public class ContainerMachineHydrotreater extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return hydrotreater.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

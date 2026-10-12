@@ -58,7 +58,11 @@ public class MachineHeatBoilerIndustrial extends BlockDummyable
       float hitY,
       float hitZ) {
 
-    if (!world.isRemote && !player.isSneaking()) {
+    if (world.isRemote) return player.isSneaking()
+        || player.getHeldItem(hand).getItem() instanceof IItemFluidIdentifier
+        && this.findCoreTE(world, pos) instanceof TileEntityHeatBoilerIndustrial;
+
+    if (!player.isSneaking()) {
 
       ItemStack heldItem = player.getHeldItem(hand);
 

@@ -1,5 +1,8 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
+
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotPattern;
 import com.hbm.lib.Library;
@@ -13,7 +16,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerAutocrafter extends Container {
+public class ContainerAutocrafter extends Container implements IAutoRoutingContainer {
+
+    private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(21)
+            .rule(20, 21, Library::isDischargeableBattery)
+            .build();
 
     private final TileEntityMachineAutocrafter autoCrafter;
 
@@ -124,5 +131,10 @@ public class ContainerAutocrafter extends Container {
     @Override
     public boolean canInteractWith(@NotNull EntityPlayer player) {
         return autoCrafter.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

@@ -64,6 +64,7 @@ public class MachineFluidTank extends BlockDummyable implements IPersistentInfoP
 	}
 	@Override
 	public int getComparatorInputOverride(IBlockState blockState, World worldIn, BlockPos pos) {
+		if(getMetaFromState(blockState) < 6) return 0;
 		TileEntity te = worldIn.getTileEntity(pos);
 		if (te instanceof TileEntityMachineFluidTank teTank) {
 			return teTank.tank.getRedstoneComparatorPower();

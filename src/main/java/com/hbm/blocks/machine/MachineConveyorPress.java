@@ -63,7 +63,11 @@ public class MachineConveyorPress extends BlockDummyable implements IConveyorBel
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX
             , float hitY, float hitZ) {
         if (world.isRemote) {
-            return true;
+            BlockPos corePos = this.findCore(world, pos);
+            if (corePos == null) return false;
+            TileEntity te = world.getTileEntity(corePos);
+            return te instanceof TileEntityConveyorPress press && press.syncStack.isEmpty()
+                    && player.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof ItemStamp;
         } else {
 
             BlockPos corePos = this.findCore(world, pos);

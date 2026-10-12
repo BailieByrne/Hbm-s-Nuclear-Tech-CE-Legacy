@@ -10,6 +10,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.HashSet;
+import java.util.Set;
+import net.minecraft.util.ResourceLocation;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -27,6 +30,8 @@ public class WaveFrontObjectVAO implements IModelCustomNamed {
     private final Object2ObjectOpenHashMap<String, VBOBufferData> groupsByName = new Object2ObjectOpenHashMap<>();
     private final boolean colored;
     private final int stride;
+    private final ResourceLocation sourceResource;
+    private final boolean sourceMixedMode;
 
     public WaveFrontObjectVAO(HFRWavefrontObject obj) {
         this(obj, false);
@@ -39,27 +44,43 @@ public class WaveFrontObjectVAO implements IModelCustomNamed {
         );
         this.colored = colored;
         this.stride = colored ? BASE_STRIDE + COLOR_BYTES : BASE_STRIDE;
+        this.sourceResource = obj.resource;
+        this.sourceMixedMode = obj.allowMixedMode;
         load(obj);
         allVBOs.add(this);
     }
 
     public void load(HFRWavefrontObject obj) {
-        for (GroupObject g : obj.groupObjects) {
-            String key = g.name.toLowerCase(Locale.ROOT);
+        destroy();
+        groups.clear();
+        Set<String> present = new HashSet<>();
+        for (GroupObject group : obj.groupObjects) {
+            String key = group.name.toLowerCase(Locale.ROOT);
             VBOBufferData data = groupsByName.get(key);
-            //mlbv: keep VBOBufferData identity so that my javac plugin works
-            boolean fresh = data == null;
-            if (fresh) {
+            if (data == null) {
                 data = new VBOBufferData();
-                data.name = g.name;
-            }
-            buildGroupBuffers(g, data);
-            if (uploaded) uploadGroupVao(data);
-            if (fresh) {
-                groups.add(data);
+                data.name = group.name;
                 groupsByName.put(key, data);
             }
+            deleteGroupBuffers(data);
+            buildGroupBuffers(group, data);
+            data.active = true;
+            if (uploaded) uploadGroupVao(data);
+            if (present.add(key)) groups.add(data);
         }
+        // Named parts absent from the new resource draw nothing, including cached handles.
+        for (var entry : groupsByName.entrySet()) {
+            if (!present.contains(entry.getKey())) {
+                VBOBufferData data = entry.getValue();
+                buildGroupBuffers(new GroupObject(data.name, GL_TRIANGLES), data);
+                if (uploaded) uploadGroupVao(data);
+            }
+        }
+    }
+
+    void reload() {
+        // InputStream-created models have no resource to reload.
+        if (sourceResource != null) load(new HFRWavefrontObject(sourceResource, sourceMixedMode));
     }
 
     private void buildGroupBuffers(GroupObject g, VBOBufferData data) {
@@ -145,7 +166,8 @@ public class WaveFrontObjectVAO implements IModelCustomNamed {
 
     @SuppressWarnings("unused")
     public GroupHandle resolve(String name) {
-        return groupsByName.get(name.toLowerCase(Locale.ROOT));
+        VBOBufferData data = groupsByName.get(name.toLowerCase(Locale.ROOT));
+        return data != null && data.active ? data : null;
     }
 
     public void uploadModels() {
@@ -185,15 +207,18 @@ public class WaveFrontObjectVAO implements IModelCustomNamed {
     // so logically, if we want to get rid of this, we need to blow the data up
     // documentation on GL15 functions seems nonexistant so fuck it we ball i guess
     public void destroy() {
-        for (VBOBufferData data : groups) {
-            GLCompat.deleteBuffers(data.vboHandle);
-            GLCompat.deleteBuffers(data.eboHandle);
-            GLCompat.deleteVertexArray(data.vaoHandle);
-            data.vboHandle = -1;
-            data.eboHandle = -1;
-            data.vaoHandle = -1;
-            data.indexCount = 0;
-        }
+        for (VBOBufferData data : groupsByName.values()) deleteGroupBuffers(data);
+    }
+
+    private static void deleteGroupBuffers(VBOBufferData data) {
+        if (data.vboHandle >= 0) GLCompat.deleteBuffers(data.vboHandle);
+        if (data.eboHandle >= 0) GLCompat.deleteBuffers(data.eboHandle);
+        if (data.vaoHandle >= 0) GLCompat.deleteVertexArray(data.vaoHandle);
+        data.vboHandle = -1;
+        data.eboHandle = -1;
+        data.vaoHandle = -1;
+        data.indexCount = 0;
+        data.active = false;
     }
 
     @Override
@@ -260,6 +285,7 @@ public class WaveFrontObjectVAO implements IModelCustomNamed {
     static final class VBOBufferData extends GroupHandle {
         String name;
         int vboHandle = -1;
+        boolean active;
     }
 
     @SuppressCheckedExceptions

@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotFiltered;
@@ -15,7 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachineWoodBurner extends Container {
+public class ContainerMachineWoodBurner extends Container implements IAutoRoutingContainer {
 
 	protected TileEntityMachineWoodBurner burner;
 
@@ -69,4 +70,9 @@ public class ContainerMachineWoodBurner extends Container {
 		this.burner.closeInventory();
 	}
  */
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

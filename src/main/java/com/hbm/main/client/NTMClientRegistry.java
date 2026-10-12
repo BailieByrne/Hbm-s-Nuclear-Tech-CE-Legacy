@@ -1,11 +1,15 @@
 package com.hbm.main.client;
 
 import com.hbm.Tags;
+import com.hbm.blocks.BlockDummyable;
 import com.hbm.blocks.ModBlocks;
 import com.hbm.blocks.bomb.Balefire;
+import com.hbm.blocks.bomb.DigammaMatter;
 import com.hbm.blocks.generic.BlockFissure;
 import com.hbm.blocks.generic.TrappedBrick;
 import com.hbm.blocks.machine.BlockSeal;
+import com.hbm.blocks.machine.PistonInserter;
+import com.hbm.blocks.machine.rbmk.RBMKDebrisRadiating;
 import com.hbm.blocks.network.FluidDuctBox;
 import com.hbm.blocks.network.FluidDuctStandard;
 import com.hbm.entity.siege.SiegeTier;
@@ -43,6 +47,7 @@ import com.hbm.render.item.weapon.ItemRenderRedstoneSword;
 import com.hbm.render.tileentity.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
+import net.minecraft.block.BlockStone;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -136,6 +141,14 @@ public class NTMClientRegistry {
     }
 
     private static void registerLoggedStateMappers() {
+        // Forge names delegates during block registration; earlier unnamed keys can replace another block's mapper.
+        for (Block block : ModBlocks.ALL_BLOCKS) {
+            if (block instanceof BlockDummyable || block instanceof RBMKDebrisRadiating || block instanceof DigammaMatter)
+                registerIgnoringStateMapper(block, BlockDummyable.META);
+        }
+        registerIgnoringStateMapper(ModBlocks.stone_porous, BlockStone.VARIANT);
+        registerIgnoringStateMapper(ModBlocks.piston_inserter, PistonInserter.FACING);
+
         registerIgnoringStateMapper(ModBlocks.door_bunker, BlockDoor.POWERED);
         registerIgnoringStateMapper(ModBlocks.door_metal, BlockDoor.POWERED);
         registerIgnoringStateMapper(ModBlocks.door_office, BlockDoor.POWERED);
@@ -173,9 +186,7 @@ public class NTMClientRegistry {
         registerNormalStateMapper(ModBlocks.sliding_blast_door_2);
         registerNormalStateMapper(ModBlocks.sliding_blast_door_keypad);
         registerNormalStateMapper(ModBlocks.sliding_blast_door_legacy);
-        registerNormalStateMapper(ModBlocks.sliding_gate_door);
         registerNormalStateMapper(ModBlocks.sliding_seal_door);
-        registerNormalStateMapper(ModBlocks.small_hatch);
         registerNormalStateMapper(ModBlocks.spotlight_beam);
         registerNormalStateMapper(ModBlocks.transition_seal);
         registerNormalStateMapper(ModBlocks.turret_sentry);
@@ -586,6 +597,7 @@ public class NTMClientRegistry {
     @SubscribeEvent
     @SuppressWarnings("unused")
     public void onModelBake(ModelBakeEvent evt) {
+        ResourceManager.init();
         ItemBedrockOreNew.bakeModels(evt);
         ItemAutogen.bakeModels(evt);
         ItemMold.bakeModels(evt);
@@ -611,7 +623,6 @@ public class NTMClientRegistry {
             e.putRenderModel(o);
         }
 
-        ResourceManager.init();
         ItemRedstoneSwordRender.INSTANCE.itemModel = registry.getObject(RedstoneSword.rsModel);
         registry.putObject(RedstoneSword.rsModel, new ItemRenderRedstoneSword());
         ItemRenderGunAnim.INSTANCE.b92ItemModel = registry.getObject(GunB92.b92Model);

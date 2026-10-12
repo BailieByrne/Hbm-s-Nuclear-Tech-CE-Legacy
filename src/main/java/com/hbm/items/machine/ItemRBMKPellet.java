@@ -1,10 +1,9 @@
 package com.hbm.items.machine;
 
-import com.hbm.items.ModItems;
+import com.hbm.items.special.ItemNuclearWaste;
 import com.hbm.main.MainRegistry;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.TextFormatting;
@@ -12,25 +11,33 @@ import net.minecraft.world.World;
 
 import java.util.List;
 
-public class ItemRBMKPellet extends Item {
+public class ItemRBMKPellet extends ItemNuclearWaste {
 	
 	public String fullName = "";
+	protected boolean hasXenon = true;
 
 	public ItemRBMKPellet(String fullName, String s) {
-		this.setTranslationKey(s);
-		this.setRegistryName(s);
+		super(s);
 		this.fullName = fullName;
 		this.setHasSubtypes(true);
 		this.setMaxDamage(0);
 		this.setCreativeTab(MainRegistry.controlTab);
 		
-		ModItems.ALL_ITEMS.add(this);
+	}
+
+	public ItemRBMKPellet disableXenon() {
+		this.hasXenon = false;
+		return this;
+	}
+
+	public boolean isXenonEnabled() {
+		return hasXenon;
 	}
 
 	@Override
 	public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items){
 		if(tab == CreativeTabs.SEARCH || tab == this.getCreativeTab()){
-			for(int i = 0; i < 10; ++i) {
+			for(int i = 0; i < (this.hasXenon ? 10 : 5); ++i) {
 				items.add(new ItemStack(this, 1, i));
 			}
 		}

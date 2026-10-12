@@ -69,6 +69,12 @@ public class ModArmor extends ItemArmor {
 		if(stack.getItem().equals(ModItems.security_legs)) {
 			return (Tags.MODID + ":textures/armor/security_2.png");
 		}
+		if(stack.getItem().equals(ModItems.mask_rag)) {
+			return (Tags.MODID + ":textures/armor/rag_damp.png");
+		}
+		if(stack.getItem().equals(ModItems.mask_piss)) {
+			return (Tags.MODID + ":textures/armor/rag_piss.png");
+		}
 		
 		return null;
 	}

@@ -51,27 +51,37 @@ public class BufPacket extends PrecompiledPacket {
         @Override
         @SideOnly(Side.CLIENT)
         public IMessage onMessage(BufPacket m, MessageContext ctx) {
-            if (m.buf == null) throw new NullPointerException();
+            Minecraft minecraft = Minecraft.getMinecraft();
+            if (minecraft.isCallingFromMinecraftThread()) {
+                deserializeOnClient(m, minecraft);
+            } else {
+                try {
+                    minecraft.addScheduledTask(() -> deserializeOnClient(m, minecraft));
+                } catch (RuntimeException | Error failure) {
+                    m.buf.release();
+                    throw failure;
+                }
+            }
+            return null;
+        }
+
+        @SideOnly(Side.CLIENT)
+        private static void deserializeOnClient(BufPacket m, Minecraft minecraft) {
             try {
-                if (Minecraft.getMinecraft().world == null) return null;
-                TileEntity te = Minecraft.getMinecraft().world.getTileEntity(new BlockPos(m.x, m.y, m.z));
+                if (minecraft.world == null) return;
+                BlockPos position = new BlockPos(m.x, m.y, m.z);
+                TileEntity te = minecraft.world.getTileEntity(position);
                 if (te instanceof IBufPacketReceiver receiver) {
                     try {
-                        // mlbv: In case anyone found this: Yes it happens on the network thread, not the main thread.
-                        // To avoid List CME, new a newList in deserialize and do someList = newList
-                        // don't forget to mark someList as volatile
+                        // Vanilla initial tile updates use the same client queue. Preserve their arrival order.
                         receiver.deserialize(m.buf);
-                    } catch (Exception e) { // just in case I fucked up
-                        MainRegistry.logger.warn("A ByteBuf packet failed to be read and has thrown an error. This normally means that there was a buffer underflow and more data was read than was actually in the packet.");
-                        MainRegistry.logger.warn("Tile: {}", te.getBlockType().getTranslationKey());
-                        MainRegistry.logger.warn(e.getMessage());
+                    } catch (Exception failure) {
+                        MainRegistry.logger.warn("Failed to apply tile sync for {} at {}", te.getBlockType().getTranslationKey(), position, failure);
                     }
                 }
             } finally {
                 m.buf.release();
             }
-
-            return null;
         }
     }
 }

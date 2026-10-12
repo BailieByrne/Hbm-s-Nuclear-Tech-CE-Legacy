@@ -1,6 +1,10 @@
 package com.hbm.handler;
 
 import com.hbm.capability.HbmCapability;
+import com.hbm.entity.train.EntityRailCarBase;
+import com.hbm.main.MainRegistry;
+import com.hbm.tileentity.IGUIProvider;
+import net.minecraft.entity.Entity;
 import com.hbm.items.IKeybindReceiver;
 import com.hbm.packet.PacketDispatcher;
 import com.hbm.packet.toclient.PlayerInformPacket;
@@ -21,7 +25,15 @@ public class HbmKeybindsServer {
         boolean wasHudOn = props.getEnableHUD();
         boolean wasMagnetOn = props.getEnableMagnet();
 
+        boolean wasPressed = props.getKeyPressed(key);
         props.setKeyPressed(key, state);
+
+        if (key == HbmKeybinds.EnumKeybind.TRAIN && state && !wasPressed) {
+            Entity riding = player.getRidingEntity();
+            if (riding instanceof EntityRailCarBase && riding instanceof IGUIProvider) {
+                player.openGui(MainRegistry.instance, 0, player.world, riding.getEntityId(), 0, 0);
+            }
+        }
 
         if(player instanceof EntityPlayerMP) {
             EntityPlayerMP mp = (EntityPlayerMP) player;

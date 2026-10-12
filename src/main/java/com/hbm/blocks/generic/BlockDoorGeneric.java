@@ -139,11 +139,9 @@ public class BlockDoorGeneric extends BlockDummyable implements IRadResistantBlo
         if (door.isRedstoneOnly()) return false;
 
         if (!player.isSneaking()) {
-            if (door.canAccess(player)) {
-				return door.tryToggle();
-			}
-		}
-		return false;
+            return door.tryToggle(player);
+        }
+        return false;
 	}
 
 	@Override
@@ -177,7 +175,7 @@ public class BlockDoorGeneric extends BlockDummyable implements IRadResistantBlo
 	}
 
 	public boolean isPassable(IBlockAccess worldIn, BlockPos pos) {
-		return true;
+		return hasExtra(worldIn.getBlockState(pos).getValue(META));
 	}
 
 	public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face) {
@@ -186,16 +184,27 @@ public class BlockDoorGeneric extends BlockDummyable implements IRadResistantBlo
 
 	@Override
 	public @NotNull AxisAlignedBB getBoundingBox(@NotNull IBlockState state, @NotNull IBlockAccess source, @NotNull BlockPos pos){
+        return getDoorBoundingBox(state, source, pos, false);
+    }
+
+    @Override
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
+        AxisAlignedBB box = getDoorBoundingBox(state, source, pos, true);
+        return box.minX == box.maxX && box.minY == box.maxY && box.minZ == box.maxZ ? NULL_AABB : box;
+    }
+
+    private AxisAlignedBB getDoorBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos, boolean forCollision) {
 		int meta = state.getValue(META);
 		TileEntity te = source.getTileEntity(pos);
 		int[] core = this.findCore(source, pos.getX(), pos.getY(), pos.getZ());
-		boolean open = hasExtra(meta) || (te instanceof TileEntityDoorGeneric && ((TileEntityDoorGeneric)te).shouldUseBB);
+		boolean open = hasExtra(meta) || (te instanceof TileEntityDoorGeneric && ((TileEntityDoorGeneric)te).state != IDoor.DoorState.CLOSED);
 		if(core == null){
 			return FULL_BLOCK_AABB;
 		}
 		TileEntity te2 = source.getTileEntity(new BlockPos(core[0], core[1], core[2]));
 		ForgeDirection dir = ForgeDirection.getOrientation(te2.getBlockMetadata() - BlockDummyable.offset);
-		AxisAlignedBB box = type.getBlockBound(pos.add(-core[0], -core[1], -core[2]).rotate(dir.getBlockRotation().add(Rotation.COUNTERCLOCKWISE_90)), open);
+		BlockPos relative = pos.add(-core[0], -core[1], -core[2]).rotate(dir.getBlockRotation().add(Rotation.COUNTERCLOCKWISE_90));
+        AxisAlignedBB box = type.getBlockBound(relative.getX(), relative.getY(), relative.getZ(), open, forCollision);
 		//System.out.println(te2.getBlockMetadata()-offset);
 		switch(te2.getBlockMetadata()-offset){
 		case 2:

@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "package": "com.hbm.mixin.mod.mousetweaks",
+  "refmap": "mixins.hbm.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "client": ["MixinMouseTweaksMain"],
+  "minVersion": "0.8.7"
+}

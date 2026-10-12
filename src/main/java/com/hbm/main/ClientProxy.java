@@ -1,22 +1,8 @@
 package com.hbm.main;
 
 import com.hbm.Tags;
-import com.hbm.blocks.BlockDummyable;
 import com.hbm.blocks.ModBlocks;
-import com.hbm.blocks.bomb.DigammaMatter;
 import com.hbm.blocks.fluid.FluidFogHandler;
-import com.hbm.blocks.generic.BMPowerBox;
-import com.hbm.blocks.generic.BlockFissure;
-import com.hbm.blocks.generic.BlockModDoor;
-import com.hbm.blocks.generic.TrappedBrick;
-import com.hbm.blocks.generic.WasteEarth;
-import com.hbm.blocks.machine.BlockSeal;
-import com.hbm.blocks.machine.BlockSiloHatch;
-import com.hbm.blocks.machine.Floodlight;
-import com.hbm.blocks.machine.PistonInserter;
-import com.hbm.blocks.machine.SpotlightBeam;
-import com.hbm.blocks.machine.rbmk.RBMKDebrisRadiating;
-import com.hbm.blocks.network.ConnectorRedWire;
 import com.hbm.command.CommandRadVisClient;
 import com.hbm.command.CommandWikiRender;
 import com.hbm.config.GeneralConfig;
@@ -64,11 +50,6 @@ import com.hbm.util.I18nUtil;
 import com.hbm.util.Vec3dUtil;
 import com.hbm.wiaj.cannery.Jars;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDirt;
-import net.minecraft.block.BlockHorizontal;
-import net.minecraft.block.BlockStone;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.particle.Particle;
@@ -77,8 +58,6 @@ import net.minecraft.client.particle.ParticleFirework.Spark;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
-import net.minecraft.client.renderer.block.statemap.StateMap;
-import net.minecraft.client.renderer.block.statemap.StateMapperBase;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.client.renderer.entity.RenderSnowball;
@@ -100,12 +79,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.IRegistry;
 import net.minecraft.world.World;
 import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.client.model.obj.OBJLoader;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fluids.BlockFluidClassic;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Loader;
@@ -117,7 +94,6 @@ import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import paulscode.sound.SoundSystemConfig;
 
 import java.io.File;
@@ -193,43 +169,6 @@ public class ClientProxy extends ServerProxy {
         registerMetaSensitiveGrenade(EntityDisperserCanister.class, ModItems.disperser_canister);
         registerMetaSensitiveGrenade(EntityDisperserCanister.class, ModItems.glyphid_gland);
 
-        ModelLoader.setCustomStateMapper(ModBlocks.door_bunker, new StateMap.Builder().ignore(BlockModDoor.POWERED).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.door_metal, new StateMap.Builder().ignore(BlockModDoor.POWERED).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.door_office, new StateMap.Builder().ignore(BlockModDoor.POWERED).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.door_red, new StateMap.Builder().ignore(BlockModDoor.POWERED).build());
-
-        ModelLoader.setCustomStateMapper(ModBlocks.toxic_block, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.mud_block, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.acid_block, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.schrabidic_block, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.corium_block, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.volcanic_lava_block, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.rad_lava_block, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.ore_volcano, new StateMap.Builder().ignore(BlockFissure.CRATER).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.sulfuric_acid_block, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.concrete_liquid, new StateMap.Builder().ignore(BlockFluidClassic.LEVEL).build());
-
-        ModelLoader.setCustomStateMapper(ModBlocks.seal_controller, new StateMap.Builder().ignore(BlockSeal.ACTIVATED).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.ntm_dirt, new StateMap.Builder().ignore(BlockDirt.SNOWY).ignore(BlockDirt.VARIANT).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.brick_jungle_trap, new StateMap.Builder().ignore(TrappedBrick.TYPE).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.stone_porous, new StateMap.Builder().ignore(BlockStone.VARIANT).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.volcano_core, new StateMap.Builder().ignore(BlockDummyable.META).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.volcano_rad_core, new StateMap.Builder().ignore(BlockDummyable.META).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.bm_power_box, new StateMap.Builder().ignore(BMPowerBox.FACING, BMPowerBox.IS_ON).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.floodlight, new StateMap.Builder().ignore(Floodlight.META).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.spotlight_beam, new StateMap.Builder().ignore(SpotlightBeam.META).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.frozen_grass, new StateMap.Builder().ignore(WasteEarth.META).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.red_connector, new StateMap.Builder().ignore(ConnectorRedWire.FACING).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.silo_hatch_drillgon, new StateMap.Builder().ignore(BlockSiloHatch.FACING).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.machine_diesel, new StateMap.Builder().ignore(BlockHorizontal.FACING).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.piston_inserter, new StateMap.Builder().ignore(PistonInserter.FACING).build());
-        ModelLoader.setCustomStateMapper(ModBlocks.turret_sentry, fixedModelStateMapper(new ModelResourceLocation(ModBlocks.machine_autosaw.getRegistryName(), "normal")));
-        ModelLoader.setCustomStateMapper(ModBlocks.turret_sentry_damaged, fixedModelStateMapper(new ModelResourceLocation(ModBlocks.machine_autosaw.getRegistryName(), "normal")));
-        //Drillgon200: This can't be efficient, but eh.
-        for (Block b : ModBlocks.ALL_BLOCKS) {
-            if (b instanceof BlockDummyable || b instanceof RBMKDebrisRadiating || b instanceof DigammaMatter)
-                ModelLoader.setCustomStateMapper(b, new StateMap.Builder().ignore(BlockDummyable.META).build());
-        }
     }
 
     private <E extends Entity> void registerGrenadeRenderer(Class<E> clazz, Item grenade) {
@@ -240,15 +179,6 @@ public class ClientProxy extends ServerProxy {
     private <E extends Entity & RenderMetaSensitiveItem.IHasMetaSensitiveRenderer<E>> void registerMetaSensitiveGrenade(Class<E> clazz, Item grenade) {
         RenderingRegistry.registerEntityRenderingHandler(clazz, (RenderManager man) ->
                 new RenderMetaSensitiveItem<>(man, grenade, Minecraft.getMinecraft().getRenderItem()));
-    }
-
-    private static StateMapperBase fixedModelStateMapper(ModelResourceLocation location) {
-        return new StateMapperBase() {
-            @Override
-            protected @NotNull ModelResourceLocation getModelResourceLocation(@NotNull IBlockState state) {
-                return location;
-            }
-        };
     }
 
     @Override
@@ -293,6 +223,7 @@ public class ClientProxy extends ServerProxy {
         registerItemRenderer(ModItems.gun_autoshotgun_sexy, new ItemRenderSexy(ResourceManager.sexy_tex));
         registerItemRenderer(ModItems.gun_autoshotgun_heretic, new ItemRenderSexy(ResourceManager.heretic_tex));
         // MISSILES
+        registerItemRenderer(ModItems.missile_test, new ItemRenderMissileGeneric(RenderMissileType.TYPE_TIER0));
         registerItemRenderer(ModItems.missile_taint, new ItemRenderMissileGeneric(RenderMissileType.TYPE_TIER0));
         registerItemRenderer(ModItems.missile_micro, new ItemRenderMissileGeneric(RenderMissileType.TYPE_TIER0));
         registerItemRenderer(ModItems.missile_bhole, new ItemRenderMissileGeneric(RenderMissileType.TYPE_TIER0));
@@ -317,10 +248,9 @@ public class ClientProxy extends ServerProxy {
         registerItemRenderer(ModItems.missile_nuclear, new ItemRenderMissileGeneric(RenderMissileType.TYPE_NUCLEAR));
         registerItemRenderer(ModItems.missile_nuclear_cluster, new ItemRenderMissileGeneric(RenderMissileType.TYPE_NUCLEAR));
         registerItemRenderer(ModItems.missile_volcano, new ItemRenderMissileGeneric(RenderMissileType.TYPE_NUCLEAR));
-        registerItemRenderer(ModItems.missile_n2, new ItemRenderMissileGeneric(RenderMissileType.TYPE_NUCLEAR));
         registerItemRenderer(ModItems.missile_shuttle, new ItemRenderMissileGeneric(RenderMissileType.TYPE_ROBIN));
-        registerItemRenderer(ModItems.missile_doomsday, new ItemRenderMissileGeneric(RenderMissileType.TYPE_DOOMSDAY));
-        registerItemRenderer(ModItems.missile_doomsday_rusted, new ItemRenderMissileGeneric(RenderMissileType.TYPE_DOOMSDAY));
+        registerItemRenderer(ModItems.missile_doomsday, new ItemRenderMissileGeneric(RenderMissileType.TYPE_NUCLEAR));
+        registerItemRenderer(ModItems.missile_doomsday_rusted, new ItemRenderMissileGeneric(RenderMissileType.TYPE_NUCLEAR));
         registerItemRenderer(ModItems.gun_b92, ItemRenderGunAnim.INSTANCE);
     }
 
@@ -398,6 +328,10 @@ public class ClientProxy extends ServerProxy {
         vanished.put(ent, System.currentTimeMillis() + 2000);
     }
 
+    public static void vanish(int ent, int duration) {
+        vanished.put(ent, System.currentTimeMillis() + duration);
+    }
+
     @Override
     public boolean isVanished(Entity e) {
 
@@ -420,6 +354,7 @@ public class ClientProxy extends ServerProxy {
             case TOGGLE_MAGNET -> HbmKeybinds.magnetKey.isKeyDown();
             case RELOAD -> HbmKeybinds.reloadKey.isKeyDown();
             case DASH -> HbmKeybinds.dashKey.isKeyDown();
+            case TRAIN -> HbmKeybinds.trainKey.isKeyDown();
             case CRANE_UP -> HbmKeybinds.craneUpKey.isKeyDown();
             case CRANE_DOWN -> HbmKeybinds.craneDownKey.isKeyDown();
             case CRANE_LEFT -> HbmKeybinds.craneLeftKey.isKeyDown();
@@ -429,7 +364,7 @@ public class ClientProxy extends ServerProxy {
             case ABILITY_ALT -> HbmKeybinds.abilityAlt.isKeyDown();
             case TOOL_ALT -> HbmKeybinds.copyToolAlt.isKeyDown();
             case TOOL_CTRL -> HbmKeybinds.copyToolCtrl.isKeyDown();
-            case GUN_PRIMARY -> Mouse.isButtonDown(0);
+            case GUN_PRIMARY -> HbmKeybinds.gunPrimaryKey.isKeyDown();
             case GUN_SECONDARY -> HbmKeybinds.gunSecondaryKey.isKeyDown();
             case GUN_TERTIARY -> HbmKeybinds.gunTertiaryKey.isKeyDown();
         };
@@ -487,8 +422,9 @@ public class ClientProxy extends ServerProxy {
 
     @Override
     public void preInit(FMLPreInitializationEvent evt) {
-        if (SoundSystemConfig.getNumberNormalChannels() < 128) {
-            SoundSystemConfig.setNumberNormalChannels(128);
+        if (GeneralConfig.enableSoundExtension) {
+            SoundSystemConfig.setNumberNormalChannels(GeneralConfig.normalSoundChannels);
+            SoundSystemConfig.setNumberStreamingChannels(50);
         }
         OBJLoader.INSTANCE.addDomain(Tags.MODID);
         ModelLoaderRegistry.registerLoader(DynamicPlaceholderModelLoader.INSTANCE);
@@ -516,7 +452,6 @@ public class ClientProxy extends ServerProxy {
         audio.updatePosition(x, y, z);
         audio.updateVolume(volume);
         audio.updateRange(range);
-        audio.updatePitch(pitch);
         audio.setKeepAlive(keepAlive);
         return audio;
     }
@@ -527,7 +462,6 @@ public class ClientProxy extends ServerProxy {
         audio.updatePosition(x, y, z);
         audio.updateVolume(volume);
         audio.updateRange(range);
-        audio.updatePitch(pitch);
         return audio;
     }
 
@@ -609,16 +543,10 @@ public class ClientProxy extends ServerProxy {
     @SuppressWarnings({"deprecation", "DataFlowIssue"})
     public int getStackColor(@NotNull ItemStack stack, boolean amplify) {
         if (stack.isEmpty()) return 0x000000;
-        int color;
         if (stack.getItem() instanceof ItemBlock) {
-            try {
-                Block block = ((ItemBlock) stack.getItem()).getBlock();
-                IBlockState state = block.getStateFromMeta(stack.getMetadata());
-                color = state.getMapColor(null, null).colorValue;
-            } catch (Exception e) {
-                color = 0xCCCCCC;
-            }
-        } else color = ColorUtil.getAverageColorFromStack(stack);
+            return ((ItemBlock) stack.getItem()).getBlock().getDefaultState().getMaterial().getMaterialMapColor().colorValue;
+        }
+        int color = ColorUtil.getAverageColorFromStack(stack);
         if (amplify) color = ColorUtil.amplifyColor(color);
         return color;
     }

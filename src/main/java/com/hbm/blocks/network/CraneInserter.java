@@ -23,6 +23,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.NotNull;
 
 public class CraneInserter extends BlockCraneBase implements IEnterableBlock {
@@ -126,6 +127,16 @@ public class CraneInserter extends BlockCraneBase implements IEnterableBlock {
             EntityItem drop = new EntityItem(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, toAdd.copy());
             world.spawnEntity(drop);
         }
+    }
+
+    @Override
+    public boolean hasComparatorInputOverride(IBlockState state) {
+        return true;
+    }
+
+    @Override
+    public int getComparatorInputOverride(IBlockState state, World world, BlockPos pos) {
+        return ItemHandlerHelper.calcRedstoneFromInventory(((TileEntityCraneInserter) world.getTileEntity(pos)).inventory);
     }
 
     @Override

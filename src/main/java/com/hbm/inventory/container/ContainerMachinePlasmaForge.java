@@ -1,6 +1,7 @@
 package com.hbm.inventory.container;
 
 import com.hbm.inventory.RecipesCommon.AStack;
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.recipes.PlasmaForgeRecipe;
 import com.hbm.inventory.recipes.PlasmaForgeRecipes;
@@ -16,7 +17,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachinePlasmaForge extends ContainerBase {
+public class ContainerMachinePlasmaForge extends ContainerBase implements IAutoRoutingContainer {
 
     private final TileEntityFusionPlasmaForge forge;
     private final TransferStrategy plasmaTransfer;
@@ -53,5 +54,10 @@ public class ContainerMachinePlasmaForge extends ContainerBase {
             if(input != null && input.matchesRecipe(stack, true)) return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return plasmaTransfer.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

@@ -63,6 +63,7 @@ public class Sellafield extends AbstractPhasedStructure {
 
 
 		int iRad = (int)Math.round(radius);
+		BlockPos.MutableBlockPos originalSurface = new BlockPos.MutableBlockPos();
 
 		for(int a = -iRad - 5; a <= iRad + 5; a++) {
 
@@ -72,6 +73,7 @@ public class Sellafield extends AbstractPhasedStructure {
 
 				if(r - rand.nextInt(3) <= radius) {
 
+					int originalSurfaceY = world.getHeight(x + a, z + b) - 1;
 					int dep = (int)depthFunc(r, radius, depth);
 					dig(world, x + a, z + b, dep);
 
@@ -88,6 +90,9 @@ public class Sellafield extends AbstractPhasedStructure {
 					} else {
 						place(world, x + a, z + b, 3, ModBlocks.sellafield_slaked);
 					}
+					// Recheck plants above the original surface after their support changes.
+					originalSurface.setPos(x + a, originalSurfaceY, z + b);
+					world.notifyNeighborsOfStateChange(originalSurface, world.getBlockState(originalSurface).getBlock(), false);
 				}
 			}
 		}

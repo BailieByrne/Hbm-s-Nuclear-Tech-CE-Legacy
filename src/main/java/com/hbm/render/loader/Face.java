@@ -18,6 +18,15 @@ public class Face {
 	public float normalX;
 	public float normalY;
 	public float normalZ;
+	private final boolean smoothing;
+
+	public Face() {
+		this(true);
+	}
+
+	public Face(boolean smoothing) {
+		this.smoothing = smoothing;
+	}
 
 	public void addFaceForRender(BufferBuilder tessellator) {
 		addFaceForRender(tessellator, 0.0F);
@@ -61,7 +70,7 @@ public class Face {
 				if (this.textureCoordinates[i].v > averageV) {
 					offsetV = -offsetV;
 				}
-				if ((this.vertexNormals != null) && (i < this.vertexNormals.length)) {
+				if (this.smoothing && (this.vertexNormals != null) && (i < this.vertexNormals.length)) {
 					normalX = this.vertexNormals[i].x;
 					normalY = this.vertexNormals[i].y;
 					normalZ = this.vertexNormals[i].z;

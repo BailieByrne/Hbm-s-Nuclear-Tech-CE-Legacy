@@ -231,14 +231,17 @@ public class ItemEnergy extends Item {
 	}
 
 	public static boolean hasOpener(EntityPlayer player){
-		ItemStack stackR = player.getHeldItemMainhand();
-		ItemStack stackL = player.getHeldItemOffhand();
-		if(stackR.isEmpty() || stackL.isEmpty()) return false;
-		return stackR.getItem() == ModItems.bottle_opener || stackL.getItem() == ModItems.bottle_opener;
+		for(ItemStack stack : player.inventory.mainInventory) {
+			if(stack.getItem() == ModItems.bottle_opener) return true;
+		}
+		return player.getHeldItemOffhand().getItem() == ModItems.bottle_opener;
 	}	
 
 	@Override
 	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer player, EnumHand hand) {
+		if(VersatileConfig.hasPotionSickness(player))
+			return ActionResult.newResult(EnumActionResult.PASS, player.getHeldItem(hand));
+
 		if(this.requiresOpener && !hasOpener(player))
 			return ActionResult.newResult(EnumActionResult.PASS, player.getHeldItem(hand));
 

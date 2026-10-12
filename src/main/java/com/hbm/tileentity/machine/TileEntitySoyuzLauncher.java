@@ -245,8 +245,8 @@ public class TileEntitySoyuzLauncher extends TileEntityMachineBase implements IT
                 inventory.setStackInSlot(i, ItemStack.EMPTY);
             }
 
-            soyuz.targetX = inventory.getStackInSlot(1).getTagCompound().getInteger("pos.getX()");
-            soyuz.targetZ = inventory.getStackInSlot(1).getTagCompound().getInteger("pos.getZ()");
+            soyuz.targetX = inventory.getStackInSlot(1).getTagCompound().getInteger("xCoord");
+            soyuz.targetZ = inventory.getStackInSlot(1).getTagCompound().getInteger("zCoord");
             soyuz.setPayload(payload);
         }
 
@@ -279,8 +279,8 @@ public class TileEntitySoyuzLauncher extends TileEntityMachineBase implements IT
     public int getDist() {
 
         if (designator() == 2) {
-            int x = inventory.getStackInSlot(1).getTagCompound().getInteger("pos.getX()");
-            int z = inventory.getStackInSlot(1).getTagCompound().getInteger("pos.getZ()");
+            int x = inventory.getStackInSlot(1).getTagCompound().getInteger("xCoord");
+            int z = inventory.getStackInSlot(1).getTagCompound().getInteger("zCoord");
 
             return (int) Vec3NT.createVectorHelper(pos.getX() - x, 0, pos.getZ() - z).length();
         }

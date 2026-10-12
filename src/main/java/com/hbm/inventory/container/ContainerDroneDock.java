@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.network.TileEntityDroneDock;
 import com.hbm.util.InventoryUtil;
@@ -10,7 +11,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerDroneDock extends Container {
+public class ContainerDroneDock extends Container implements IAutoRoutingContainer {
     protected TileEntityDroneDock crate;
 
     private final TransferStrategy transferStrategy = TransferStrategy.builder(() -> this.crate.inventory.getSlots())
@@ -45,5 +46,10 @@ public class ContainerDroneDock extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return crate.isUsableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

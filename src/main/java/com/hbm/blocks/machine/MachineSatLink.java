@@ -82,7 +82,10 @@ public class MachineSatLink extends BlockDummyable implements ILookOverlay {
 			return false;
 
 		} else {
-			return true;
+			if (player.isSneaking()) return true;
+			if (!(player.getHeldItem(hand).getItem() instanceof ISatChip)) return false;
+			int[] corePos = this.findCore(world, pos.getX(), pos.getY(), pos.getZ());
+			return corePos != null && world.getTileEntity(new BlockPos(corePos[0], corePos[1], corePos[2])) instanceof TileEntityMachineSatLink;
 		}
 	}
 

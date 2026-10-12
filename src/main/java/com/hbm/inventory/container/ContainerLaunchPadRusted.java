@@ -1,5 +1,8 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
+
 import com.hbm.api.item.IDesignatorItem;
 import com.hbm.inventory.slot.SlotCraftingOutput;
 import com.hbm.items.ModItems;
@@ -11,7 +14,13 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerLaunchPadRusted extends Container {
+public class ContainerLaunchPadRusted extends Container implements IAutoRoutingContainer {
+
+    private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(4)
+            .rule(3, 4, stack -> stack.getItem() instanceof IDesignatorItem)
+            .rule(1, 2, stack -> stack.getItem() == ModItems.launch_code)
+            .rule(2, 3, stack -> stack.getItem() == ModItems.launch_key)
+            .build();
 
     private TileEntityLaunchPadRusted launchpad;
 
@@ -79,5 +88,10 @@ public class ContainerLaunchPadRusted extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return launchpad.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

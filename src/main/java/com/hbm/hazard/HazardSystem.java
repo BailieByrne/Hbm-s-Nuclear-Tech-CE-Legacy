@@ -203,7 +203,7 @@ public class HazardSystem {
     }
 
     private static PlayerDeltaResult computeDeltaForPlayer(List<InventoryDelta> deltas) {
-        float totalNeutronDelta = 0f;
+        double totalNeutronDelta = 0D;
         Map<Integer, Optional<Consumer<EntityPlayer>>> finalApplicators = new HashMap<>(Math.max(16, deltas.size() * 2));
 
         for (InventoryDelta delta : deltas) {
@@ -225,7 +225,7 @@ public class HazardSystem {
         boolean isOldStackHazardous = isStackHazardous(oldStack);
         boolean isNewStackHazardous = isStackHazardous(newStack);
 
-        float neutronDelta = 0;
+        double neutronDelta = 0D;
         if (RadiationConfig.neutronActivation) {
             if (!isOldStackHazardous) {
                 neutronDelta -= ContaminationUtil.getNeutronRads(oldStack);
@@ -866,7 +866,7 @@ public class HazardSystem {
     private static class PlayerHazardData {
         private final Map<Integer, Consumer<EntityPlayer>> activeApplicators = new ConcurrentHashMap<>();
         private EntityPlayer player;
-        private float totalNeutronRads = 0f;
+        private double totalNeutronRads = 0D;
 
         PlayerHazardData(EntityPlayer player) {
             this.player = player;
@@ -880,10 +880,10 @@ public class HazardSystem {
          */
         static HazardScanResult calculateHazardScanForPlayer(EntityPlayer player) {
             Map<Integer, Consumer<EntityPlayer>> applicators = new HashMap<>();
-            float totalNeutronRads = 0f;
+            double totalNeutronRads = 0D;
 
             if (player.inventoryContainer == null) {
-                return new HazardScanResult(Collections.emptyMap(), 0f);
+                return new HazardScanResult(Collections.emptyMap(), 0D);
             }
 
             for (int i = 0; i < player.inventoryContainer.inventorySlots.size(); i++) {
@@ -917,7 +917,7 @@ public class HazardSystem {
         void setScanResult(HazardScanResult result) {
             this.activeApplicators.clear();
             this.activeApplicators.putAll(result.applicatorMap);
-            this.totalNeutronRads = Math.max(0f, result.totalNeutronRads);
+            this.totalNeutronRads = Math.max(0D, result.totalNeutronRads);
         }
 
         void applyDeltaResult(PlayerDeltaResult result) {
@@ -954,7 +954,7 @@ public class HazardSystem {
                     double activationRate =
                             ContaminationUtil.getNoNeutronPlayerRads(player) * 0.00004D - (0.00004D * RadiationConfig.neutronActivationThreshold);
                     if (activationRate > minRadRate) {
-                        float totalActivationAmount = (float) activationRate * RadiationConfig.hazardRate;
+                        double totalActivationAmount = activationRate * RadiationConfig.hazardRate;
                         if (ContaminationUtil.neutronActivateInventory(player, totalActivationAmount, 1.0F)) {
                             schedulePlayerUpdate(this.player);
                             sync = true;
@@ -968,7 +968,7 @@ public class HazardSystem {
             }
         }
 
-        record HazardScanResult(Map<Integer, Consumer<EntityPlayer>> applicatorMap, float totalNeutronRads) {
+        record HazardScanResult(Map<Integer, Consumer<EntityPlayer>> applicatorMap, double totalNeutronRads) {
         }
     }
 
@@ -978,10 +978,10 @@ public class HazardSystem {
     private record InventoryDelta(UUID playerUUID, int serverSlotIndex, ItemStack oldStack, ItemStack newStack) {
     }
 
-    private record DeltaUpdate(Optional<Consumer<EntityPlayer>> applicator, float neutronRadsDelta) {
+    private record DeltaUpdate(Optional<Consumer<EntityPlayer>> applicator, double neutronRadsDelta) {
     }
 
-    private record PlayerDeltaResult(Map<Integer, Optional<Consumer<EntityPlayer>>> finalApplicators, float totalNeutronDelta) {
+    private record PlayerDeltaResult(Map<Integer, Optional<Consumer<EntityPlayer>>> finalApplicators, double totalNeutronDelta) {
     }
 
     private record HazardUpdateResult(Map<UUID, PlayerHazardData.HazardScanResult> fullScanResults, Map<UUID, PlayerDeltaResult> deltaResults) {

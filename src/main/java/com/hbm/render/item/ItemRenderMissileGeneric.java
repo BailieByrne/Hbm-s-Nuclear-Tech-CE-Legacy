@@ -32,8 +32,7 @@ public class ItemRenderMissileGeneric extends TEISRBase {
 		TYPE_STEALTH,
 		TYPE_ABM,
 		TYPE_NUCLEAR,
-		TYPE_ROBIN,
-		TYPE_DOOMSDAY
+		TYPE_ROBIN
 	}
 	
 	public ItemRenderMissileGeneric(RenderMissileType category) {
@@ -72,7 +71,6 @@ public class ItemRenderMissileGeneric extends TEISRBase {
 			case TYPE_STEALTH: guiScale = 1.75D; guiOffset = 4.75D; break;
 			case TYPE_ABM: guiScale = 2.25D; guiOffset = 7D; break;
 			case TYPE_NUCLEAR: guiScale = 1.375D; guiOffset = 1.5D; break;
-			case TYPE_DOOMSDAY: guiScale = 1.375D; guiOffset = 1.5D; break;
 			case TYPE_ROBIN: guiScale = 1.25D; guiOffset = 2D; break;
 		}
 
@@ -140,6 +138,8 @@ public class ItemRenderMissileGeneric extends TEISRBase {
 	
 	public static void init() {
 
+		renderers.put(new ComparableStack(ModItems.missile_test), generateStandard(ResourceManager.missileMicroTest_tex, ResourceManager.missileMicro));
+
 		renderers.put(new ComparableStack(ModItems.missile_taint), generateStandard(ResourceManager.missileTaint_tex, ResourceManager.missileMicro));
 		renderers.put(new ComparableStack(ModItems.missile_micro), generateStandard(ResourceManager.missileMicro_tex, ResourceManager.missileMicro));
 		renderers.put(new ComparableStack(ModItems.missile_bhole), generateStandard(ResourceManager.missileMicroBHole_tex, ResourceManager.missileMicro));
@@ -174,7 +174,6 @@ public class ItemRenderMissileGeneric extends TEISRBase {
 		renderers.put(new ComparableStack(ModItems.missile_nuclear), generateStandard(ResourceManager.missileNuclear_tex, ResourceManager.missileNuclear));
 		renderers.put(new ComparableStack(ModItems.missile_nuclear_cluster), generateStandard(ResourceManager.missileMIRV_tex, ResourceManager.missileNuclear));
 		renderers.put(new ComparableStack(ModItems.missile_volcano), generateStandard(ResourceManager.missileVolcano_tex, ResourceManager.missileNuclear));
-		renderers.put(new ComparableStack(ModItems.missile_n2), generateLarge(ResourceManager.missileN2_tex, ResourceManager.missileN2));
 		
 		renderers.put(new ComparableStack(ModItems.missile_shuttle), generateStandard(ResourceManager.missileShuttle_tex, ResourceManager.missileShuttle));
 

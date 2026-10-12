@@ -1,6 +1,7 @@
 package com.hbm.inventory.container;
 
 import com.hbm.interfaces.IContainerOpenEventListener;
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.machine.storage.TileEntityFileCabinet;
 import com.hbm.util.InventoryUtil;
@@ -11,7 +12,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerFileCabinet extends Container implements IContainerOpenEventListener {
+public class ContainerFileCabinet extends Container implements IAutoRoutingContainer, IContainerOpenEventListener {
 
     protected TileEntityFileCabinet cabinet;
 
@@ -58,5 +59,10 @@ public class ContainerFileCabinet extends Container implements IContainerOpenEve
     public void onContainerClosed(EntityPlayer player) {
         super.onContainerClosed(player);
         cabinet.closeInventory(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

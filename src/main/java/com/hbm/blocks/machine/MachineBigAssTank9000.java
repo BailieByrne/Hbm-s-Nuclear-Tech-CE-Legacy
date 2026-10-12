@@ -40,6 +40,7 @@ public class MachineBigAssTank9000 extends BlockDummyable implements IPersistent
 	}
 	@Override
 	public int getComparatorInputOverride(IBlockState blockState, World worldIn, BlockPos pos) {
+		if(getMetaFromState(blockState) < 6) return 0;
 		TileEntity te = worldIn.getTileEntity(pos);
 		if (te instanceof TileEntityMachineBAT9000 bat) {
 			return bat.tankNew.getRedstoneComparatorPower();

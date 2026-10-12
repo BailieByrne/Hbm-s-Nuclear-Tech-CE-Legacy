@@ -25,6 +25,11 @@ public abstract class EntityExplosionChunkloading extends Entity implements IChu
     }
 
     @Override
+    public boolean shouldBootstrapChunkLoader() {
+        return loaderTicket == null && !awaitingTicketRestore;
+    }
+
+    @Override
     public void init(Ticket ticket) {
         if(!world.isRemote && ticket != null) {
             if(loaderTicket == null) {

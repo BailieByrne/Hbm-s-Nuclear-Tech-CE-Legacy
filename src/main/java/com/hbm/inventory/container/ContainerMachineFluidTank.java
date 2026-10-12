@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.items.machine.IItemFluidIdentifier;
@@ -14,9 +15,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineFluidTank extends Container {
+public class ContainerMachineFluidTank extends Container implements IAutoRoutingContainer {
 
-  private final TileEntityMachineFluidTank fluidTank;
+  public final TileEntityMachineFluidTank fluidTank;
     private final TransferStrategy transferStrategy;
 
   public ContainerMachineFluidTank(InventoryPlayer invPlayer, TileEntityMachineFluidTank tedf) {
@@ -56,4 +57,9 @@ public class ContainerMachineFluidTank extends Container {
   public boolean canInteractWith(@NotNull EntityPlayer player) {
     return fluidTank.isUseableByPlayer(player);
   }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

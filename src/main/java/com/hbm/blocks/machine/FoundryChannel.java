@@ -218,13 +218,10 @@ public class FoundryChannel extends BlockContainer implements ICrucibleAcceptor 
 	
 	@Override
 	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-		if(world.isRemote) {
-			return true;
-		}
-		
 		TileEntityFoundryChannel cast = (TileEntityFoundryChannel) world.getTileEntity(pos);
 		
 		if(!player.getHeldItem(hand).isEmpty() && player.getHeldItem(hand).getItem() instanceof ItemTool && (player.getHeldItem(hand).getItem()).getToolClasses(player.getHeldItem(hand)).contains("shovel")) {
+			if (world.isRemote) return true;
 			if(cast.amount > 0) {
 				ItemStack scrap = ItemScraps.create(new MaterialStack(cast.type, cast.amount));
 				if(!player.inventory.addItemStackToInventory(scrap)) {

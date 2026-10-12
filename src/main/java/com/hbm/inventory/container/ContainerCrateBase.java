@@ -2,6 +2,7 @@ package com.hbm.inventory.container;
 
 import com.cleanroommc.bogosorter.api.ISortableContainer;
 import com.cleanroommc.bogosorter.api.ISortingContextBuilder;
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.machine.IHandHeldCrate;
 import com.hbm.tileentity.machine.TileEntityCrate;
@@ -17,7 +18,7 @@ import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
 @Optional.Interface(iface = "com.cleanroommc.bogosorter.api.ISortableContainer", modid = "bogosorter")
-public class ContainerCrateBase extends Container implements ISortableContainer {
+public class ContainerCrateBase extends Container implements IAutoRoutingContainer, ISortableContainer {
 
     protected final TileEntityCrate crate;
     private final TransferStrategy transferStrategy;
@@ -77,5 +78,10 @@ public class ContainerCrateBase extends Container implements ISortableContainer 
         }
 
         return super.slotClick(slotId, dragType, clickTypeIn, player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

@@ -107,4 +107,21 @@ public class GunEnergyFactory {
 		return bullet;
 	}
 */
+
+	public static BulletConfiguration getTurbineConfig() {
+
+		BulletConfiguration bullet = new BulletConfiguration();
+
+		bullet.ammo = new RecipesCommon.ComparableStack(ModItems.nothing);
+		bullet.dmgMin = 100;
+		bullet.dmgMax = 150;
+		bullet.velocity = 1F;
+		bullet.gravity = 0.0F;
+		bullet.maxAge = 200;
+		bullet.style = BulletConfiguration.STYLE_BLADE;
+		bullet.destroysBlocks = true;
+		bullet.doesRicochet = false;
+
+		return bullet;
+	}
 }

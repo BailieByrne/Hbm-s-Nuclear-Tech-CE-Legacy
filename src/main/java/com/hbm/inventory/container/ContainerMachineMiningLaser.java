@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotUpgrade;
@@ -13,18 +14,19 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachineMiningLaser extends Container {
+public class ContainerMachineMiningLaser extends Container implements IAutoRoutingContainer {
 
-	private TileEntityMachineMiningLaser laser;
+	public final TileEntityMachineMiningLaser laser;
 
-    private final TransferStrategy transferStrategy = TransferStrategy.builder(() -> this.laser.inventory.getSlots())
+    private final TransferStrategy transferStrategy;
+
+    public ContainerMachineMiningLaser(InventoryPlayer invPlayer, TileEntityMachineMiningLaser tedf) {
+		laser = tedf;
+        transferStrategy = TransferStrategy.builder(() -> this.laser.inventory.getSlots())
                                                                       .rule(0, 1, Library::isBattery)
                                                                       .rule(1, 9, Library::isMachineUpgrade)
                                                                       .genericMachineRange(9)
                                                                       .build();
-
-    public ContainerMachineMiningLaser(InventoryPlayer invPlayer, TileEntityMachineMiningLaser tedf) {
-		laser = tedf;
 
 		//Battery
 		this.addSlotToContainer(new SlotBattery(tedf.inventory, 0, 8, 108));
@@ -55,4 +57,9 @@ public class ContainerMachineMiningLaser extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return laser.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

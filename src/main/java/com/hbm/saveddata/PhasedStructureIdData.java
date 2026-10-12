@@ -4,9 +4,7 @@ import com.hbm.main.MainRegistry;
 import com.hbm.world.phased.PhasedStructureRegistry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.DimensionManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -41,24 +39,15 @@ public class PhasedStructureIdData {
     private boolean dirty = false;
 
     /**
-     * Load or create ID mappings for the given server.
+     * Load or create ID mappings for the overworld supplied by WorldEvent.Load.
      * <p>
-     * Load sequence:
-     * - WorldServer is constructed and registered in DimensionManager (WorldServer ctor).
-     * - WorldServer.initialize(...) runs before WorldEvent.Load.
-     * - WorldEvent.Load is posted for each dimension.
-     * - initialWorldChunkLoad() runs (spawn chunks load and NBT is read).
-     * <p>
-     * We must initialize before spawn chunk NBT deserializes, but after the overworld save handler exists.
-     * DimensionManager.getWorld(0, false) returns the already-constructed overworld without forcing a load.
+     * The event can precede DimensionManager registration. Its world already
+     * provides the save handler needed to initialize before spawn chunk NBT
+     * deserializes.
      */
-    public PhasedStructureIdData(MinecraftServer server) {
+    public PhasedStructureIdData(WorldServer world) {
         keyToId.defaultReturnValue(-1);
         stringToId.defaultReturnValue(-1);
-        WorldServer world = DimensionManager.getWorld(0, false);
-        if (world == null) {
-            throw new IllegalStateException("PhasedStructureIdData accessed before overworld is loaded for " + server);
-        }
         saveFile = new File(world.getSaveHandler().getWorldDirectory(), FILE_NAME);
         loadFromDisk();
         ensureAllRegistered();

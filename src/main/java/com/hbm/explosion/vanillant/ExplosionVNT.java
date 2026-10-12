@@ -35,7 +35,7 @@ public class ExplosionVNT {
 	public float size;
 	public Entity exploder;
 
-	private Map compatPlayers = new HashMap();
+	private final Map<EntityPlayer, Vec3d> compatPlayers = new HashMap<>();
 	public Explosion compat;
 	
 	public ExplosionVNT(World world, double x, double y, double z, float size) {
@@ -55,15 +55,24 @@ public class ExplosionVNT {
 		this.size = size;
 		this.exploder = exploder;
 		
-		this.compat = new Explosion(world, exploder, x, y, z, size, false, false) {
-
-			@Override
-			public Map<EntityPlayer, Vec3d> getPlayerKnockbackMap() {
-				return ExplosionVNT.this.compatPlayers;
-			}
-		};
+		this.compat = new CompatExplosion(this, false);
 	}
 	
+    /** Identifies this VNT's vanilla compatibility object to explosion-event adapters. */
+    public static final class CompatExplosion extends Explosion {
+        private final Map<EntityPlayer, Vec3d> playerKnockback;
+
+        private CompatExplosion(ExplosionVNT source, boolean damagesTerrain) {
+            super(source.world, source.exploder, source.posX, source.posY, source.posZ, source.size, false, damagesTerrain);
+            playerKnockback = source.compatPlayers;
+        }
+
+        @Override
+        public Map<EntityPlayer, Vec3d> getPlayerKnockbackMap() {
+            return playerKnockback;
+        }
+    }
+
 	public void explode() {
 
 		
@@ -83,12 +92,7 @@ public class ExplosionVNT {
 		
 		//compat
 		if(processBlocks) {
-			this.compat = new Explosion(world, this.exploder, posX, posY, posZ, size, false, true) {
-				@Override
-				public Map<EntityPlayer, Vec3d> getPlayerKnockbackMap() {
-					return ExplosionVNT.this.compatPlayers;
-				}
-			};
+			this.compat = new CompatExplosion(this, true);
 			this.compat.getAffectedBlockPositions().addAll(affectedBlocks);
 		}
 		if(processEntities) this.compatPlayers.putAll(affectedPlayers);

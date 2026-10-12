@@ -18,7 +18,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineSolderingStation extends Container {
+public class ContainerMachineSolderingStation extends Container implements IAutoRoutingContainer {
+  private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(11)
+      .rule(7, 8, Library::isBattery)
+      .rule(8, 9, stack -> stack.getItem() instanceof IItemFluidIdentifier)
+      .rule(9, 11, stack -> stack.getItem() instanceof ItemMachineUpgrade)
+      .rule(0, 3, stack -> matchesIngredient(SolderingRecipes.toppings, stack))
+      .rule(3, 5, stack -> matchesIngredient(SolderingRecipes.pcb, stack))
+      .rule(5, 6, stack -> matchesIngredient(SolderingRecipes.solder, stack))
+      .build();
   private final TileEntityMachineSolderingStation soldering_station;
 
   public ContainerMachineSolderingStation(
@@ -49,6 +57,16 @@ public class ContainerMachineSolderingStation extends Container {
     for (int i = 0; i < 9; i++) {
       this.addSlotToContainer(new Slot(playerInv, i, 8 + i * 18, 180));
     }
+  }
+
+  @Override
+  public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+    return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+  }
+
+  private static boolean matchesIngredient(Iterable<RecipesCommon.AStack> ingredients, ItemStack stack) {
+    for (RecipesCommon.AStack ingredient : ingredients) if (ingredient.matchesRecipe(stack, false)) return true;
+    return false;
   }
 
   @Override

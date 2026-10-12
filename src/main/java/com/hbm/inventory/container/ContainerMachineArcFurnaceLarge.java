@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.recipes.ArcFurnaceRecipes;
 import com.hbm.inventory.slot.SlotBattery;
@@ -17,7 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineArcFurnaceLarge extends Container {
+public class ContainerMachineArcFurnaceLarge extends Container implements IAutoRoutingContainer {
 
     private final TileEntityMachineArcFurnaceLarge furnace;
 
@@ -90,5 +91,10 @@ public class ContainerMachineArcFurnaceLarge extends Container {
         public int getSlotStackLimit() {
             return this.getHasStack() ? furnace.getMaxInputSize() : 1;
         }
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

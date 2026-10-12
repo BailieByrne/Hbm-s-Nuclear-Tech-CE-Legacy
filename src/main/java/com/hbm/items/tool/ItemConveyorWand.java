@@ -257,8 +257,7 @@ public class ItemConveyorWand extends Item implements ILookOverlay {
             EnumFacing moveDir = stack.hasTagCompound() ? bendable.getInputDirection(world, pos) : bendable.getOutputDirection(world, pos);
             BlockPos adjacentPos = pos.offset(moveDir);
             if (world.getBlockState(adjacentPos).getBlock().isReplaceable(world, adjacentPos)) {
-                pos = pos.offset(moveDir);
-                facing = moveDir.getOpposite();
+                facing = moveDir;
             }
         }
 
@@ -345,7 +344,7 @@ public class ItemConveyorWand extends Item implements ILookOverlay {
             if (onState.getBlock() instanceof BlockConveyorBendable bendable) {
                 EnumFacing moveDir = bendable.getInputDirection(world, pos);
                 if (world.getBlockState(pos.offset(moveDir)).getBlock().isReplaceable(world, pos.offset(moveDir))) {
-                    side = moveDir.getOpposite();
+                    side = moveDir;
                 }
             }
 
@@ -385,6 +384,8 @@ public class ItemConveyorWand extends Item implements ILookOverlay {
         if (depth <= 0) return;
         IBlockState state = world.getBlockState(pos);
         if (!(state.getBlock() instanceof BlockConveyorBase conveyor)) return;
+        EnumFacing input = conveyor.getInputDirection(world, pos);
+        EnumFacing output = conveyor.getOutputDirection(world, pos);
 
         int event = ForgeHooks.onBlockBreakEvent(world, player.interactionManager.getGameType(), player, pos);
         if (event == -1) return;
@@ -394,8 +395,8 @@ public class ItemConveyorWand extends Item implements ILookOverlay {
         }
         player.connection.sendPacket(new SPacketBlockChange(world, pos));
 
-        breakExtra(world, player, pos.offset(conveyor.getInputDirection(world, pos)), depth - 1);
-        breakExtra(world, player, pos.offset(conveyor.getOutputDirection(world, pos)), depth - 1);
+        breakExtra(world, player, pos.offset(input), depth - 1);
+        breakExtra(world, player, pos.offset(output), depth - 1);
     }
 
     @Override

@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "package": "com.hbm.mixin.mod.treechop",
+  "refmap": "mixins.hbm.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": ["MixinChopUtil", "MixinChopResult"],
+  "minVersion": "0.8.7"
+}

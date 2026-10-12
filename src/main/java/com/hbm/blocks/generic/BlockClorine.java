@@ -96,4 +96,9 @@ public class BlockClorine extends Block {
 		return true;
 	}
 
+	@Override
+	public boolean isAir(IBlockState state, IBlockAccess world, BlockPos pos) {
+		return true;
+	}
+
 }

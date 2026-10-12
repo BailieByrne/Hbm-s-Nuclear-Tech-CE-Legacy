@@ -307,9 +307,9 @@ public final class StaticTesrBakedModels {
                     .item(1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F)
                     .gui(3.25D, 1.125D, 0.0D, 6.5D),
             normalSpec(ModBlocks.machine_well, "models/derrick.obj", "models/machines/derrick", yawMap().meta(12, 180).meta(13, 0).meta(14, 270).meta(15, 90).build())
-                    // 1.7 (mesh identical): renderCommon = S(0.5), no yaw; renderInventory = T(0,-4,0)·S(4), no yaw.
-                    .item(0.5F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F)
-                    .gui(0.0D, -4.0D, 0.0D, 4.0D),
+                    // RenderDerrick: renderCommon = RY(90)·S(0.5), renderInventory = T(0,-4,0)·S(3).
+                    .item(0.5F, RAD_90, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F)
+                    .gui(0.0D, -4.0D, 0.0D, 3.0D),
             normalSpec(ModBlocks.reactor_zirnox, "models/zirnox.obj", "models/machines/zirnox", yawMap().meta(12, 90).meta(13, 270).meta(14, 180).meta(15, 0).build())
                     .doubleSided()
                     .item(0.75F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F)

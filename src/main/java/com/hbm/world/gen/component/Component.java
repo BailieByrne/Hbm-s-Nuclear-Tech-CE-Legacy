@@ -29,6 +29,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
+import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -52,7 +53,7 @@ abstract public class Component extends StructureComponent {
 
 	protected Component(Random rand, int minX, int minY, int minZ, int maxX, int maxY, int maxZ ) {
 		super(0);
-		this.setCoordBaseMode(EnumFacing.byIndex(rand.nextInt(4)));
+		this.setCoordBaseMode(EnumFacing.byHorizontalIndex(rand.nextInt(4)));
 
 		switch (this.getCoordMode()) {
 			case 1, 3:
@@ -62,6 +63,16 @@ abstract public class Component extends StructureComponent {
 				this.boundingBox = new StructureBoundingBox(minX, minY, minZ, minX + maxX, minY + maxY, minZ + maxZ);
 
 		}
+	}
+
+	@Override
+	protected void writeStructureToNBT(NBTTagCompound tagCompound) {
+		this.setToNBT(tagCompound);
+	}
+
+	@Override
+	protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager templateManager) {
+		this.getFromNBT(tagCompound);
 	}
 
 	/** Set to NBT */
@@ -117,7 +128,7 @@ abstract public class Component extends StructureComponent {
 	}
 
 	public int getCoordMode() {
-		return this.getCoordBaseMode() != null ? this.getCoordBaseMode().getIndex() : 0;
+		return this.getCoordBaseMode() != null ? this.getCoordBaseMode().getHorizontalIndex() : -1;
 	}
 
 	/** Metadata for Decoration Methods **/
@@ -595,6 +606,15 @@ abstract public class Component extends StructureComponent {
             case 3 -> this.boundingBox.maxZ - x;
             default -> z;
         };
+	}
+
+	/** Placement helpers already rotate metadata for the legacy coordinate mode. */
+	@Override
+	protected void setBlockState(World world, IBlockState state, int x, int y, int z, StructureBoundingBox box) {
+		BlockPos pos = new BlockPos(getXWithOffset(x, z), getYWithOffset(y), getZWithOffset(x, z));
+		if (box.isVecInside(pos)) {
+			world.setBlockState(pos, state, 2);
+		}
 	}
 
 	/** Methods that are actually optimized, including ones that cut out replaceBlock and onlyReplace functionality when it's redundant. */

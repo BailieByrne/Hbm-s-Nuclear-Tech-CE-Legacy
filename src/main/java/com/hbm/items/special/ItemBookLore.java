@@ -43,6 +43,7 @@ import java.util.Objects;
  */
 public class ItemBookLore extends Item implements IGUIProvider, IDynamicModels {
 
+    private static final ResourceLocation TEX_PAGES = new ResourceLocation(Tags.MODID, "items/book_pages");
     private static final ResourceLocation TEX_COVER = new ResourceLocation(Tags.MODID, "items/book_cover");
     private static final ResourceLocation TEX_TITLE = new ResourceLocation(Tags.MODID, "items/book_title");
 
@@ -134,9 +135,10 @@ public class ItemBookLore extends Item implements IGUIProvider, IDynamicModels {
             IModel base = ModelLoaderRegistry.getModel(new ResourceLocation("minecraft:item/generated"));
             ImmutableMap.Builder<String, String> tex = ImmutableMap.builder();
 
-            tex.put("layer0", TEX_COVER.toString());
-            tex.put("layer1", TEX_TITLE.toString());
-            tex.put("particle", TEX_COVER.toString());
+            tex.put("layer0", TEX_PAGES.toString());
+            tex.put("layer1", TEX_COVER.toString());
+            tex.put("layer2", TEX_TITLE.toString());
+            tex.put("particle", TEX_PAGES.toString());
 
             IModel retextured = base.retexture(tex.build());
             IBakedModel baked = retextured.bake(ModelRotation.X0_Y0, DefaultVertexFormats.ITEM, ModelLoader.defaultTextureGetter());
@@ -157,6 +159,7 @@ public class ItemBookLore extends Item implements IGUIProvider, IDynamicModels {
     @Override
     @SideOnly(Side.CLIENT)
     public void registerSprite(TextureMap map) {
+        map.registerSprite(TEX_PAGES);
         map.registerSprite(TEX_COVER);
         map.registerSprite(TEX_TITLE);
     }
@@ -165,7 +168,7 @@ public class ItemBookLore extends Item implements IGUIProvider, IDynamicModels {
     @SideOnly(Side.CLIENT)
     public IItemColor getItemColorHandler() {
         return (stack, tintIndex) -> {
-            if (tintIndex == 0) { // cover
+            if (tintIndex == 1) { // cover
                 if (stack.hasTagCompound()) {
                     NBTTagCompound tag = stack.getTagCompound();
                     if (tag != null) {
@@ -174,7 +177,7 @@ public class ItemBookLore extends Item implements IGUIProvider, IDynamicModels {
                     }
                 }
                 return 0x303030;
-            } else if (tintIndex == 1) { // title
+            } else if (tintIndex == 2) { // title
                 if (stack.hasTagCompound()) {
                     NBTTagCompound tag = stack.getTagCompound();
                     if (tag != null) {

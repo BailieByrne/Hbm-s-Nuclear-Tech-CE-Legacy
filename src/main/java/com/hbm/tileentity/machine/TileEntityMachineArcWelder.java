@@ -384,10 +384,16 @@ public class TileEntityMachineArcWelder extends TileEntityMachineBase
     }
 
     @Override
+    public int[] getAccessibleSlotsFromSide(EnumFacing side) {
+        return new int[]{1, 3};
+    }
+
+    @Override
     public int[] getAccessibleSlotsFromSide(EnumFacing side, BlockPos accessorPos) {
         EnumFacing dir = EnumFacing.byIndex(this.getBlockMetadata() - 10);
         EnumFacing rot = dir.rotateY();
         BlockPos core = this.pos;
+        if (accessorPos.equals(core)) return getAccessibleSlotsFromSide(side);
 
         // Red
         BlockPos red1 = core.offset(rot);

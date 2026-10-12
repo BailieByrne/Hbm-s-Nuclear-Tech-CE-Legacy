@@ -19,6 +19,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.NotNull;
 
 public class CraneBoxer extends BlockCraneBase implements IEnterableBlock {
@@ -112,8 +113,7 @@ public class CraneBoxer extends BlockCraneBase implements IEnterableBlock {
 
     @Override
     public int getComparatorInputOverride(IBlockState blockState, World world, BlockPos pos) {
-        int redstoneSignal = blockState.getComparatorInputOverride(world, pos);
-        return redstoneSignal;
+        return ItemHandlerHelper.calcRedstoneFromInventory(((TileEntityCraneBoxer) world.getTileEntity(pos)).inventory);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.tileentity.machine.albion.TileEntityPARFC;
@@ -11,7 +12,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerPARFC extends Container {
+public class ContainerPARFC extends Container implements IAutoRoutingContainer {
 
     private final TileEntityPARFC rfc;
 
@@ -44,5 +45,10 @@ public class ContainerPARFC extends Container {
     @Override
     public @NotNull ItemStack transferStackInSlot(EntityPlayer player, int index) {
         return InventoryUtil.transferStack(this.inventorySlots, index, this.TRANSFER_STRATEGY, player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

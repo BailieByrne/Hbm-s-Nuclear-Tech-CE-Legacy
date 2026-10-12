@@ -1,6 +1,7 @@
 package com.hbm.inventory;
 
 import net.minecraft.item.ItemStack;
+import net.minecraft.inventory.Slot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +72,37 @@ public final class TransferStrategy {
 
     public RuleDispatchMode ruleDispatchMode() {
         return ruleDispatchMode;
+    }
+
+    public boolean isAutomaticInsertionAllowed(List<Slot> inventory, int slot, ItemStack stack) {
+        int slots = machineSlots();
+        if (stack.isEmpty() || slot < 0 || slot >= slots) return false;
+        boolean matched = false;
+        for (TransferRule rule : machineRules) {
+            if (!rule.accepts(stack)) continue;
+            matched = true;
+            if (rangeHasRoom(inventory, stack, rule.startInclusive(), rule.endExclusive())) {
+                return slot >= rule.startInclusive() && slot < rule.endExclusive();
+            }
+            if (ruleDispatchMode == RuleDispatchMode.FIRST_MATCH_WINS) break;
+        }
+        return (!matched || ruleDispatchMode == RuleDispatchMode.FALLTHROUGH_ON_FAILURE)
+                && slot >= genericMachineRangeStart(slots) && slot < genericMachineRangeEnd(slots);
+    }
+
+    private static boolean rangeHasRoom(List<Slot> inventory, ItemStack stack, int start, int end) {
+        for (int index = start; index < end; index++) {
+            Slot destination = inventory.get(index);
+            if (!destination.isItemValid(stack)) continue;
+            int limit = Math.min(stack.getMaxStackSize(), destination.getSlotStackLimit());
+            if (limit <= 0) continue;
+            ItemStack current = destination.getStack();
+            if (current.isEmpty()) return true;
+            if (stack.isStackable() && current.getItem() == stack.getItem()
+                    && (!stack.getHasSubtypes() || current.getItemDamage() == stack.getItemDamage())
+                    && ItemStack.areItemStackTagsEqual(stack, current) && current.getCount() < limit) return true;
+        }
+        return false;
     }
 
     public void validateRuntimeRanges(int machineSlots) {

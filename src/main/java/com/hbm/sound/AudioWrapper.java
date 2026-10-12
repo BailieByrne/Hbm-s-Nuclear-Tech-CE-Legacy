@@ -22,9 +22,14 @@ public class AudioWrapper {
 
 	public void setDoesRepeat(boolean repeats) { }
 
+	public void setRefreshVolumeOnStart(boolean refresh) { }
+
 	public void startSound() { }
 
 	public void stopSound() { }
+
+	/** Positive distance-adjusted volume, before category and master gain. */
+	public boolean isAudible() { return false; }
 
 	public boolean isPlaying() { return false; }
 }

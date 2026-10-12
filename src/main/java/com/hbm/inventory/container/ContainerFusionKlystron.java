@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.tileentity.machine.fusion.TileEntityFusionKlystron;
@@ -11,7 +12,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerFusionKlystron extends Container {
+public class ContainerFusionKlystron extends Container implements IAutoRoutingContainer {
 
     protected TileEntityFusionKlystron klystron;
 
@@ -43,5 +44,10 @@ public class ContainerFusionKlystron extends Container {
     @Override
     public boolean canInteractWith(@NotNull EntityPlayer player) {
         return klystron.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

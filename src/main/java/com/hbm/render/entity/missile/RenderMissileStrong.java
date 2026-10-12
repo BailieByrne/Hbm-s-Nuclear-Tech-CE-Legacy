@@ -1,51 +1,65 @@
 package com.hbm.render.entity.missile;
 
-import com.hbm.entity.missile.EntityMissileTier2;
+import org.lwjgl.opengl.GL11;
 import com.hbm.interfaces.AutoRegister;
-import com.hbm.main.ResourceManager;
-import com.hbm.render.NTMRenderHelper;
-import com.hbm.render.tileentity.RenderLaunchPad;
 import com.hbm.util.RenderUtil;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
-import org.lwjgl.opengl.GL11;
-@AutoRegister(factory = "FACTORY")
-public class RenderMissileStrong extends Render<EntityMissileTier2.EntityMissileStrong> {
 
-	public static final IRenderFactory<EntityMissileTier2.EntityMissileStrong> FACTORY = (RenderManager man) -> {return new RenderMissileStrong(man);};
+
+import com.hbm.entity.missile.EntityMissileBaseNT;
+import com.hbm.entity.missile.EntityMissileTier2.*;
+import com.hbm.main.ResourceManager;
+
+import net.minecraft.client.renderer.entity.Render;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.ResourceLocation;
+
+@AutoRegister(entity = EntityMissileStrong.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileIncendiaryStrong.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileClusterStrong.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileBusterStrong.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileEMPStrong.class, factory = "FACTORY")
+public class RenderMissileStrong extends Render<Entity> {
+    public static final IRenderFactory<Entity> FACTORY = RenderMissileStrong::new;
 	
-	protected RenderMissileStrong(RenderManager renderManager) {
-		super(renderManager);
-	}
-	
+	public RenderMissileStrong(RenderManager manager) { super(manager); }
+
 	@Override
-	public void doRender(EntityMissileTier2.EntityMissileStrong missile, double x, double y, double z, float entityYaw, float partialTicks) {
+	public void doRender(Entity entity, double x, double y, double z, float p_76986_8_, float interp) {
+
 		GlStateManager.pushMatrix();
-        boolean prevLighting = RenderUtil.isLightingEnabled();
-        int prevShade = RenderUtil.getShadeModel();
-        if (!prevLighting) GlStateManager.enableLighting();
-        double[] renderPos = NTMRenderHelper.getRenderPosFromMissile(missile, partialTicks);
-        x = renderPos[0];
-        y = renderPos[1];
-        z = renderPos[2];
-        GlStateManager.translate(x, y, z);
-        GlStateManager.scale(RenderLaunchPad.w_2, RenderLaunchPad.h_2, RenderLaunchPad.w_2);
-        GlStateManager.rotate(missile.prevRotationYaw + (missile.rotationYaw - missile.prevRotationYaw) * partialTicks - 90.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(missile.prevRotationPitch + (missile.rotationPitch - missile.prevRotationPitch) * partialTicks, 0.0F, 0.0F, 1.0F);
-        
-        GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        bindTexture(ResourceManager.missileStrong_HE_tex);
-        ResourceManager.missileStrong.renderAll();
-        GlStateManager.shadeModel(prevShade);
-        if (!prevLighting) GlStateManager.disableLighting();
+        boolean previousLighting = RenderUtil.isLightingEnabled();
+        int previousShade = RenderUtil.getShadeModel();
+        if (!previousLighting) GlStateManager.enableLighting();
+		GlStateManager.translate((float) x, (float) y, (float) z);
+		GlStateManager.rotate(entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * interp - 90.0F, 0.0F, 1.0F, 0.0F);
+		GlStateManager.rotate(entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * interp, 0.0F, 0.0F, 1.0F);
+		GlStateManager.rotate(entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * interp - 90.0F, 0.0F, -1.0F, 0.0F);
+		GlStateManager.scale(1.5F, 1.5F, 1.5F);
+
+		if(entity instanceof EntityMissileBaseNT) switch(entity.getDataManager().get(EntityMissileBaseNT.ROT_IDX)) {
+		case 2: GlStateManager.rotate(90, 0F, 1F, 0F); break;
+		case 4: GlStateManager.rotate(180, 0F, 1F, 0F); break;
+		case 3: GlStateManager.rotate(270, 0F, 1F, 0F); break;
+		case 5: GlStateManager.rotate(0, 0F, 1F, 0F); break;
+		}
+
+		if(entity instanceof EntityMissileStrong) bindTexture(ResourceManager.missileStrong_HE_tex);
+		if(entity instanceof EntityMissileIncendiaryStrong) bindTexture(ResourceManager.missileStrong_IN_tex);
+		if(entity instanceof EntityMissileClusterStrong) bindTexture(ResourceManager.missileStrong_CL_tex);
+		if(entity instanceof EntityMissileBusterStrong) bindTexture(ResourceManager.missileStrong_BU_tex);
+		if(entity instanceof EntityMissileEMPStrong) bindTexture(ResourceManager.missileStrong_EMP_tex);
+		GlStateManager.shadeModel(GL11.GL_SMOOTH);
+		ResourceManager.missileStrong.renderAll();
+		GlStateManager.shadeModel(previousShade);
+        if (!previousLighting) GlStateManager.disableLighting();
 		GlStateManager.popMatrix();
 	}
 
 	@Override
-	protected ResourceLocation getEntityTexture(EntityMissileTier2.EntityMissileStrong entity) {
+	protected ResourceLocation getEntityTexture(Entity p_110775_1_) {
 		return ResourceManager.missileStrong_HE_tex;
 	}
 

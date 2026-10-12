@@ -55,7 +55,7 @@ public class TileEntityBroadcaster extends TileEntityLoadedBase implements ITick
             if(audio == null) {
                 audio = createAudioLoop();
                 audio.startSound();
-            } else if(!audio.isPlaying()) {
+            } else if(!audio.isPlaying() && audio.isAudible()) {
                 audio = rebootAudio(audio);
             }
 
@@ -90,7 +90,9 @@ public class TileEntityBroadcaster extends TileEntityLoadedBase implements ITick
             case 2 -> HBMSoundHandler.broadcast3;
             default -> HBMSoundHandler.broadcast1;
         };
-        return MainRegistry.proxy.getLoopedSound(event, SoundCategory.BLOCKS, xCoord, yCoord, zCoord, 25F, 25F, 1.0F, 20);
+        AudioWrapper loop = MainRegistry.proxy.getLoopedSound(event, SoundCategory.BLOCKS, xCoord, yCoord, zCoord, 25F, 25F, 1.0F, 20);
+        loop.setRefreshVolumeOnStart(true);
+        return loop;
     }
 
     AxisAlignedBB bb = null;

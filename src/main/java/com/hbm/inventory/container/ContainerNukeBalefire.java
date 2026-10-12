@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.items.ModItems;
 import com.hbm.tileentity.bomb.TileEntityNukeBalefire;
@@ -11,9 +12,9 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerNukeBalefire extends Container {
+public class ContainerNukeBalefire extends Container implements IAutoRoutingContainer {
 
-	private TileEntityNukeBalefire balefireBomb;
+	public final TileEntityNukeBalefire balefireBomb;
 
 	private static final TransferStrategy TRANSFER_STRATEGY = TransferStrategy.builder(2)
                                                                               .rule(0, 1, s -> s.getItem() == ModItems.egg_balefire)
@@ -51,4 +52,9 @@ public class ContainerNukeBalefire extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return balefireBomb.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

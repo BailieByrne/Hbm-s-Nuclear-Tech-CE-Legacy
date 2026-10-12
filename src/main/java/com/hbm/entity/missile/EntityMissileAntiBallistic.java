@@ -7,7 +7,6 @@ import com.hbm.entity.projectile.EntityThrowableInterp;
 import com.hbm.explosion.ExplosionLarge;
 import com.hbm.interfaces.AutoRegister;
 import com.hbm.main.MainRegistry;
-import com.hbm.tileentity.machine.TileEntityMachineRadarNT;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.*;
@@ -28,14 +27,14 @@ public class EntityMissileAntiBallistic extends EntityThrowableInterp implements
 	private ForgeChunkManager.Ticket loaderTicket;
 	public Entity tracking;
 	public double velocity;
-	private int activationTimer;
-	private static final double baseSpeed = 1.5D;
+	protected int activationTimer;
+	public static double baseSpeed = 1.5D;
     private boolean awaitingTicketRestore;
 
     public EntityMissileAntiBallistic(World world) {
 		super(world);
+		this.setSize(1.5F, 1.5F);
 		this.motionY = baseSpeed;
-		this.setSize(1F, 8F);
 	}
 	@Override
 	protected void entityInit() {
@@ -54,16 +53,15 @@ public class EntityMissileAntiBallistic extends EntityThrowableInterp implements
 
 	@Override
 	public void onUpdate() {
-		this.prevPosX = this.posX;
-		this.prevPosY = this.posY;
-		this.prevPosZ = this.posZ;
+		if(!world.isRemote) requestChunkLoaderTicketIfNeeded();
+		// Apply field-reflected motion before steering toward the next interception point.
+		super.onUpdate();
 
 		if(!world.isRemote) {
-			requestChunkLoaderTicketIfNeeded();
 
 			if(velocity < 6) velocity += 0.1;
 
-			if(activationTimer < 10) {
+			if(activationTimer < 40) {
 				activationTimer++;
 				motionY = baseSpeed;
 			} else {
@@ -75,30 +73,7 @@ public class EntityMissileAntiBallistic extends EntityThrowableInterp implements
 					ExplosionLarge.spawnShock(world, posX, posY, posZ, 24, 3F);
 				}
 
-				if (this.tracking != null) { // Ensure tracking target exists
-				    double distance = Math.sqrt(
-				        Math.pow(this.tracking.posX - this.posX, 2) +
-				        Math.pow(this.tracking.posY - this.posY, 2) +
-				        Math.pow(this.tracking.posZ - this.posZ, 2)
-				    );
-
-				    if (distance < 15) { // Check if the distance is less than 10
-
-				        List<Entity> explosionRadius = world.getEntitiesWithinAABB(Entity.class,
-				            new AxisAlignedBB(posX - 15, posY - 15, posZ - 15, posX + 15, posY + 15, posZ + 15));
-
-				        for (Entity entity : explosionRadius) {
-				            if (entity instanceof EntityMissileBaseNT) {
-				                EntityMissileBaseNT target = (EntityMissileBaseNT) entity;
-				                target.health -= 51; //EntityMissileBaseNT has default health of 50 to die
-				            }
-				        }
-
-				        this.setDead(); // Destroy the anti-missile
-				        ExplosionLarge.explode(world, thrower, posX, posY, posZ, 20F, true, false, false);
-				    }
-				}
-				if(this.tracking != null) {
+				if(this.tracking != null && !this.tracking.isDead) {
 					this.aimAtTarget();
 				} else {
 					if(this.ticksExisted > 600) this.setDead();
@@ -114,7 +89,6 @@ public class EntityMissileAntiBallistic extends EntityThrowableInterp implements
 			Vec3d vec = new Vec3d(motionX, motionY, motionZ).normalize();
 			MainRegistry.proxy.particleControl(posX - vec.x, posY - vec.y, posZ - vec.z, 2);
 		}
-		super.onUpdate();
 		float f2 = MathHelper.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
 		this.rotationYaw = (float) (Math.atan2(this.motionX, this.motionZ) * 180.0D / Math.PI);
 		for(this.rotationPitch = (float) (Math.atan2(this.motionY, f2) * 180.0D / Math.PI) - 90; this.rotationPitch - this.prevRotationPitch < -180.0F; this.prevRotationPitch -= 360.0F);
@@ -124,20 +98,13 @@ public class EntityMissileAntiBallistic extends EntityThrowableInterp implements
 	}
 
 	/** Detects and caches nearby EntityMissileBaseNT */
-    private void targetMissile() {
+	protected void targetMissile() {
 		Entity closest = null;
 		double dist = 1_000;
-		int radarRange = TileEntityMachineRadarNT.radarRange;
-        AxisAlignedBB boundingBox = new AxisAlignedBB(
-                this.posX - radarRange, this.posY, this.posZ - radarRange,
-                this.posX + radarRange, this.posY + radarRange, +this.posZ + radarRange
-        );
-
-		List<Entity> entitiesWithinRange = world.getEntitiesWithinAABB(Entity.class, boundingBox);
-
-		for(Entity e : entitiesWithinRange) {
+		// Read the same loaded-entity source as the 1.7 radar cache, without a giant spatial query.
+		for(Entity e : world.loadedEntityList) {
 			if(e.dimension != this.dimension) continue;
-			if(!(e instanceof EntityMissileBaseNT)) continue; //can only lock onto missiles
+			if(!(e instanceof EntityMissileBaseNT)) continue;
 			if(e instanceof EntityMissileStealth) continue; //cannot lock onto missiles with stealth coating
 
 			Vec3d vec = new Vec3d(e.posX - posX, e.posY - posY, e.posZ - posZ);
@@ -150,14 +117,13 @@ public class EntityMissileAntiBallistic extends EntityThrowableInterp implements
 	}
 
 	/** Predictive targeting system */
-    private void aimAtTarget() {
+	protected void aimAtTarget() {
 		Vec3d delta = new Vec3d(tracking.posX - posX, tracking.posY - posY, tracking.posZ - posZ);
 		double intercept = delta.length() / (baseSpeed * this.velocity);
 		Vec3d predicted = new Vec3d(tracking.posX + (tracking.posX - tracking.lastTickPosX) * intercept, tracking.posY + (tracking.posY - tracking.lastTickPosY) * intercept, tracking.posZ + (tracking.posZ - tracking.lastTickPosZ) * intercept);
 		Vec3d motion = new Vec3d(predicted.x - posX, predicted.y - posY, predicted.z - posZ).normalize();
 
 		if(delta.length() < 10 && activationTimer >= 40) {
-			System.out.println("I DIED HERE 1");
 			this.setDead();
 			ExplosionLarge.explode(world, thrower, posX, posY, posZ, 15F, true, false, false);
 		}
@@ -169,7 +135,7 @@ public class EntityMissileAntiBallistic extends EntityThrowableInterp implements
 
 	@Override
 	protected void onImpact(RayTraceResult mop) {
-		if(this.activationTimer >= 10) {
+		if(this.activationTimer >= 40) {
 			this.setDead();
 			ExplosionLarge.explode(world, thrower, posX, posY, posZ, 20F, true, false, false);
 		}
@@ -201,6 +167,11 @@ public class EntityMissileAntiBallistic extends EntityThrowableInterp implements
 	public void writeEntityToNBT(NBTTagCompound nbt) {
 		super.writeEntityToNBT(nbt);
 		nbt.setDouble("veloc", this.velocity);
+	}
+
+	@Override
+	public boolean shouldBootstrapChunkLoader() {
+		return loaderTicket == null && !awaitingTicketRestore;
 	}
 
 	@Override

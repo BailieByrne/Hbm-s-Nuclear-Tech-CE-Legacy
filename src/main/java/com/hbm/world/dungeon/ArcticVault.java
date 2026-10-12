@@ -6,7 +6,6 @@ import com.hbm.lib.Library;
 import com.hbm.main.MainRegistry;
 import com.hbm.world.generator.DungeonToolbox;
 import com.hbm.world.phased.AbstractPhasedStructure;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.BlockStoneBrick;
 import net.minecraft.block.material.Material;
@@ -38,19 +37,18 @@ public class ArcticVault extends AbstractPhasedStructure {
     }
 
     @Override
+    protected int getGenerationHeightOffset() {
+        return -1;
+    }
+
+    @Override
     public boolean checkSpawningConditions(@NotNull World world, long serialized) {
         int x = Library.getBlockPosX(serialized);
         int y = Library.getBlockPosY(serialized);
         int z = Library.getBlockPosZ(serialized);
         BlockPos.MutableBlockPos pos = this.mutablePos;
-        return world.getBiome(pos.setPos(x, y - 1, z)).getTemperature(pos.setPos(x, y, z)) < 0.2 && world.getBlockState(pos.setPos(x, y - 1, z)).getMaterial() == Material.ROCK;
-    }
-
-    @Override
-    public @NotNull LongArrayList getHeightPoints(long origin) {
-        LongArrayList points = new LongArrayList(1);
-        points.add(origin);
-        return points;
+        pos.setPos(x, y, z);
+        return world.getBiome(pos).getTemperature(pos) < 0.2 && world.getBlockState(pos).getMaterial() == Material.ROCK;
     }
 
     @Override
