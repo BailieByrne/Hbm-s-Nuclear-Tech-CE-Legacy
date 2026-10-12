@@ -11,6 +11,7 @@ import com.hbm.items.weapon.sedna.factory.GunFactory;
 import com.hbm.lib.HBMSoundHandler;
 import com.hbm.lib.ModDamageSource;
 import com.hbm.main.AdvancementManager;
+import com.hbm.main.MainRegistry;
 import com.hbm.packet.toclient.AuxParticlePacketNT;
 import com.hbm.particle.helper.HbmEffectNT;
 import com.hbm.util.ContaminationUtil;
@@ -23,6 +24,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
@@ -114,7 +116,8 @@ public class EntityCreeperNuclear extends EntityCreeper {
 			boolean flag = ForgeEventFactory.getMobGriefingEvent(this.world, this);
 
 			if (this.getPowered()) {
-                PacketThreading.createAllAroundThreadedPacket(new AuxParticlePacketNT(HbmEffectNT.TinyTot, null, posX, posY + 0.5, posZ), new NetworkRegistry.TargetPoint(dimension, posX, posY, posZ, 250));
+                MainRegistry.logger.info("[NUCLEAR CREEPER] Powered nuclear creeper detonating at {} / {} / {} in dimension {}", posX, posY, posZ, dimension);
+                PacketThreading.createAllAroundThreadedPacket(new AuxParticlePacketNT(HbmEffectNT.Muke, new NBTTagCompound(), posX, posY + 0.5, posZ), new NetworkRegistry.TargetPoint(dimension, posX, posY, posZ, 250));
                 world.playSound(null, posX, posY + 0.5, posZ, HBMSoundHandler.mukeExplosion, SoundCategory.HOSTILE, 15.0F, 1.0F);
 
                 if (flag) {

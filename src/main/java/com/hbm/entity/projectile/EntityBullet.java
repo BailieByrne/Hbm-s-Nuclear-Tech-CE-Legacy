@@ -2,6 +2,7 @@ package com.hbm.entity.projectile;
 
 import com.hbm.blocks.ModBlocks;
 import com.hbm.blocks.bomb.BlockDetonatable;
+import com.hbm.blocks.generic.BlockMetalFence;
 import com.hbm.blocks.generic.RedBarrel;
 import com.hbm.config.CompatibilityConfig;
 import com.hbm.entity.mob.EntityCreeperNuclear;
@@ -303,7 +304,7 @@ public class EntityBullet extends Entity implements IProjectile {
 		if (blockstate.getMaterial() != Material.AIR) {
 			AxisAlignedBB axisalignedbb = blockstate.getCollisionBoundingBox(this.world, bulletTilePos);
 
-			if (axisalignedbb != Block.NULL_AABB && axisalignedbb.offset(bulletTilePos).contains(new Vec3d(this.posX, this.posY, this.posZ)) && !this.getIsCritical()) {
+			if (!(block instanceof BlockMetalFence) && axisalignedbb != Block.NULL_AABB && axisalignedbb.offset(bulletTilePos).contains(new Vec3d(this.posX, this.posY, this.posZ)) && !this.getIsCritical()) {
 				this.inGround = true;
 			}
 

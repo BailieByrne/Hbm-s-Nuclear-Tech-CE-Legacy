@@ -1,6 +1,7 @@
 package com.hbm.entity.projectile;
 
 import com.hbm.interfaces.AutoRegister;
+import com.hbm.lib.Library;
 import com.hbm.items.weapon.sedna.BulletConfig;
 import com.hbm.util.BobMathUtil;
 import com.hbm.util.TrackerUtil;
@@ -14,6 +15,7 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.network.play.server.SPacketEntityTeleport;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
@@ -33,6 +35,11 @@ public class EntityBulletBaseMK4 extends EntityThrowableInterp implements IEntit
     public float damage;
     public int ricochets = 0;
     public Entity lockonTarget = null;
+
+    @Override
+    protected RayTraceResult rayTraceBlocks(Vec3d start, Vec3d end) {
+        return Library.rayTraceBlocksForProjectile(world, start, end, false, true, false);
+    }
 
 
     public EntityBulletBaseMK4(World world) {

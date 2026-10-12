@@ -118,6 +118,8 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
                     .inputItems(new OreDictStack(ANY_PLASTIC.ingot(), 2), new ComparableStack(ModItems.circuit, 3, EnumCircuitType.CHIP), new OreDictStack(SR.dust(), 1)));
             this.register(new GenericRecipe("ass.flashdrive").setup(100, 250).outputItems(DictFrame.fromOne(ModItems.drive, EnumDriveType.FLASH_EMPTY))
                     .inputItems(new OreDictStack(ANY_PLASTIC.ingot(), 2), new ComparableStack(ModItems.circuit, 1, EnumCircuitType.CHIP), new OreDictStack(GOLD.plate())));
+            this.register(new GenericRecipe("ass.diskdrive").setup(200, 250).outputItems(DictFrame.fromOne(ModItems.drive, EnumDriveType.DISK_EMPTY))
+                    .inputItems(new OreDictStack(ANY_PLASTIC.ingot(), 8), new ComparableStack(ModItems.circuit, 1, EnumCircuitType.BASIC), new OreDictStack(ND.wireDense())));
 
             // alternates
             this.register(new GenericRecipe("ass.analogAlt").setupNamed(200, 250).outputItems(DictFrame.fromOne(ModItems.circuit, EnumCircuitType.ANALOG))
