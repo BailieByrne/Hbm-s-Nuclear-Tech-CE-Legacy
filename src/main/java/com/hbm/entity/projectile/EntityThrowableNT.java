@@ -189,7 +189,7 @@ public abstract class EntityThrowableNT extends Entity implements IProjectile, I
 
         RayTraceResult mop = null;
         if (!isSpectral()) {
-            mop = Library.rayTraceBlocks(world, pos, nextPos, false, true, false);
+            mop = rayTraceBlocks(pos, nextPos);
         }
         //Looks fine too theres no Float divs,
 
@@ -223,6 +223,7 @@ public abstract class EntityThrowableNT extends Entity implements IProjectile, I
                         onImpact(new RayTraceResult(entity, hitMop.hitVec));
                     }
                 }
+
             }
         }
 
@@ -273,6 +274,10 @@ public abstract class EntityThrowableNT extends Entity implements IProjectile, I
         motionY -= gravity;
 
         setPosition(posX, posY, posZ);
+    }
+
+    protected RayTraceResult rayTraceBlocks(Vec3d start, Vec3d end) {
+        return Library.rayTraceBlocks(world, start, end, false, true, false);
     }
 
     public boolean doesImpactEntities() {

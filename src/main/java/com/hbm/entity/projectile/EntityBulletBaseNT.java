@@ -21,6 +21,7 @@ import com.hbm.handler.threading.PacketThreading;
 import com.hbm.interfaces.AutoRegister;
 import com.hbm.items.weapon.sedna.ItemGunBaseSedna;
 import com.hbm.lib.HBMSoundHandler;
+import com.hbm.lib.Library;
 import com.hbm.main.MainRegistry;
 import com.hbm.packet.toclient.AuxParticlePacketNT;
 import com.hbm.particle.helper.HbmEffectNT;
@@ -86,6 +87,11 @@ public class EntityBulletBaseNT extends EntityThrowableInterp implements IBullet
 
     public BulletConfiguration getConfig() {
         return config;
+    }
+
+    @Override
+    protected RayTraceResult rayTraceBlocks(Vec3d start, Vec3d end) {
+        return Library.rayTraceBlocksForProjectile(world, start, end, false, true, false);
     }
 
     public EntityBulletBaseNT(World world) {
