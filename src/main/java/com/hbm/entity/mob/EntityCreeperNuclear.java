@@ -114,7 +114,7 @@ public class EntityCreeperNuclear extends EntityCreeper {
 			boolean flag = ForgeEventFactory.getMobGriefingEvent(this.world, this);
 
 			if (this.getPowered()) {
-                PacketThreading.createAllAroundThreadedPacket(new AuxParticlePacketNT(HbmEffectNT.Muke, null, posX, posY + 0.5, posZ), new NetworkRegistry.TargetPoint(dimension, posX, posY, posZ, 250));
+                PacketThreading.createAllAroundThreadedPacket(new AuxParticlePacketNT(HbmEffectNT.TinyTot, null, posX, posY + 0.5, posZ), new NetworkRegistry.TargetPoint(dimension, posX, posY, posZ, 250));
                 world.playSound(null, posX, posY + 0.5, posZ, HBMSoundHandler.mukeExplosion, SoundCategory.HOSTILE, 15.0F, 1.0F);
 
                 if (flag) {

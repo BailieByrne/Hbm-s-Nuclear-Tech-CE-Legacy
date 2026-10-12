@@ -1708,7 +1708,7 @@ public class Library {
             }
         }
 
-        if (startState != AIR_DEFAULT_STATE) {
+        if (startState != AIR_DEFAULT_STATE && blockFilter.test(startState)) {
             if ((!ignoreBlockWithoutBoundingBox || startState.getCollisionBoundingBox(world, pos) != Block.NULL_AABB) && startState.getBlock().canCollideCheck(startState, stopOnLiquid)) {
                 RayTraceResult hit = startState.collisionRayTrace(world, pos, startVec, endVec);
                 //noinspection ConstantValue
