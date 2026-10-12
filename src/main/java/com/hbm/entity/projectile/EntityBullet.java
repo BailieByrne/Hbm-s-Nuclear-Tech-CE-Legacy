@@ -8,6 +8,7 @@ import com.hbm.entity.mob.EntityCreeperNuclear;
 import com.hbm.handler.ArmorUtil;
 import com.hbm.interfaces.AutoRegister;
 import com.hbm.items.ModItems;
+import com.hbm.lib.Library;
 import com.hbm.lib.ModDamageSource;
 import com.hbm.packet.PacketDispatcher;
 import com.hbm.packet.toclient.ParticleBurstPacket;
