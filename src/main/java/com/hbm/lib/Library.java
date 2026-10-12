@@ -9,6 +9,7 @@ import com.hbm.api.energymk2.IEnergyConnectorMK2;
 import com.hbm.api.fluidmk2.IFluidConnectorBlockMK2;
 import com.hbm.api.fluidmk2.IFluidConnectorMK2;
 import com.hbm.blocks.ModBlocks;
+import com.hbm.blocks.generic.BlockMetalFence;
 import com.hbm.capability.HbmLivingCapability.EntityHbmPropsProvider;
 import com.hbm.capability.HbmLivingCapability.IEntityHbmProps;
 import com.hbm.capability.NTMFluidCapabilityHandler;
@@ -1614,6 +1615,11 @@ public class Library {
     }
 
     @Nullable
+    public static RayTraceResult rayTraceBlocksForProjectile(@NotNull World world, @NotNull Vec3d startVec, @NotNull Vec3d endVec, boolean stopOnLiquid, boolean ignoreBlockWithoutBoundingBox, boolean returnLastUncollidableBlock) {
+        return rayTraceBlocksInternal(world, startVec, endVec, stopOnLiquid, ignoreBlockWithoutBoundingBox, returnLastUncollidableBlock, 200, state -> !(state.getBlock() instanceof BlockMetalFence));
+    }
+
+    @Nullable
     public static RayTraceResult rayTraceBlocks(@NotNull World world, @NotNull Vec3d startVec, @NotNull Vec3d endVec, boolean stopOnLiquid, boolean ignoreBlockWithoutBoundingBox, boolean returnLastUncollidableBlock, int maxSteps) {
         return rayTraceBlocksInternal(world, startVec, endVec, stopOnLiquid, ignoreBlockWithoutBoundingBox, returnLastUncollidableBlock, maxSteps);
     }
@@ -1626,6 +1632,11 @@ public class Library {
 
     @Nullable
     private static RayTraceResult rayTraceBlocksInternal(@NotNull World world, @NotNull Vec3d startVec, @NotNull Vec3d endVec, boolean stopOnLiquid, boolean ignoreBlockWithoutBoundingBox, boolean returnLastUncollidableBlock, int maxSteps) {
+        return rayTraceBlocksInternal(world, startVec, endVec, stopOnLiquid, ignoreBlockWithoutBoundingBox, returnLastUncollidableBlock, maxSteps, state -> true);
+    }
+
+    @Nullable
+    private static RayTraceResult rayTraceBlocksInternal(@NotNull World world, @NotNull Vec3d startVec, @NotNull Vec3d endVec, boolean stopOnLiquid, boolean ignoreBlockWithoutBoundingBox, boolean returnLastUncollidableBlock, int maxSteps, Predicate<? super IBlockState> blockFilter) {
         if (Double.isNaN(startVec.x) || Double.isNaN(startVec.y) || Double.isNaN(startVec.z) || Double.isNaN(endVec.x) || Double.isNaN(endVec.y) || Double.isNaN(endVec.z)) {
             return null;
         }
@@ -1822,7 +1833,7 @@ public class Library {
             if (!ignoreBlockWithoutBoundingBox || state.getMaterial() == Material.PORTAL || state.getCollisionBoundingBox(world, pos) != Block.NULL_AABB) {
                 Block block = state.getBlock();
 
-                if (block.canCollideCheck(state, stopOnLiquid)) {
+                if (blockFilter.test(state) && block.canCollideCheck(state, stopOnLiquid)) {
                     stepStart.set(curX, curY, curZ);
                     RayTraceResult hit = state.collisionRayTrace(world, pos, stepStart, endVec);
                     //noinspection ConstantValue

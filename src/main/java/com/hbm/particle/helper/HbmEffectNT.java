@@ -414,7 +414,7 @@ public enum HbmEffectNT {
         Muke.setHandler((world, x, y, z, data) -> {
             EntityPlayer player = Minecraft.getMinecraft().player;
             ParticleMukeWave wave = new ParticleMukeWave(world, x, y, z);
-            ParticleMukeFlash flash = new ParticleMukeFlash(world, x, y, z, data.getBoolean("balefire"));
+            ParticleMukeFlash flash = new ParticleMukeFlash(world, x, y, z, data != null && data.getBoolean("balefire"));
 
             Minecraft.getMinecraft().effectRenderer.addEffect(wave);
             Minecraft.getMinecraft().effectRenderer.addEffect(flash);
