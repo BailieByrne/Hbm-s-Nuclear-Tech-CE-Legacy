@@ -3,8 +3,10 @@ package com.hbm.blocks.machine;
 import com.hbm.blocks.BlockDummyable;
 import com.hbm.blocks.IPersistentInfoProvider;
 import com.hbm.blocks.ModBlocks;
+import com.hbm.inventory.fluid.FluidType;
 import com.hbm.inventory.fluid.Fluids;
 import com.hbm.inventory.fluid.tank.FluidTankNTM;
+import com.hbm.items.machine.IItemFluidIdentifier;
 import com.hbm.lib.ForgeDirection;
 import com.hbm.main.MainRegistry;
 import com.hbm.tileentity.TileEntityProxyCombo;
@@ -19,6 +21,10 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.internal.FMLNetworkHandler;
 
@@ -28,23 +34,6 @@ public class MachineOrbus extends BlockDummyable implements IPersistentInfoProvi
 
 	public MachineOrbus(Material mat, String s) {
 		super(mat, s);
-	}
-
-	@Override
-	public boolean hasComparatorInputOverride(IBlockState state) {
-		return true;
-	}
-	@Override
-	public int getComparatorInputOverride(IBlockState blockState, World worldIn, BlockPos pos) {
-		TileEntity te = worldIn.getTileEntity(pos);
-		if (te instanceof TileEntityMachineOrbus orbus) {
-			return orbus.tankNew.getRedstoneComparatorPower();
-		}
-		TileEntity core = this.findCoreTE(worldIn, pos);
-		if (core instanceof TileEntityMachineOrbus orbus) {
-			return orbus.tankNew.getRedstoneComparatorPower();
-		}
-		return 0;
 	}
 
 	@Override
@@ -79,6 +68,19 @@ public class MachineOrbus extends BlockDummyable implements IPersistentInfoProvi
 			FMLNetworkHandler.openGui(player, MainRegistry.instance, ModBlocks.guiID_barrel, world, pos[0], pos[1], pos[2]);
 			return true;
 		} else {
+			int[] pos = this.findCore(world, pos1.getX(), pos1.getY(), pos1.getZ());
+			if(pos == null) return false;
+
+			TileEntityMachineOrbus tank = (TileEntityMachineOrbus) world.getTileEntity(new BlockPos(pos[0], pos[1], pos[2]));
+			if(!player.getHeldItem(hand).isEmpty() && player.getHeldItem(hand).getItem() instanceof IItemFluidIdentifier identifier) {
+				FluidType type = identifier.getType(world, pos[0], pos[1], pos[2], player.getHeldItem(hand));
+				tank.tankNew.setTankType(type);
+				tank.markDirty();
+				player.sendMessage(new TextComponentString("Changed type to ")
+						.setStyle(new Style().setColor(TextFormatting.YELLOW))
+						.appendSibling(new TextComponentTranslation(type.getConditionalName()))
+						.appendSibling(new TextComponentString("!")));
+			}
 			return true;
 		}
 	}

@@ -74,6 +74,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -225,6 +226,7 @@ public class MainRegistry {
         MinecraftForge.TERRAIN_GEN_BUS.register(new ModEventHandlerImpact());
         MinecraftForge.EVENT_BUS.register(new PollutionHandler());
         MinecraftForge.EVENT_BUS.register(new DamageResistanceHandler());
+        if (Loader.isModLoaded("srparasites")) MinecraftForge.EVENT_BUS.register(new CompatSRP());
 
         if (event.getSide() == Side.CLIENT) {
             HbmKeybinds keyHandler = new HbmKeybinds();
@@ -260,7 +262,10 @@ public class MainRegistry {
 
         ForgeChunkManager.setForcedChunkLoadingCallback(this, (tickets, world) -> {
             for (Ticket ticket : tickets) {
-
+                if (ticket.getModData().getBoolean("hbmBlastTemporary")) {
+                    ForgeChunkManager.releaseTicket(ticket);
+                    continue;
+                }
                 if (ticket.getEntity() instanceof IChunkLoader) {
                     ((IChunkLoader) ticket.getEntity()).init(ticket);
                 }
@@ -341,15 +346,15 @@ public class MainRegistry {
             World.MAX_ENTITY_RADIUS = 5;
         MinecraftForge.EVENT_BUS.register(new SchistStratum(ModBlocks.stone_gneiss.getDefaultState(), 0.01D, 5, 8, 30)); //DecorateBiomeEvent.Pre
         if (WorldConfig.enableSulfurCave)
-            new OreCave(ModBlocks.stone_resource, 0).setThreshold(1.5D).setRangeMult(20).setYLevel(30).setMaxRange(20).withFluid(ModBlocks.sulfuric_acid_block);    //sulfur
+            new OreCave(ModBlocks.stone_resource, 0).setDimensionGate(dim -> CompatibilityConfig.sulfurSpawn.getOrDefault(dim, 0) > 0).setThreshold(1.5D).setRangeMult(20).setYLevel(30).setMaxRange(20).withFluid(ModBlocks.sulfuric_acid_block);    //sulfur
         if (WorldConfig.enableAsbestosCave)
-            new OreCave(ModBlocks.stone_resource, 1).setThreshold(1.75D).setRangeMult(20).setYLevel(25).setMaxRange(20);                                            //asbestos
+            new OreCave(ModBlocks.stone_resource, 1).setDimensionGate(dim -> CompatibilityConfig.asbestosSpawn.getOrDefault(dim, 0) > 0).setThreshold(1.75D).setRangeMult(20).setYLevel(25).setMaxRange(20);                                            //asbestos
         if (WorldConfig.enableHematite)
             new OreLayer3D(ModBlocks.stone_resource, BlockEnums.EnumStoneType.HEMATITE.ordinal()).setScaleH(0.04D).setScaleV(0.25D).setThreshold(230);
         if (WorldConfig.enableBauxite)
             new OreLayer3D(ModBlocks.stone_resource, BlockEnums.EnumStoneType.BAUXITE.ordinal()).setScaleH(0.03D).setScaleV(0.15D).setThreshold(300);
         if (WorldConfig.enableMalachite)
-            new OreLayer3D(ModBlocks.stone_resource, BlockEnums.EnumStoneType.MALACHITE.ordinal()).setScaleH(0.1D).setScaleV(0.15D).setThreshold(275);
+            new OreLayer3D(ModBlocks.stone_resource, BlockEnums.EnumStoneType.MALACHITE.ordinal()).setDimensionGate(dim -> CompatibilityConfig.malachiteSpawn.getOrDefault(dim, 0) > 0).setScaleH(0.1D).setScaleV(0.15D).setThreshold(275);
 
         proxy.postInit(event);
         AdvGen.generate();

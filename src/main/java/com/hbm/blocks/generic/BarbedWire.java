@@ -44,6 +44,10 @@ public class BarbedWire extends Block {
     public void onEntityCollision(World worldIn, BlockPos pos, IBlockState state, Entity ent) {
         ent.setInWeb();
 
+        ent.motionX *= 0.15D;
+        ent.motionY *= 0.1D;
+        ent.motionZ *= 0.15D;
+
         if (this == ModBlocks.barbed_wire) {
             ent.attackEntityFrom(DamageSource.CACTUS, 2.0F);
         }
@@ -73,7 +77,7 @@ public class BarbedWire extends Block {
         }
 
         if (this == ModBlocks.barbed_wire_wither) {
-            ent.attackEntityFrom(DamageSource.CACTUS, 3.0F);
+            ent.attackEntityFrom(DamageSource.CACTUS, 2.0F);
 
             if (ent instanceof EntityLivingBase)
                 ((EntityLivingBase) ent).addPotionEffect(new PotionEffect(MobEffects.WITHER, 5 * 20, 4));

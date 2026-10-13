@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.items.machine.IItemFluidIdentifier;
@@ -14,7 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerPWR extends Container {
+public class ContainerPWR extends Container implements IAutoRoutingContainer {
 
     TileEntityPWRController controller;
 
@@ -51,4 +52,9 @@ public class ContainerPWR extends Container {
         return controller.isUseableByPlayer(player);
     }
 
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

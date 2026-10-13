@@ -25,7 +25,7 @@ public class ModDamageSource extends DamageSource {
     public static DamageSource boat = (new DamageSource("boat")).setDamageIsAbsolute().setDamageBypassesArmor();
     public static DamageSource building = (new DamageSource("building")).setDamageIsAbsolute().setDamageBypassesArmor();
     public static DamageSource taint = (new DamageSource("taint")).setDamageIsAbsolute().setDamageBypassesArmor();
-    public static DamageSource ams = (new DamageSource("ams")).setDamageIsAbsolute().setDamageBypassesArmor().setDamageAllowedInCreativeMode();
+    public static DamageSource ams = (new DamageSource("ams")).setDamageIsAbsolute().setDamageBypassesArmor();
     public static DamageSource amsCore = (new DamageSource("amsCore")).setDamageIsAbsolute().setDamageBypassesArmor();
     public static DamageSource broadcast = (new DamageSource("broadcast")).setDamageIsAbsolute().setDamageBypassesArmor();
     public static DamageSource bang = (new DamageSource("bang")).setDamageIsAbsolute().setDamageBypassesArmor();
@@ -79,7 +79,7 @@ public class ModDamageSource extends DamageSource {
     }
     public static DamageSource causeTauDamage(Entity p_76353_0_, Entity p_76353_1_)
     {
-        return new EntityDamageSourceIndirect("tau", p_76353_0_, p_76353_1_).setProjectile().setDamageBypassesArmor().setDamageIsAbsolute();
+        return new EntityDamageSourceIndirect("tau", p_76353_0_, p_76353_1_).setProjectile().setDamageBypassesArmor();
     }
     public static DamageSource causeCombineDamage(Entity p_76353_0_, Entity p_76353_1_)
     {

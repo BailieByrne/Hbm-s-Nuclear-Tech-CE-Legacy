@@ -238,7 +238,7 @@ public class ModEventHandler {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void worldUnload(WorldEvent.Unload e) {
         BombForkJoinPool.onWorldUnload(e.getWorld());
         ClimbableRegistry.clearDimension(e.getWorld());
@@ -1278,19 +1278,8 @@ public class ModEventHandler {
             AdvancementManager.grantAchievement(playerMP, AdvancementManager.achStratum);
             event.setExpToDrop(500);
         }
-        if (GeneralConfig.enableCoalGas && (block == Blocks.COAL_ORE || block == Blocks.COAL_BLOCK || block == ModBlocks.ore_lignite)) {// Spawn coal gas in adjacent air blocks
-            for (EnumFacing dir : EnumFacing.VALUES) {
-                if (world.rand.nextInt(2) == 0) {
-                    BlockPos adjacentPos = pos.offset(dir);
-                    DelayedTick.nextWorldTickEnd(world, w -> {
-                        IBlockState adjacentState = w.getBlockState(adjacentPos);
-                        if (adjacentState.getBlock().isAir(adjacentState, w, adjacentPos)) {
-                            w.setBlockState(adjacentPos, ModBlocks.gas_coal.getDefaultState(), 3);
-                        }
-                    });
-                }
-            }
-        }
+        if (GeneralConfig.enableCoalGas && (block == Blocks.COAL_ORE || block == Blocks.COAL_BLOCK || block == ModBlocks.ore_lignite)
+                && (player.isCreative() || !block.canHarvestBlock(world, pos, player))) releaseCoalGas(world, pos, block);
         if (RadiationConfig.enablePollution && RadiationConfig.enableLeadFromBlocks && !ArmorRegistry.hasProtection(player, EntityEquipmentSlot.HEAD, HazardClass.PARTICLE_FINE)) {
             float metalPollution = PollutionHandler.getPollution(world, pos, PollutionHandler.PollutionType.HEAVYMETAL);
             if (!(metalPollution < 5.0f)) {
@@ -1303,6 +1292,31 @@ public class ModEventHandler {
                     amplifier = 2;
                 }
                 player.addPotionEffect(new PotionEffect(HbmPotion.lead, 100, amplifier));
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void coalHarvest(BlockEvent.HarvestDropsEvent event) {
+        if (event.getHarvester() instanceof EntityPlayerMP) {
+            releaseCoalGas(event.getWorld(), event.getPos(), event.getState().getBlock());
+        }
+    }
+
+    private static void releaseCoalGas(World world, BlockPos pos, Block block) {
+        if (!GeneralConfig.enableCoalGas || (block != Blocks.COAL_ORE && block != Blocks.COAL_BLOCK && block != ModBlocks.ore_lignite)) return;
+        for (EnumFacing dir : EnumFacing.VALUES) {
+            if (world.rand.nextInt(2) == 0) {
+                BlockPos adjacentPos = pos.offset(dir);
+                DelayedTick.nextWorldTickEnd(world, w -> {
+                    // Creative and unharvestable breaks have no harvest callback; a later protection
+                    // handler can still cancel their BreakEvent before the block is removed.
+                    if (w.getBlockState(pos).getBlock() == block) return;
+                    IBlockState adjacentState = w.getBlockState(adjacentPos);
+                    if (adjacentState.getBlock().isAir(adjacentState, w, adjacentPos)) {
+                        w.setBlockState(adjacentPos, ModBlocks.gas_coal.getDefaultState(), 3);
+                    }
+                });
             }
         }
     }
@@ -1519,6 +1533,12 @@ public class ModEventHandler {
         IHBMData oldData = HbmCapability.getData(event.getOriginal());
         IHBMData newData = HbmCapability.getData(event.getEntityPlayer());
         newData.setReceivedBook(oldData.hasReceivedBook());
+        newData.setMaxShield(oldData.getMaxShield());
+        newData.setShield(oldData.getShield());
+        newData.setEnableBackpack(oldData.getEnableBackpack());
+        newData.setEnableHUD(oldData.getEnableHUD());
+        newData.setEnableMagnet(oldData.getEnableMagnet());
+        newData.setReputation(oldData.getReputation());
     }
 
     // TODO should probably use these.

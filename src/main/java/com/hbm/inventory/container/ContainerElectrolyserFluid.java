@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotFiltered;
@@ -14,7 +15,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
-public class ContainerElectrolyserFluid extends Container {
+public class ContainerElectrolyserFluid extends Container implements IAutoRoutingContainer {
 
     private TileEntityElectrolyser electrolyser;
 
@@ -73,5 +74,10 @@ public class ContainerElectrolyserFluid extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return electrolyser.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

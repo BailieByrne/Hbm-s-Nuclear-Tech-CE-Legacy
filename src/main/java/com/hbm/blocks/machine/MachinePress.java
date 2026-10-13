@@ -3,7 +3,6 @@ package com.hbm.blocks.machine;
 import com.hbm.api.block.IToolable;
 import com.hbm.blocks.BlockDummyable;
 import com.hbm.tileentity.TileEntityProxyCombo;
-import com.hbm.tileentity.machine.TileEntityMachineEPress;
 import com.hbm.tileentity.machine.TileEntityMachinePress;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -57,7 +56,7 @@ public class MachinePress extends BlockDummyable implements IToolable {
         if (stack.hasDisplayName()) {
             BlockPos core = this.findCore(worldIn, pos);
             if (core != null) {
-                TileEntityMachineEPress entity = (TileEntityMachineEPress) worldIn.getTileEntity(core);
+                TileEntityMachinePress entity = (TileEntityMachinePress) worldIn.getTileEntity(core);
                 if (entity != null) entity.setCustomName(stack.getDisplayName());
             }
         }

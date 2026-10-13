@@ -1,6 +1,7 @@
 package com.hbm.blocks.network;
 
 import com.hbm.blocks.ILookOverlay;
+import com.hbm.blocks.BlockDummyable;
 import com.hbm.blocks.ModBlocks;
 import com.hbm.inventory.container.ContainerCounterTorch;
 import com.hbm.inventory.gui.GUICounterTorch;
@@ -25,6 +26,7 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.network.internal.FMLNetworkHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.items.CapabilityItemHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -65,10 +67,11 @@ public class RadioTorchCounter extends RadioTorchBase implements IGUIProvider {
     }
 
     public boolean canBlockStay(World world, EnumFacing dir, Block b, BlockPos checkPos, IBlockState checkState) {
-        if (b.isSideSolid(checkState, world, checkPos, dir) || (b.isFullCube(checkState) && !b.isAir(checkState, world, checkPos)))
+        if (b.isSideSolid(checkState, world, checkPos, dir)
+                || (!(b instanceof BlockDummyable) && b.isFullCube(checkState) && !b.isAir(checkState, world, checkPos)))
             return true;
         TileEntity te = Compat.getTileStandard(world, checkPos.getX(), checkPos.getY(), checkPos.getZ());
-        return te instanceof IInventory;
+        return te instanceof IInventory || te != null && te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
     }
 
     @Override

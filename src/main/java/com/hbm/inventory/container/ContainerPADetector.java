@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotFiltered;
@@ -14,7 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerPADetector extends Container {
+public class ContainerPADetector extends Container implements IAutoRoutingContainer {
 
     private final TileEntityPADetector detector;
 
@@ -55,5 +56,10 @@ public class ContainerPADetector extends Container {
     @Override
     public ItemStack transferStackInSlot(EntityPlayer player, int index) {
         return InventoryUtil.transferStack(this.inventorySlots, index, this.TRANSFER_STRATEGY, player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

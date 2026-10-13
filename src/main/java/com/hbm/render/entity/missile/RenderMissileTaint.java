@@ -1,49 +1,73 @@
 package com.hbm.render.entity.missile;
 
-import com.hbm.entity.missile.EntityMissileTier0;
+import org.lwjgl.opengl.GL11;
 import com.hbm.interfaces.AutoRegister;
-import com.hbm.main.ResourceManager;
-import com.hbm.render.NTMRenderHelper;
 import com.hbm.util.RenderUtil;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
-@AutoRegister(factory = "FACTORY")
-public class RenderMissileTaint extends Render<EntityMissileTier0.EntityMissileTaint> {
 
-	public static final IRenderFactory<EntityMissileTier0.EntityMissileTaint> FACTORY = (RenderManager man) -> {return new RenderMissileTaint(man);};
+
+import com.hbm.entity.missile.EntityMissileBaseNT;
+import com.hbm.entity.missile.EntityMissileTier0.*;
+import com.hbm.main.ResourceManager;
+
+import net.minecraft.client.renderer.entity.Render;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.ResourceLocation;
+
+@AutoRegister(entity = EntityMissileTest.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileMicro.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileBHole.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileSchrabidium.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileTaint.class, factory = "FACTORY")
+@AutoRegister(entity = EntityMissileEMP.class, factory = "FACTORY")
+public class RenderMissileTaint extends Render<Entity> {
+    public static final IRenderFactory<Entity> FACTORY = RenderMissileTaint::new;
 	
-	protected RenderMissileTaint(RenderManager renderManager) {
-		super(renderManager);
-	}
+	public RenderMissileTaint(RenderManager manager) { super(manager); }
 
 	@Override
-	public void doRender(EntityMissileTier0.EntityMissileTaint missile, double x, double y, double z, float entityYaw, float partialTicks) {
-		GlStateManager.pushMatrix();
-        boolean prevLighting = RenderUtil.isLightingEnabled();
-        if (!prevLighting) GlStateManager.enableLighting();
-		double[] renderPos = NTMRenderHelper.getRenderPosFromMissile(missile, partialTicks);
-		x = renderPos[0];
-		y = renderPos[1];
-		z = renderPos[2];
-		GlStateManager.translate(x, y, z);
-        GlStateManager.rotate(missile.prevRotationYaw + (missile.rotationYaw - missile.prevRotationYaw) * partialTicks - 90.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(missile.prevRotationPitch + (missile.rotationPitch - missile.prevRotationPitch) * partialTicks, 0.0F, 0.0F, 1.0F);
-        GlStateManager.scale(2F, 2F, 2F);
+	public void doRender(Entity entity, double x, double y, double z, float p_76986_8_, float interp) {
 
-        GlStateManager.disableCull();
-        bindTexture(getEntityTexture(missile));
-        ResourceManager.missileTaint.renderAll();
-        GlStateManager.enableCull();
-        if (!prevLighting) GlStateManager.disableLighting();
+		GlStateManager.pushMatrix();
+        boolean previousLighting = RenderUtil.isLightingEnabled();
+        int previousShade = RenderUtil.getShadeModel();
+        if (!previousLighting) GlStateManager.enableLighting();
+		GlStateManager.translate((float) x, (float) y, (float) z);
+		GlStateManager.rotate(entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * interp - 90.0F, 0.0F, 1.0F, 0.0F);
+		GlStateManager.rotate(entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * interp, 0.0F, 0.0F, 1.0F);
+		GlStateManager.rotate(entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * interp - 90.0F, 0.0F, -1.0F, 0.0F);
+
+		if(entity instanceof EntityMissileBaseNT) switch(entity.getDataManager().get(EntityMissileBaseNT.ROT_IDX)) {
+		case 2: GlStateManager.rotate(90, 0F, 1F, 0F); break;
+		case 4: GlStateManager.rotate(180, 0F, 1F, 0F); break;
+		case 3: GlStateManager.rotate(270, 0F, 1F, 0F); break;
+		case 5: GlStateManager.rotate(0, 0F, 1F, 0F); break;
+		}
+
+		GlStateManager.enableCull();
+		bindTexture(getEntityTexture(entity));
+		GlStateManager.shadeModel(GL11.GL_SMOOTH);
+		ResourceManager.missileMicro.renderAll();
+		GlStateManager.shadeModel(previousShade);
+        if (!previousLighting) GlStateManager.disableLighting();
 		GlStateManager.popMatrix();
 	}
-	
-	@Override
-	protected ResourceLocation getEntityTexture(EntityMissileTier0.EntityMissileTaint entity) {
-		return ResourceManager.missileTaint_tex;
-	}
 
+	@Override
+	protected ResourceLocation getEntityTexture(Entity p_110775_1_) {
+		if(p_110775_1_ instanceof EntityMissileTaint)
+			return ResourceManager.missileTaint_tex;
+		if(p_110775_1_ instanceof EntityMissileBHole)
+			return ResourceManager.missileMicroBHole_tex;
+		if(p_110775_1_ instanceof EntityMissileSchrabidium)
+			return ResourceManager.missileMicroSchrab_tex;
+		if(p_110775_1_ instanceof EntityMissileEMP)
+			return ResourceManager.missileMicroEMP_tex;
+		if(p_110775_1_ instanceof EntityMissileTest)
+			return ResourceManager.missileMicroTest_tex;
+
+		return ResourceManager.missileMicro_tex;
+	}
 }

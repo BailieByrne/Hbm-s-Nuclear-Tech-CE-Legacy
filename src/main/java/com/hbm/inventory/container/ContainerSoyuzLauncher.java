@@ -1,6 +1,7 @@
 package com.hbm.inventory.container;
 
 import com.hbm.api.item.IDesignatorItem;
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotFiltered;
@@ -17,10 +18,14 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerSoyuzLauncher extends Container {
+public class ContainerSoyuzLauncher extends Container implements IAutoRoutingContainer {
 
-	private TileEntitySoyuzLauncher launcher;
-    private final TransferStrategy transferStrategy = TransferStrategy.builder(27)
+	public final TileEntitySoyuzLauncher launcher;
+    private final TransferStrategy transferStrategy;
+
+	public ContainerSoyuzLauncher(InventoryPlayer invPlayer, TileEntitySoyuzLauncher tedf) {
+		launcher = tedf;
+        transferStrategy = TransferStrategy.builder(27)
                                                                       .rule(0, 1, s -> s.getItem() instanceof ItemSoyuz)
                                                                       .rule(1, 2, s -> s.getItem() instanceof IDesignatorItem)
                                                                       .rule(2, 3, s -> s.getItem() instanceof ISatChip)
@@ -30,10 +35,6 @@ public class ContainerSoyuzLauncher extends Container {
                                                                       .rule(8, 9, Library::isBattery)
                                                                       .genericMachineRange(9)
                                                                       .build();
-
-	public ContainerSoyuzLauncher(InventoryPlayer invPlayer, TileEntitySoyuzLauncher tedf) {
-
-		launcher = tedf;
 
 		//Soyuz
 		this.addSlotToContainer(new SlotItemHandler(tedf.inventory, 0, 98, 80));
@@ -85,4 +86,9 @@ public class ContainerSoyuzLauncher extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return launcher.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

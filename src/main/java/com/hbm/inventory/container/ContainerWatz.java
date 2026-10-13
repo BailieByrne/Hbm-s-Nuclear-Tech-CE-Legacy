@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.machine.TileEntityWatz;
 import com.hbm.util.InventoryUtil;
@@ -10,7 +11,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerWatz extends Container {
+public class ContainerWatz extends Container implements IAutoRoutingContainer {
 
 	protected TileEntityWatz watz;
 
@@ -52,4 +53,9 @@ public class ContainerWatz extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return watz.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

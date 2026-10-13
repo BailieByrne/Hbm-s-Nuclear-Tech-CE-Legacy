@@ -217,7 +217,7 @@ public class CompatibilityConfig {
 		aluminiumClusterSpawn = CommonConfig.createConfigHashMap(config, CommonConfig.CATEGORY_ORES, "01.24_aluminiumClusterSpawn", "Amount of aluminium cluster veins per chunk - <dimID:amount> (Int:Int)", Integer.class, Integer.class, new String[]{ "0:3", "-6:3" }, ":");
 		copperClusterSpawn = CommonConfig.createConfigHashMap(config, CommonConfig.CATEGORY_ORES, "01.24_copperClusterSpawn", "Amount of copper cluster veins per chunk - <dimID:amount> (Int:Int)", Integer.class, Integer.class, new String[]{ "0:3", "-6:3" }, ":");
 		
-		malachiteSpawn = CommonConfig.createConfigHashMap(config, CommonConfig.CATEGORY_ORES, "01.24_malachiteSpawn", "Amount of malachite veins per chunk - <dimID:amount> (Int:Int)", Integer.class, Integer.class, new String[]{ "0:1" }, ":");
+		malachiteSpawn = CommonConfig.createConfigHashMap(config, CommonConfig.CATEGORY_ORES, "01.24_malachiteSpawn", "Malachite layer dimensions: missing or nonpositive disables, positive enables normal density - <dimID:value> (Int:Int)", Integer.class, Integer.class, new String[]{ "0:1" }, ":");
 		
 		reiiumSpawn = CommonConfig.createConfigHashMap(config, CommonConfig.CATEGORY_ORES, "01.25_reiiumSpawnRate", "Amount of reiium ore veins per chunk - <dimID:amount> (Int:Int)", Integer.class, Integer.class, new String[]{ "-29:1" }, ":");
 		weidaniumSpawn = CommonConfig.createConfigHashMap(config, CommonConfig.CATEGORY_ORES, "01.26_weidaniumSpawnRate", "Amount of weidanium ore veins per chunk - <dimID:amount> (Int:Int)", Integer.class, Integer.class, new String[]{ "-31:1" }, ":");

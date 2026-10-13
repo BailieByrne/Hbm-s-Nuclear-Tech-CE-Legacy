@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.machine.TileEntityFireboxBase;
 import com.hbm.util.InventoryUtil;
@@ -10,7 +11,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerFirebox extends Container {
+public class ContainerFirebox extends Container implements IAutoRoutingContainer {
 
 	protected TileEntityFireboxBase firebox;
 
@@ -51,4 +52,9 @@ public class ContainerFirebox extends Container {
 		super.onContainerClosed(player);
 		this.firebox.playersUsing--;
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

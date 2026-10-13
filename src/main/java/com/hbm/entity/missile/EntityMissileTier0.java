@@ -49,7 +49,7 @@ public abstract class EntityMissileTier0 extends EntityMissileBaseNT {
 		public EntityMissileTest(World world) { super(world); }
 		public EntityMissileTest(World world, float x, float y, float z, int a, int b) { super(world, x, y, z, a, b); }
 		@Override public ItemStack getDebrisRareDrop() { return null; }
-		@Override public ItemStack getMissileItemForInfo() { return new ItemStack(ModItems.missile_micro); }
+		@Override public ItemStack getMissileItemForInfo() { return new ItemStack(ModItems.missile_test); }
 
 		@Override public void onMissileImpact(RayTraceResult mop) {
 			if(this.world.isRemote) return;
@@ -138,12 +138,12 @@ public abstract class EntityMissileTier0 extends EntityMissileBaseNT {
 		public EntityMissileTaint(World world) { super(world); }
 		public EntityMissileTaint(World world, float x, float y, float z, int a, int b) { super(world, x, y, z, a, b); }
 		@Override public void onMissileImpact(RayTraceResult mop) {
-			this.world.createExplosion(this, this.posX, this.posY, this.posZ, 10.0F, true);
+			this.world.createExplosion(this, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z, 5.0F, true);
             BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
             for(int i = 0; i < 100; i++) {
-				int a = rand.nextInt(11) + (int) this.posX - 5;
-				int b = rand.nextInt(11) + (int) this.posY - 5;
-				int c = rand.nextInt(11) + (int) this.posZ - 5;
+				int a = rand.nextInt(11) + mop.getBlockPos().getX() - 5;
+				int b = rand.nextInt(11) + mop.getBlockPos().getY() - 5;
+				int c = rand.nextInt(11) + mop.getBlockPos().getZ() - 5;
 				pos.setPos(a, b, c);
                 IBlockState state = world.getBlockState(pos);
 				if(state.isNormalCube() && !state.getBlock().isAir(state, world, pos))

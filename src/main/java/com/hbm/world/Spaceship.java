@@ -875,14 +875,14 @@ public class Spaceship extends AbstractPhasedStructure {
 		world.setBlockState(pos.setPos(x + 10, y + -1, z + 29), Block3.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 11, y + -1, z + 29), Block3.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 2, y + -1, z + 30), Block3.getDefaultState(), 3);
-		world.setBlockState(pos.setPos(x + 3, y + -1, z + 30), ModBlocks.machine_generator.getDefaultState(), 3);
+		world.setBlockState(pos.setPos(x + 3, y + -1, z + 30), ModBlocks.pwr_control.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 4, y + -1, z + 30), ModBlocks.red_cable.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 5, y + -1, z + 30), Blocks.AIR.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 6, y + -1, z + 30), Blocks.AIR.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 7, y + -1, z + 30), Blocks.AIR.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 8, y + -1, z + 30), Blocks.AIR.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 9, y + -1, z + 30), ModBlocks.red_cable.getDefaultState(), 3);
-		world.setBlockState(pos.setPos(x + 10, y + -1, z + 30), ModBlocks.machine_generator.getDefaultState(), 3);
+		world.setBlockState(pos.setPos(x + 10, y + -1, z + 30), ModBlocks.pwr_control.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 11, y + -1, z + 30), Block3.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 2, y + -1, z + 31), Block2.getDefaultState(), 3);
 		world.setBlockState(pos.setPos(x + 3, y + -1, z + 31), Block3.getDefaultState(), 3);

@@ -19,6 +19,7 @@ import com.hbm.lib.queues.MpscUnboundedXaddArrayLongQueue;
 import com.hbm.main.MainRegistry;
 import com.hbm.util.ChunkUtil;
 import com.hbm.util.CompatDynamicTrees;
+import com.hbm.util.SectionGeneration;
 import com.hbm.world.WorldUtil;
 import com.hbm.world.biome.BiomeGenCraterBase;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -94,6 +95,7 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
     NonBlockingLong2LongHashMap waitingRoom;
     Long2IntOpenHashMap sectionMaskByChunk;
     MainScratch mainScratch;
+    final ArrayDeque<PreparedPublication> publications = new ArrayDeque<>();
     @SuppressWarnings("unused")
     volatile int pendingChunks, pendingMainThreadNotifies, finished, mapAcquired, finishQueued, poolAcquired, activeWorkers, jobRegistered;
     @SuppressWarnings("unused")
@@ -106,6 +108,7 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
     int workerTarget;
     int snapshotsInFlight;
     int jobDimension = Integer.MIN_VALUE;
+    boolean generationHeld;
 
     int tickDelay = BombConfig.falloutDelay;
     boolean biomeChange = true;
@@ -217,6 +220,16 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
         long idleDeadline = 0;
         while (System.nanoTime() < deadline) {
             if (finished != 0) break;
+            if (!publications.isEmpty()) {
+                try {
+                    if (!publications.peekFirst().publishIfReady()) break;
+                    publications.removeFirst();
+                    continue;
+                } catch (RuntimeException | Error failure) {
+                    try { setDead(); } catch (RuntimeException | Error cleanup) { failure.addSuppressed(cleanup); }
+                    throw failure;
+                }
+            }
             Runnable r = mainTasks.relaxedPoll();
             if (r != null) {
                 r.run();
@@ -275,14 +288,26 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
         workerInnerSize = innerSize;
         workerOuterSize = outerSize;
         workerTarget = Math.max(1, Math.min(workers, total));
-        registerJobIfNeeded();
+        holdGenerationTracking();
         maybeScheduleWorkers();
+    }
+
+    // MK5 hands tracking to the admitted fallout entity before releasing its own acquisition.
+    public void holdGenerationTracking() {
+        WorldServer server = (WorldServer) world;
+        assert server.getMinecraftServer().isCallingFromMinecraftThread();
+        if (!generationHeld) {
+            SectionGeneration.acquire();
+            generationHeld = true;
+        }
+        if (U.compareAndSetInt(this, OFF_POOL_ACQUIRED, 0, 1)) pool = BombForkJoinPool.acquire();
+        registerJobIfNeeded();
     }
 
     void releasePool() {
         unregisterJobIfNeeded();
         if (U.getAndSetInt(this, OFF_POOL_ACQUIRED, 0) != 0) {
-            BombForkJoinPool.release();
+            BombForkJoinPool.release(pool);
             pool = null;
         }
     }
@@ -291,7 +316,7 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
         if (U.compareAndSetInt(this, OFF_JOB_REGISTERED, 0, 1)) {
             int dim = world == null ? Integer.MIN_VALUE : world.provider.getDimension();
             jobDimension = dim;
-            BombForkJoinPool.register(dim, this);
+            BombForkJoinPool.register(pool, dim, this);
         }
     }
 
@@ -299,7 +324,7 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
         if (U.getAndSetInt(this, OFF_JOB_REGISTERED, 0) != 0) {
             int dim = jobDimension;
             jobDimension = Integer.MIN_VALUE;
-            if (dim != Integer.MIN_VALUE) BombForkJoinPool.unregister(dim, this);
+            if (dim != Integer.MIN_VALUE) BombForkJoinPool.unregister(pool, dim, this);
         }
     }
 
@@ -570,23 +595,127 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
         int finalTaskCount = taskCount;
 
         U.getAndAddInt(this, OFF_PENDING_MAIN, 1);
-        mainTasks.offer(() -> {
-            try {
-                if (((WorldServer) world).getChunkProvider().loadedChunks.get(cpLong) != capturedChunk
-                        || !snapshotStillCurrent(capturedChunk, ebs, biomeIds)) {
-                    captures.offer(work);
-                    return;
+        mainTasks.offer(() -> publications.addLast(new PreparedPublication(work, capturedChunk, ebs, biomeIds,
+                finalTasks, finalTaskCount, biomeCopy, fallingCopy)));
+    }
+
+    final class PreparedPublication {
+        final ChunkWork work;
+        final Chunk chunk;
+        final ExtendedBlockStorage[] snapshot;
+        final byte[] biomeIds;
+        final SubUpdate[] tasks;
+        final int taskCount;
+        final Long2IntOpenHashMap biomeChanges;
+        final Long2ObjectOpenHashMap<IBlockState> falling;
+        LongArrayList lightPositions;
+        long[] lightChunks;
+        ChunkUtil.LightChunkLease lease;
+        boolean opacityChanged;
+
+        PreparedPublication(ChunkWork work, Chunk chunk, ExtendedBlockStorage[] snapshot, byte[] biomeIds,
+                            SubUpdate[] tasks, int taskCount, Long2IntOpenHashMap biomeChanges,
+                            Long2ObjectOpenHashMap<IBlockState> falling) {
+            this.work = work; this.chunk = chunk; this.snapshot = snapshot; this.biomeIds = biomeIds;
+            this.tasks = tasks; this.taskCount = taskCount; this.biomeChanges = biomeChanges; this.falling = falling;
+        }
+
+        boolean current() {
+            return ChunkUtil.liveChunkNow((WorldServer) world, work.chunkPos()) == chunk
+                    && snapshotStillCurrent(chunk, snapshot, biomeIds);
+        }
+
+        boolean publishIfReady() {
+            if (!current()) {
+                try { captures.offer(work); }
+                finally { retire(); }
+                return true;
+            }
+            if (lightPositions == null) {
+                lightPositions = new LongArrayList();
+                MutableBlockPos pos = TL_POS.get();
+                for (int i = 0; i < taskCount; i++) {
+                    SubUpdate task = tasks[i];
+                    ObjectIterator<Long2ObjectMap.Entry<IBlockState>> deferred = task.deferred.long2ObjectEntrySet().fastIterator();
+                    while (deferred.hasNext()) {
+                        Long2ObjectMap.Entry<IBlockState> entry = deferred.next();
+                        Library.fromLong(pos, entry.getLongKey());
+                        collectLightChange(entry.getLongKey(), pos, task.deferredOld.get(entry.getLongKey()), entry.getValue());
+                    }
+                    ExtendedBlockStorage prepared = task.prepared;
+                    boolean deferredLight = false;
+                    ObjectIterator<Long2ObjectMap.Entry<IBlockState>> old = task.oldStates.long2ObjectEntrySet().fastIterator();
+                    while (old.hasNext()) {
+                        Long2ObjectMap.Entry<IBlockState> entry = old.next();
+                        long packed = entry.getLongKey();
+                        Library.fromLong(pos, packed);
+                        IBlockState replacement = prepared == null ? Blocks.AIR.getDefaultState()
+                                : prepared.get(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
+                        IBlockState before = entry.getValue();
+                        if (collectLightChange(packed, pos, before, replacement)) {
+                            deferredLight = true;
+                            // Native lighting requires sequential source installation, rather than a pre-lit bulk batch.
+                            task.deferred.put(packed, replacement);
+                            task.deferredOld.put(packed, before);
+                            if (prepared == null) prepared = new ExtendedBlockStorage(task.subY << 4, world.provider.hasSkyLight());
+                            prepared.set(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15, before);
+                            old.remove();
+                        }
+                    }
+                    if (deferredLight) tasks[i] = new SubUpdate(task.subY, !task.oldStates.isEmpty(), prepared,
+                            task.oldStates, task.deferred, task.deferredOld);
                 }
-                int mask = applyPreparedOnMainInto(chunkX, chunkZ, finalTasks, finalTaskCount);
+            }
+            WorldServer server = (WorldServer) world;
+            if (lease == null && !ChunkUtil.lightNeighborhoodLoaded(server, lightPositions)) {
+                if (lightChunks == null) lightChunks = ChunkUtil.lightNeighborhood(lightPositions);
+                // This entity retains its own native ENTITY ticket while waiting.
+                lease = ChunkUtil.tryLightChunkLease(server, lightChunks, 1);
+                if (lease == null) return false;
+            }
+            if (lease != null && !lease.isReady()) return false;
+            try {
+                if (!current()) {
+                    captures.offer(work);
+                    return true;
+                }
+                int cx = Library.getChunkPosX(work.chunkPos()), cz = Library.getChunkPosZ(work.chunkPos());
+                int mask = applyPreparedOnMainInto(cx, cz, tasks, taskCount);
+                if (opacityChanged) chunk.generateSkylightMap();
                 Long2ObjectOpenHashMap<IBlockState> oldStates = mainScratch.oldMerged.isEmpty() ? null : mainScratch.oldMerged;
-                doNotifyOnMain(cpLong, oldStates, mask, biomeCopy, fallingCopy);
-                if (U.getAndAddInt(this, OFF_PENDING_CHUNKS, -1) - 1 == 0) maybeFinish();
-            } finally {
+                doNotifyOnMain(work.chunkPos(), oldStates, mask, biomeChanges, falling);
+                U.getAndAddInt(EntityFalloutRain.this, OFF_PENDING_CHUNKS, -1);
+                return true;
+            } finally { retire(); }
+        }
+
+        boolean collectLightChange(long packed, MutableBlockPos pos, IBlockState before, IBlockState after) {
+            if (before.getLightOpacity(world, pos) != after.getLightOpacity(world, pos)) {
+                opacityChanged = true;
+                lightPositions.add(packed);
+                return true;
+            } else if (before.getLightValue(world, pos) != after.getLightValue(world, pos)) {
+                lightPositions.add(packed);
+                return true;
+            }
+            return false;
+        }
+
+        void retire() {
+            try { closeLease(); }
+            finally {
                 mainScratch.oldMerged.clear();
                 snapshotsInFlight--;
-                if (U.getAndAddInt(this, OFF_PENDING_MAIN, -1) - 1 == 0) maybeFinish();
+                if (U.getAndAddInt(EntityFalloutRain.this, OFF_PENDING_MAIN, -1) - 1 == 0) maybeFinish();
             }
-        });
+        }
+
+        void closeLease() {
+            if (lease == null) return;
+            ChunkUtil.LightChunkLease closing = lease;
+            lease = null;
+            closing.close();
+        }
     }
 
     void doNotifyOnMain(long cpLong, Long2ObjectOpenHashMap<IBlockState> oldStates, int mask, Long2IntOpenHashMap biomeChanges,
@@ -614,6 +743,10 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
                     continue;
                 }
                 if (oldState == newState) continue;
+                if (ChunkUtil.lightChanged(world, mutableBlockPos, oldState, newState)
+                        && !world.checkLight(mutableBlockPos))
+                    throw new IllegalStateException("Fallout published a light change without its native loaded neighborhood at "
+                            + mutableBlockPos);
                 world.notifyBlockUpdate(mutableBlockPos, oldState, newState, 3);
                 world.notifyNeighborsOfStateChange(mutableBlockPos, newState.getBlock(), true);
                 if (CompatDynamicTrees.isTreePart(oldState.getBlock())) {
@@ -672,7 +805,8 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
             if (t.changed) {
                 ExtendedBlockStorage update = t.prepared;
                 ExtendedBlockStorage current = storages[subY];
-                if (update != null && current != Chunk.NULL_BLOCK_STORAGE && !current.isEmpty()) {
+                if (current != Chunk.NULL_BLOCK_STORAGE) {
+                    if (update == null) update = new ExtendedBlockStorage(subY << 4, world.provider.hasSkyLight());
                     update.blockLight = current.blockLight;
                     update.skyLight = current.skyLight;
                 }
@@ -887,11 +1021,25 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
 
     private void abort() {
         U.putIntRelease(this, OFF_FINISHED, 1);
+        Throwable failure = null;
+        for (PreparedPublication publication : publications) {
+            try { publication.closeLease(); }
+            catch (RuntimeException | Error cleanup) {
+                if (failure == null) failure = cleanup; else failure.addSuppressed(cleanup);
+            }
+        }
+        publications.clear();
+        if (generationHeld) {
+            generationHeld = false;
+            SectionGeneration.release();
+        }
         releasePool();
         if (U.getAndSetInt(this, OFF_MAP_ACQUIRED, 0) != 0) {
             ChunkUtil.releaseMirrorMap((WorldServer) world);
         }
         clearChunkLoader();
+        if (failure instanceof RuntimeException) throw (RuntimeException) failure;
+        if (failure instanceof Error) throw (Error) failure;
     }
 
     @Override
@@ -905,7 +1053,15 @@ public class EntityFalloutRain extends EntityExplosionChunkloading implements Bo
 
     @Override
     public void cancelJob() {
-        abort();
+        if (finished != 0) return;
+        U.putIntRelease(this, OFF_FINISHED, 1);
+        if (!world.isRemote && !world.getMinecraftServer().isCallingFromMinecraftThread()) {
+            world.getMinecraftServer().addScheduledTask(() -> {
+                if (!isDead) setDead();
+            });
+        } else if (!isDead) {
+            setDead();
+        }
     }
 
     public int getScale() {

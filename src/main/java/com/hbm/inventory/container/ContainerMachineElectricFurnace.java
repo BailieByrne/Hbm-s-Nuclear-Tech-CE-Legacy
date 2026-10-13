@@ -1,5 +1,8 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
+
 import com.hbm.inventory.slot.SlotSmelting;
 import com.hbm.inventory.slot.SlotUpgrade;
 import com.hbm.items.machine.ItemMachineUpgrade;
@@ -12,6 +15,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class ContainerMachineElectricFurnace extends ContainerBase {
+
+    private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(4)
+            .rule(0, 1, Library::isDischargeableBattery)
+            .rule(3, 4, stack -> stack.getItem() instanceof ItemMachineUpgrade)
+            .genericMachineRange(1, 2)
+            .build();
 
 	private TileEntityMachineElectricFurnace diFurnace;
 
@@ -85,4 +94,9 @@ public class ContainerMachineElectricFurnace extends ContainerBase {
 	public boolean canInteractWith(EntityPlayer player) {
 		return diFurnace.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

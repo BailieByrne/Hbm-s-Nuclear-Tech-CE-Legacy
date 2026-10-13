@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotFiltered;
@@ -16,7 +17,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineGasFlare extends Container {
+public class ContainerMachineGasFlare extends Container implements IAutoRoutingContainer {
 
 	private final TileEntityMachineGasFlare gasFlare;
     private final TransferStrategy transferStrategy;
@@ -67,4 +68,9 @@ public class ContainerMachineGasFlare extends Container {
 	public boolean canInteractWith(@NotNull EntityPlayer player) {
 		return gasFlare.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

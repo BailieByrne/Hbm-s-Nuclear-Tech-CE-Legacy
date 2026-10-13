@@ -131,8 +131,6 @@ public class FoundryTank extends BlockContainer implements ICrucibleAcceptor {
 	@Override
 	public boolean onBlockActivated(World world, @NotNull BlockPos pos, @NotNull IBlockState state, @NotNull EntityPlayer player, @NotNull EnumHand hand, @NotNull EnumFacing facing, float hitX, float hitY, float hitZ) {
 
-		if(world.isRemote) return true;
-
 		TileEntity te = world.getTileEntity(pos);
 		if(!(te instanceof TileEntityFoundryTank)) return false;
 		TileEntityFoundryTank cast = (TileEntityFoundryTank) te;
@@ -141,6 +139,7 @@ public class FoundryTank extends BlockContainer implements ICrucibleAcceptor {
 
 		if(!held.isEmpty() && held.getItem() instanceof ItemTool && ((ItemTool) held.getItem()).getToolClasses(held).contains("shovel")) {
 			if(cast.amount > 0) {
+				if (world.isRemote) return true;
 				ItemStack scrap = ItemScraps.create(new MaterialStack(cast.type, cast.amount));
 				if(!player.inventory.addItemStackToInventory(scrap)) {
 					world.spawnEntity(new EntityItem(world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, scrap));

@@ -1,0 +1,53 @@
+{
+  "items": {
+    "AXE": [
+      "hbm:alloy_axe",
+      "hbm:alloy_pickaxe",
+      "hbm:bismuth_axe",
+      "hbm:bismuth_pickaxe",
+      "hbm:centri_stick",
+      "hbm:chainsaw",
+      "hbm:chlorophyte_axe",
+      "hbm:chlorophyte_pickaxe",
+      "hbm:cmb_axe",
+      "hbm:cmb_pickaxe",
+      "hbm:cobalt_axe",
+      "hbm:cobalt_decorated_axe",
+      "hbm:cobalt_decorated_pickaxe",
+      "hbm:cobalt_pickaxe",
+      "hbm:desh_axe",
+      "hbm:desh_pickaxe",
+      "hbm:drax",
+      "hbm:drax_mk2",
+      "hbm:drax_mk3",
+      "hbm:dwarven_pickaxe",
+      "hbm:elec_axe",
+      "hbm:elec_pickaxe",
+      "hbm:mese_axe",
+      "hbm:mese_pickaxe",
+      "hbm:schrabidium_axe",
+      "hbm:schrabidium_pickaxe",
+      "hbm:smashing_hammer",
+      "hbm:starmetal_axe",
+      "hbm:starmetal_pickaxe",
+      "hbm:steel_axe",
+      "hbm:steel_pickaxe",
+      "hbm:titanium_axe",
+      "hbm:titanium_pickaxe",
+      "hbm:volcanic_axe",
+      "hbm:volcanic_pickaxe"
+    ],
+    "TOOL": [
+      "hbm:alloy_shovel",
+      "hbm:cmb_shovel",
+      "hbm:cobalt_decorated_shovel",
+      "hbm:cobalt_shovel",
+      "hbm:desh_shovel",
+      "hbm:elec_shovel",
+      "hbm:schrabidium_shovel",
+      "hbm:starmetal_shovel",
+      "hbm:steel_shovel",
+      "hbm:titanium_shovel"
+    ]
+  }
+}

@@ -2,7 +2,6 @@ package com.hbm.main.client;
 
 import com.hbm.Tags;
 import com.hbm.blocks.ModBlocks;
-import com.hbm.lib.ObjectDoubleFunction;
 import com.hbm.render.chunk.SectionGeometry;
 import com.hbm.render.icon.PaddedSpriteUtil;
 import com.hbm.render.icon.PaddedSpriteUtil.TextureInfo;
@@ -33,8 +32,6 @@ public final class StaticDecoBakedModels {
     }
 
     public static void registerSprites(TextureMap map) {
-        register(map, "models/deco/steelwall");
-        register(map, "models/deco/steelcorner");
         register(map, "models/deco/steelroof");
         register(map, "models/misc/modelstatue");
         register(map, "models/modelgun");
@@ -42,30 +39,11 @@ public final class StaticDecoBakedModels {
 
         register(map, "models/misc/boxcar");
         register(map, "models/misc/duchessgambit");
-        register(map, "models/sat/sat_base");
-        register(map, "models/sat/sat_radar");
-        register(map, "models/sat/sat_resonator");
-        register(map, "models/sat/sat_scanner");
-        register(map, "models/sat/sat_mapper");
-        register(map, "models/sat/sat_laser");
-        register(map, "models/sat/sat_foeq");
     }
 
     public static void bakeModels(IRegistry<ModelResourceLocation, IBakedModel> registry) {
         TextureMap atlas = Minecraft.getMinecraft().getTextureMapBlocks();
 
-        bakeLegacyFacingModel(registry, atlas, ModBlocks.steel_wall, new ModelSteelWall(), "models/deco/steelwall",
-                facing -> compose(
-                        translate(0.5D, 1.5D, 0.5D),
-                        rotateZ(180.0D),
-                        rotateY(legacyFacingYaw(facing))
-                ));
-        bakeLegacyFacingModel(registry, atlas, ModBlocks.steel_corner, new ModelSteelCorner(), "models/deco/steelcorner",
-                facing -> compose(
-                        translate(0.5D, 1.5D, 0.5D),
-                        rotateZ(180.0D),
-                        rotateY(legacyFacingYaw(facing))
-                ));
         bakeLegacyFacingModel(registry, atlas, ModBlocks.steel_roof, new ModelSteelRoof(), "models/deco/steelroof",
                 facing -> compose(
                         translate(0.5D, 1.5D, 0.5D),
@@ -91,22 +69,14 @@ public final class StaticDecoBakedModels {
                         translate(0.0D, 0.5D, 0.0D)
                 ));
 
-        bakeSatellite(registry, atlas, ModBlocks.sat_radar, "sat_radar", StaticDecoBakedModels::satelliteYaw);
-        bakeSatellite(registry, atlas, ModBlocks.sat_scanner, "sat_scanner", StaticDecoBakedModels::satelliteYaw);
-        bakeSatellite(registry, atlas, ModBlocks.sat_mapper, "sat_mapper", StaticDecoBakedModels::satelliteYaw);
-        bakeSatellite(registry, atlas, ModBlocks.sat_laser, "sat_laser", StaticDecoBakedModels::satelliteYaw);
-        bakeSatellite(registry, atlas, ModBlocks.sat_resonator, "sat_resonator", StaticDecoBakedModels::resonatorYaw);
-        bakeWavefrontFacing(registry, atlas, ModBlocks.sat_foeq,
-                "models/sat_foeq.obj", "models/sat/sat_foeq",
-                facing -> compose(
-                        translate(0.5D, 1.5D, 0.5D),
-                        rotateZ(180.0D),
-                        translate(0.0D, -1.5D, 0.0D),
-                        rotateY(90.0D),
-                        rotateY(satelliteYaw(facing))
-                ));
+
 
         bakeStatueModels(registry, atlas);
+    }
+
+    public static void graphicsChanged() {
+        SectionGeometry.refreshModels(Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes(),
+                ModBlocks.statue_elb, ModBlocks.statue_elb_g, ModBlocks.statue_elb_w, ModBlocks.statue_elb_f);
     }
 
     private static void bakeStatueModels(IRegistry<ModelResourceLocation, IBakedModel> registry, TextureMap atlas) {
@@ -145,48 +115,14 @@ public final class StaticDecoBakedModels {
                     gunTexture.uScale,
                     gunTexture.vScale
             );
-            IBakedModel watch = new FixedTransformModelRendererBakedModel(ModelWatchBox::new, watchSprite,
-                    compose(
-                            base,
-                            translate(0.0D, -2.0D * G, Q),
-                            rotateZ(180.0D),
-                            translate(0.0D, 0.11D, 0.0D),
-                            scale(0.5D)
-                    ),
-                    0.0625F,
-                    watchTexture.uScale,
-                    watchTexture.vScale
-            );
+            IBakedModel watch = new StatueWatchBakedModel(watchSprite,
+                    compose(base, translate(0.0D, -2.0D * G, Q), rotateZ(180.0D)),
+                    watchTexture.uScale, watchTexture.vScale);
 
             registry.putObject(facingLocation(ModBlocks.statue_elb, facing), body);
             registry.putObject(facingLocation(ModBlocks.statue_elb_g, facing), new CompositeBakedModel(body, gun));
             registry.putObject(facingLocation(ModBlocks.statue_elb_w, facing), new CompositeBakedModel(body, watch));
             registry.putObject(facingLocation(ModBlocks.statue_elb_f, facing), new CompositeBakedModel(body, gun, watch));
-        }
-    }
-
-    private static void bakeSatellite(IRegistry<ModelResourceLocation, IBakedModel> registry, TextureMap atlas, Block block, String modelName,
-                                      ObjectDoubleFunction<EnumFacing> yawFunction) {
-        SectionGeometry.candidate(block);
-        HFRWavefrontObject baseModel = new HFRWavefrontObject(new ResourceLocation(Tags.MODID, "models/sat_base.obj"));
-        HFRWavefrontObject model = new HFRWavefrontObject(new ResourceLocation(Tags.MODID, "models/" + modelName + ".obj"));
-        TextureInfo baseTexture = inspectTexture("models/sat/sat_base");
-        TextureInfo variantTexture = inspectTexture("models/sat/" + modelName);
-        TextureAtlasSprite baseSprite = sprite(atlas, baseTexture);
-        TextureAtlasSprite variantSprite = sprite(atlas, variantTexture);
-
-        for (EnumFacing facing : HORIZONTALS) {
-            Matrix4f transform = compose(
-                    translate(0.5D, 1.5D, 0.5D),
-                    rotateZ(180.0D),
-                    translate(0.0D, -1.5D, 0.0D),
-                    rotateY(90.0D),
-                    rotateY(yawFunction.applyDouble(facing))
-            );
-            registry.putObject(facingLocation(block, facing), new CompositeBakedModel(
-                    new FixedTransformWavefrontBakedModel(baseModel, baseSprite, null, transform, true, baseTexture.uScale, baseTexture.vScale),
-                    new FixedTransformWavefrontBakedModel(model, variantSprite, null, transform, true, variantTexture.uScale, variantTexture.vScale)
-            ));
         }
     }
 
@@ -248,23 +184,5 @@ public final class StaticDecoBakedModels {
         };
     }
 
-    private static double satelliteYaw(EnumFacing facing) {
-        return switch (facing) {
-            case NORTH -> 180.0D;
-            case SOUTH -> 0.0D;
-            case WEST -> 90.0D;
-            case EAST -> 270.0D;
-            default -> 0.0D;
-        };
-    }
 
-    private static double resonatorYaw(EnumFacing facing) {
-        return switch (facing) {
-            case NORTH -> 180.0D;
-            case SOUTH -> 0.0D;
-            case WEST -> 270.0D;
-            case EAST -> 90.0D;
-            default -> 0.0D;
-        };
-    }
 }

@@ -17,6 +17,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
 import org.jetbrains.annotations.NotNull;
 
 @AutoRegister
@@ -53,10 +55,17 @@ public class TileEntityRadioTorchCounter extends TileEntityMachineBase implement
             EnumFacing dir = getTorchFacing().getOpposite();
 
             TileEntity tile = Compat.getTileStandard(world, pos.getX() + dir.getXOffset(), pos.getY() + dir.getYOffset(), pos.getZ() + dir.getZOffset());
+            ItemStack[] invSlots = null;
             if (tile instanceof IInventory inv) {
-                ItemStack[] invSlots = new ItemStack[inv.getSizeInventory()];
+                invSlots = new ItemStack[inv.getSizeInventory()];
                 for (int i = 0; i < invSlots.length; i++) invSlots[i] = inv.getStackInSlot(i);
+            } else if (tile != null && tile.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) {
+                IItemHandler inv = tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+                invSlots = new ItemStack[inv.getSlots()];
+                for (int i = 0; i < invSlots.length; i++) invSlots[i] = inv.getStackInSlot(i);
+            }
 
+            if (invSlots != null) {
                 for (int i = 0; i < MAPPING_SIZE; i++) {
                     if (channel[i].isEmpty()) continue;
                     if (inventory.getStackInSlot(i).isEmpty()) continue;

@@ -54,6 +54,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
 
 import java.util.List;
 
@@ -249,25 +250,25 @@ public class ContaminationUtil {
         return HazardSystem.getRawRadsFromStack(stack) > 0;
     }
 
-	public static float getNeutronRads(ItemStack stack){
+	public static double getNeutronRads(ItemStack stack){
 		if(stack != null && !stack.isEmpty() && !isRadItem(stack)){
 			if(stack.hasTagCompound()){
 				NBTTagCompound nbt = stack.getTagCompound();
-				if(nbt.hasKey(NTM_NEUTRON_NBT_KEY)){
-					return nbt.getFloat(NTM_NEUTRON_NBT_KEY) * stack.getCount();
+				if(nbt.hasKey(NTM_NEUTRON_NBT_KEY, Constants.NBT.TAG_DOUBLE)){
+					return nbt.getDouble(NTM_NEUTRON_NBT_KEY) * stack.getCount();
 				}
 			}
 		}
-		return 0F;
+		return 0D;
 	}
 
 	public static void addNeutronRadInfo(ItemStack stack, EntityPlayer player, List<String> list, ITooltipFlag flagIn){
 		if (HazardSystem.getRawRadsFromStack(stack) > 0) return;
 
-        float activationRads = getNeutronRads(stack);
+        double activationRads = getNeutronRads(stack);
         if (activationRads > 0) {
             list.add("§a[" + I18nUtil.resolveKey("trait.radioactive") + "]");
-            float stackRad = activationRads / stack.getCount();
+            double stackRad = activationRads / stack.getCount();
             list.add(" §e" + Library.roundFloat(HazardTypeRadiation.getNewValue(stackRad), 3) + HazardTypeRadiation.getSuffix(stackRad) + " RAD/s");
 
             if (stack.getCount() > 1) {
@@ -276,7 +277,7 @@ public class ContaminationUtil {
         }
 	}
 
-	public static boolean neutronActivateInventory(EntityPlayer player, float rad, float decay) {
+	public static boolean neutronActivateInventory(EntityPlayer player, double rad, float decay) {
 		boolean changed = false;
 		for (int slotI = 0; slotI < player.inventory.mainInventory.size(); slotI++) {
 			if (slotI != player.inventory.currentItem) {
@@ -293,14 +294,23 @@ public class ContaminationUtil {
 		return changed;
 	}
 
-	public static boolean neutronActivateItem(ItemStack stack, float rad, float decay) {
+	public static boolean neutronActivateItem(ItemStack stack, double rad, float decay) {
 		if (stack == null || stack.isEmpty() || stack.getCount() != 1 || isRadItem(stack)) return false;
-		float prevActivation = 0;
-		if (stack.hasTagCompound() && stack.getTagCompound().hasKey(NTM_NEUTRON_NBT_KEY)) {
-			prevActivation = stack.getTagCompound().getFloat(NTM_NEUTRON_NBT_KEY);
+		NBTTagCompound tag = stack.getTagCompound();
+		boolean removedLegacy = tag != null && tag.hasKey(NTM_NEUTRON_NBT_KEY, Constants.NBT.TAG_FLOAT);
+		if (removedLegacy) {
+			tag.removeTag(NTM_NEUTRON_NBT_KEY);
+			if (tag.isEmpty()) {
+				tag = null;
+				stack.setTagCompound(null);
+			}
+		}
+		double prevActivation = 0D;
+		if (tag != null && tag.hasKey(NTM_NEUTRON_NBT_KEY, Constants.NBT.TAG_DOUBLE)) {
+			prevActivation = tag.getDouble(NTM_NEUTRON_NBT_KEY);
 		}
 
-		float newActivation = prevActivation * decay + (rad / stack.getCount());
+		double newActivation = prevActivation * decay + (rad / stack.getCount());
 
 		if (newActivation < 0.0001F) {
 			if (prevActivation > 0) {
@@ -314,18 +324,18 @@ public class ContaminationUtil {
 		} else {
 			if (Math.abs(newActivation - prevActivation) > 1e-6) {
 				NBTTagCompound nbt = stack.hasTagCompound() ? stack.getTagCompound() : new NBTTagCompound();
-				nbt.setFloat(NTM_NEUTRON_NBT_KEY, newActivation);
+				nbt.setDouble(NTM_NEUTRON_NBT_KEY, newActivation);
 				stack.setTagCompound(nbt);
 				return true;
 			}
 		}
-		return false;
+		return removedLegacy;
 	}
 
 	public static boolean isContaminated(ItemStack stack){
 		if(!stack.hasTagCompound())
 			return false;
-        return stack.getTagCompound().hasKey(NTM_NEUTRON_NBT_KEY);
+        return stack.getTagCompound().hasKey(NTM_NEUTRON_NBT_KEY, Constants.NBT.TAG_DOUBLE);
     }
 
     public static String getPreffixFromRad(double rads) {

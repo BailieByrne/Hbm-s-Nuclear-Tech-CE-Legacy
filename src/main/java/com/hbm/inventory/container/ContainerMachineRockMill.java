@@ -1,6 +1,7 @@
 package com.hbm.inventory.container;
 
 import com.hbm.api.energymk2.IBatteryItem;
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotNonRetarded;
 import com.hbm.items.ModItems;
@@ -13,7 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineRockMill extends ContainerBase {
+public class ContainerMachineRockMill extends ContainerBase implements IAutoRoutingContainer {
 
     private static final TransferStrategy TRANSFER_STRATEGY = TransferStrategy.builder(8)
             .rule(0, 1, s -> s.getItem() instanceof IBatteryItem || s.getItem() == ModItems.battery_creative)
@@ -45,5 +46,10 @@ public class ContainerMachineRockMill extends ContainerBase {
     @Override
     public @NotNull ItemStack transferStackInSlot(@NotNull EntityPlayer player, int index) {
         return InventoryUtil.transferStack(this.inventorySlots, index, TRANSFER_STRATEGY, player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

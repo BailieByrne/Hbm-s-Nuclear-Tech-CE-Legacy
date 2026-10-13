@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.tileentity.machine.rbmk.TileEntityRBMKOutgasser;
@@ -11,7 +12,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerRBMKOutgasser extends Container {
+public class ContainerRBMKOutgasser extends Container implements IAutoRoutingContainer {
 
 	private TileEntityRBMKOutgasser rbmk;
 
@@ -45,4 +46,9 @@ public class ContainerRBMKOutgasser extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return rbmk.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

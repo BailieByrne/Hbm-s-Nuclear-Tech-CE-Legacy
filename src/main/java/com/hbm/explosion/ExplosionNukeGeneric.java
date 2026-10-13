@@ -534,28 +534,6 @@ public class ExplosionNukeGeneric {
                 else world.setBlockState(pos, Blocks.DIRT.getDefaultState());
                 return;
             }
-            if(b.getBlock() == ModBlocks.sellafield || b.getBlock() == ModBlocks.sellafield_slaked){
-                world.setBlockState(pos, Blocks.STONE.getDefaultState());
-                return;
-            }
-
-            if (b.getBlock() == ModBlocks.waste_trinitite) {
-                world.setBlockState(pos, Blocks.SAND.getDefaultState());
-                return;
-            }
-
-
-            if (b.getBlock() == ModBlocks.waste_trinitite_red) {
-                world.setBlockState(pos, Blocks.SAND.getStateFromMeta(1));
-                return;
-            }
-
-
-            if (b.getBlock() == ModBlocks.taint) {
-                world.setBlockState(pos, ModBlocks.stone_gneiss.getDefaultState());
-                return;
-            }
-
             if (m == Material.CACTUS || m == Material.CORAL || m == Material.LEAVES || m == Material.PLANTS || m == Material.SPONGE || m == Material.VINE || m == Material.GOURD || m == Material.WOOD) {
                 world.setBlockToAir(pos);
             }

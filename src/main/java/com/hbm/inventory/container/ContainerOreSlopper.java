@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.inventory.slot.SlotUpgrade;
@@ -17,7 +18,7 @@ import net.minecraftforge.items.SlotItemHandler;
 
 import java.util.function.Predicate;
 
-public class ContainerOreSlopper extends Container {
+public class ContainerOreSlopper extends Container implements IAutoRoutingContainer {
 
     public TileEntityMachineOreSlopper slopper;
 
@@ -68,5 +69,10 @@ public class ContainerOreSlopper extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return slopper.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

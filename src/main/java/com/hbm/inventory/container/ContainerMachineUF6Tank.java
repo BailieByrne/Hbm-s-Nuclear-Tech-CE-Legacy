@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.lib.Library;
@@ -12,7 +13,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachineUF6Tank extends Container {
+public class ContainerMachineUF6Tank extends Container implements IAutoRoutingContainer {
 
 	private TileEntityMachineUF6Tank tank;
 
@@ -53,4 +54,9 @@ public class ContainerMachineUF6Tank extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return tank.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

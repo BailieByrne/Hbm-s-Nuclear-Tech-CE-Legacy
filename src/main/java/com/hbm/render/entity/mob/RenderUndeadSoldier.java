@@ -2,8 +2,8 @@ package com.hbm.render.entity.mob;
 
 import com.hbm.entity.mob.EntityUndeadSoldier;
 import com.hbm.interfaces.AutoRegister;
+import com.hbm.render.model.ModelSkeletonNT;
 import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.model.ModelSkeleton;
 import net.minecraft.client.model.ModelZombie;
 import net.minecraft.client.renderer.entity.RenderBiped;
 import net.minecraft.client.renderer.entity.RenderManager;
@@ -19,7 +19,7 @@ public class RenderUndeadSoldier extends RenderBiped<EntityUndeadSoldier> {
     public static final ResourceLocation TEXTURE_SKELETON = new ResourceLocation("minecraft", "textures/entity/skeleton/skeleton.png");
 
     public static final ModelBiped MODEL_ZOMBIE = new ModelZombie();
-    public static final ModelBiped MODEL_SKELETON = new ModelSkeleton();
+    public static final ModelBiped MODEL_SKELETON = new ModelSkeletonNT();
 
     public RenderUndeadSoldier(RenderManager renderManager) {
         super(renderManager, MODEL_ZOMBIE, 0.5F);

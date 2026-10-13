@@ -1,5 +1,7 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.tileentity.machine.TileEntityCoreInjector;
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,7 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerCoreInjector extends Container {
+public class ContainerCoreInjector extends Container implements IAutoRoutingContainer {
 
     //TODO: add slots
     private final TileEntityCoreInjector coreInjector;
@@ -64,4 +66,9 @@ public class ContainerCoreInjector extends Container {
     public boolean canInteractWith(EntityPlayer player) {
         return coreInjector.isUseableByPlayer(player);
     }
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return false;
+    }
+
 }

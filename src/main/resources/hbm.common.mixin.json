@@ -8,6 +8,7 @@
     "MixinCompiledChunk",
     "MixinRenderChunk",
     "MixinRenderGlobal",
+    "MixinGameSettings",
     "MixinTileEntity",
     "MixinRenderPlayerManly",
     "MixinChunk",
@@ -19,6 +20,10 @@
     "MixinTileEntitySpecialRenderer"
   ],
   "mixins": [
+    "MixinExtendedBlockStorage",
+    "MixinBlockStateContainer",
+    "MixinItemStack",
+    "MixinEntityChunkLoader",
     "MixinFMLProxyPacket",
     "MixinNetworkDispatcher"
   ],

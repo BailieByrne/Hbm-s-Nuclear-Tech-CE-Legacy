@@ -30,6 +30,11 @@ public class EntityRailgunBlast extends Entity implements IChunkLoader {
 	private Ticket loaderTicket;
 
 	@Override
+	public boolean shouldBootstrapChunkLoader() {
+		return loaderTicket == null && !awaitingTicketRestore;
+	}
+
+	@Override
 	public void init(Ticket ticket) {
 		if(!world.isRemote) {
 
@@ -104,7 +109,7 @@ public class EntityRailgunBlast extends Entity implements IChunkLoader {
 				
 				world.spawnEntity(EntityNukeExplosionMK5.statFac(world, BombConfig.missileRadius>>1, posX, posY, posZ));
 				if(BombConfig.enableNukeClouds) {
-					EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.missileRadius>>1);
+					EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.missileRadius>>1);
 				}
 			}
 			this.setDead();

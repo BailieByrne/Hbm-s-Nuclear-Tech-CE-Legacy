@@ -14,7 +14,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
-import net.minecraft.world.gen.structure.template.TemplateManager;
 
 import java.util.List;
 import java.util.Random;
@@ -72,13 +71,7 @@ public class BunkerComponents {
 		
 		public StartingHub() { }
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
-		}
 
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-		}
 
 		public StartingHub(Random rand, int x, int z) {
 			super(rand, x, 64, z, 7, 5, 7);
@@ -87,7 +80,7 @@ public class BunkerComponents {
 		public StartingHub(int componentType, StructureBoundingBox box, int coordMode) {
 			super(componentType);
 			this.boundingBox = box;
-			this.setCoordBaseMode(EnumFacing.byIndex(coordMode));
+			this.setCoordBaseMode(EnumFacing.byHorizontalIndex(coordMode));
 		}
 		
 		/** write to nbt */
@@ -187,20 +180,12 @@ public class BunkerComponents {
 		
 		public Corridor() { }
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
 
-		}
-
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public Corridor(int componentType, StructureBoundingBox box, int coordMode, Random rand) {
 			super(componentType);
 			this.boundingBox = box;
-			this.setCoordBaseMode(EnumFacing.byIndex(coordMode));
+			this.setCoordBaseMode(EnumFacing.byHorizontalIndex(coordMode));
 			
 			decorations[0] = rand.nextInt(6);
 			decorations[1] = rand.nextInt(6);
@@ -333,20 +318,12 @@ public class BunkerComponents {
 		
 		public BedroomL() { }
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
 
-		}
-
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public BedroomL(int componentType, StructureBoundingBox box, int coordMode) {
 			super(componentType);
 			this.boundingBox = box;
-			this.setCoordBaseMode(EnumFacing.byIndex(coordMode));
+			this.setCoordBaseMode(EnumFacing.byHorizontalIndex(coordMode));
 		}
 		
 		/** write to nbt */
@@ -451,20 +428,12 @@ public class BunkerComponents {
 		
 		public FunJunction() { }
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
 
-		}
-
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public FunJunction(int componentType, StructureBoundingBox box, int coordMode) {
 			super(componentType);
 			this.boundingBox = box;
-			this.setCoordBaseMode(EnumFacing.byIndex(coordMode));
+			this.setCoordBaseMode(EnumFacing.byHorizontalIndex(coordMode));
 		}
 		
 		/** write to nbt */
@@ -567,20 +536,12 @@ public class BunkerComponents {
 		
 		public BathroomL() { }
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
 
-		}
-
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public BathroomL(int componentType, StructureBoundingBox box, int coordMode) {
 			super(componentType);
 			this.boundingBox = box;
-			this.setCoordBaseMode(EnumFacing.byIndex(coordMode));
+			this.setCoordBaseMode(EnumFacing.byHorizontalIndex(coordMode));
 		}
 		
 		/** write to nbt */
@@ -669,20 +630,12 @@ public class BunkerComponents {
 		
 		public Laboratory() { }
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
 
-		}
-
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public Laboratory(int componentType, StructureBoundingBox box, int coordMode) {
 			super(componentType);
 			this.boundingBox = box;
-			this.setCoordBaseMode(EnumFacing.byIndex(coordMode));
+			this.setCoordBaseMode(EnumFacing.byHorizontalIndex(coordMode));
 		}
 		
 		/** write to nbt */
@@ -806,20 +759,12 @@ public class BunkerComponents {
 		
 		public PowerRoom() { }
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
 
-		}
-
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public PowerRoom(int componentType, StructureBoundingBox box, int coordMode, Random rand) {
 			super(componentType);
 			this.boundingBox = box;
-			this.setCoordBaseMode(EnumFacing.byIndex(coordMode));
+			this.setCoordBaseMode(EnumFacing.byHorizontalIndex(coordMode));
 			
 			float chance = rand.nextFloat();
 			powerType = chance < 0.2 ? 2 : chance < 0.6 ? 1 : 0;

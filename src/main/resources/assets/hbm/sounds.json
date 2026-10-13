@@ -436,5 +436,32 @@
   "weapon.casing.small": {"category": "player", "sounds": ["hbm:weapon/casing/small1", "hbm:weapon/casing/small2", "hbm:weapon/casing/small3"]},
   "weapon.casing.medium": {"category": "player", "sounds": ["hbm:weapon/casing/medium1", "hbm:weapon/casing/medium2", "hbm:weapon/casing/medium3"]},
   "weapon.casing.large": {"category": "player", "sounds": ["hbm:weapon/casing/large1", "hbm:weapon/casing/large2", "hbm:weapon/casing/large3"]},
-  "weapon.casing.shell": {"category": "player", "sounds": ["hbm:weapon/casing/shell1", "hbm:weapon/casing/shell2", "hbm:weapon/casing/shell3"]}
+  "weapon.casing.shell": {"category": "player", "sounds": ["hbm:weapon/casing/shell1", "hbm:weapon/casing/shell2", "hbm:weapon/casing/shell3"]},
+  "block.door.sliding_door_opened": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "hbm:block/door/sliding_door_opened",
+        "stream": false
+      }
+    ]
+  },
+  "block.door.sliding_door_shut": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "hbm:block/door/sliding_door_shut",
+        "stream": false
+      }
+    ]
+  },
+  "block.door.sliding_door_opening": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "hbm:block/door/sliding_door_opening",
+        "stream": false
+      }
+    ]
+  }
 }

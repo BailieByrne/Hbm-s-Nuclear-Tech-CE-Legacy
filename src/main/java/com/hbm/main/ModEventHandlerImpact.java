@@ -219,6 +219,7 @@ public class ModEventHandlerImpact {
 
 	@SubscribeEvent
 	public void postImpactDecoration(DecorateBiomeEvent.Decorate event) {
+		if(event.getResult() == Event.Result.DENY) return;
 		TomSaveData data = TomSaveData.forWorld(event.getWorld());
 		EventType type = event.getType();
 

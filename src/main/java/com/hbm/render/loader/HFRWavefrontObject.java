@@ -16,15 +16,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HFRWavefrontObject implements IModelCustomNamed
 {
-    /** For resource reloading */
-    //mlbv: removed. see comments at HFRModelReloader
-//    public static LinkedHashSet<HFRWavefrontObject> allModels = new LinkedHashSet();
-//    public static LinkedHashMap<WaveFrontObjectVAO, HFRWavefrontObject> allVBOs = new LinkedHashMap();
+    static final Set<HFRWavefrontObject> LIVE_MODELS = Collections.synchronizedSet(
+            Collections.newSetFromMap(new WeakHashMap<>()));
     private static Pattern vertexPattern = Pattern.compile("(v( (\\-){0,1}\\d+(\\.\\d+)?){3,7} *\\n)|(v( (\\-){0,1}\\d+(\\.\\d+)?){3,7} *$)");
     private static Pattern vertexNormalPattern = Pattern.compile("(vn( (\\-){0,1}\\d+(\\.\\d+)?){3,4} *\\n)|(vn( (\\-){0,1}\\d+(\\.\\d+)?){3,4} *$)");
     private static Pattern textureCoordinatePattern = Pattern.compile("(vt( (\\-){0,1}\\d+\\.\\d+){2,3} *\\n)|(vt( (\\-){0,1}\\d+(\\.\\d+)?){2,3} *$)");
@@ -45,10 +46,16 @@ public class HFRWavefrontObject implements IModelCustomNamed
     private GroupObject currentGroupObject;
     public ResourceLocation resource;
     private String fileName;
-    private boolean allowMixedMode = false;
+    boolean allowMixedMode = false;
+    private boolean smoothing = true;
 
     public HFRWavefrontObject(ResourceLocation resource) throws ModelFormatException {
         this(resource, false);
+    }
+
+    public HFRWavefrontObject noSmooth() {
+        smoothing = false;
+        return this;
     }
 
     /** Provides a way for a model to have both tris and quads, however this means it can't be rendered directly.
@@ -64,6 +71,7 @@ public class HFRWavefrontObject implements IModelCustomNamed
         try {
             IResource res = Minecraft.getMinecraft().getResourceManager().getResource(resource);
             loadObjModel(res.getInputStream());
+            LIVE_MODELS.add(this);
         } catch(IOException e) {
             throw new ModelFormatException("IO Exception reading model format", e);
         }
@@ -442,7 +450,7 @@ public class HFRWavefrontObject implements IModelCustomNamed
 
         if (isValidFaceLine(line))
         {
-            face = new Face();
+            face = new Face(smoothing);
 
             String trimmedLine = line.substring(line.indexOf(" ") + 1);
             String[] tokens = trimmedLine.split(" ");

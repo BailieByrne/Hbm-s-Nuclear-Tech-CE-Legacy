@@ -120,7 +120,17 @@ public class BulletConfig implements Cloneable {
             EntityLivingBase living = (EntityLivingBase) entity;
             float prevHealth = living.getHealth();
 
-            EntityDamageUtil.attackEntityFromNT(living, source, intendedDamage, true, true, bullet.config.knockbackMult, bullet.config.armorThresholdNegation, bullet.config.armorPiercingPercent);
+            double flightX = bullet.posX;
+            double flightY = bullet.posY;
+            double flightZ = bullet.posZ;
+            bullet.setPosition(mop.hitVec.x, mop.hitVec.y, mop.hitVec.z);
+            try {
+                EntityDamageUtil.attackEntityFromNT(living, source, intendedDamage, true, true, bullet.config.knockbackMult, bullet.config.armorThresholdNegation, bullet.config.armorPiercingPercent);
+            } finally {
+                // Damage observers need the contact position. Continuing
+                // penetration still integrates from this tick's flight origin.
+                bullet.setPosition(flightX, flightY, flightZ);
+            }
 
             float newHealth = living.getHealth();
 
@@ -148,7 +158,7 @@ public class BulletConfig implements Cloneable {
             }
 
             EntityLivingBase living = (EntityLivingBase) entity;
-            EntityDamageUtil.attackEntityFromNT(living, source, bullet.damage, true, true, bullet.config.knockbackMult, bullet.config.armorThresholdNegation, bullet.config.armorPiercingPercent);
+            damageBeamAtContact(bullet, mop, living, source, true);
             if (!living.isEntityAlive()) ConfettiUtil.decideConfetti(living, source);
         }
     };
@@ -167,9 +177,35 @@ public class BulletConfig implements Cloneable {
             }
 
             EntityLivingBase living = (EntityLivingBase) entity;
-            EntityDamageUtil.attackEntityFromNT(living, source, beam.damage, true, false, beam.config.knockbackMult, beam.config.armorThresholdNegation, beam.config.armorPiercingPercent);
+            damageBeamAtContact(beam, mop, living, source, false);
         }
     };
+
+    private static void damageBeamAtContact(EntityBulletBeamBase beam, RayTraceResult hit,
+            EntityLivingBase living, DamageSource source, boolean allowSpecialCancel) {
+        double originX = beam.posX;
+        double originY = beam.posY;
+        double originZ = beam.posZ;
+        double motionX = beam.motionX;
+        double motionY = beam.motionY;
+        double motionZ = beam.motionZ;
+        beam.setPosition(hit.hitVec.x, hit.hitVec.y, hit.hitVec.z);
+        // An instant beam stores its native ray in heading, rather than entity
+        // motion. Damage observers need that ray and its actual contact point.
+        beam.motionX = beam.headingX;
+        beam.motionY = beam.headingY;
+        beam.motionZ = beam.headingZ;
+        try {
+            EntityDamageUtil.attackEntityFromNT(living, source, beam.damage, true, allowSpecialCancel,
+                    beam.config.knockbackMult, beam.config.armorThresholdNegation, beam.config.armorPiercingPercent);
+        } finally {
+            beam.setPosition(originX, originY, originZ);
+            beam.motionX = motionX;
+            beam.motionY = motionY;
+            beam.motionZ = motionZ;
+        }
+    }
+
     public int id;
     public RecipesCommon.ComparableStack ammo;
     public ItemStack casingItem;

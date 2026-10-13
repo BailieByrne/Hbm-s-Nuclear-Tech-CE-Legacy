@@ -298,6 +298,11 @@ public class BlockMeta extends BlockBase implements ICustomBlockItem, IDynamicMo
         }
 
         @Override
+        public int getMetadata(int damage) {
+            return damage;
+        }
+
+        @Override
         @SideOnly(Side.CLIENT)
         public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> list) {
             if (this.isInCreativeTab(tab)) {

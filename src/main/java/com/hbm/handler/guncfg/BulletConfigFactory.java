@@ -289,7 +289,7 @@ public class BulletConfigFactory {
 			}
 			if(size > 0)
 				bullet.world.spawnEntity(EntityNukeExplosionMK5.statFac(bullet.world, size, posX, posY, posZ));
-            EntityNukeTorex.statFac(bullet.world, posX, posY, posZ, size == 0 ? 15 : size);
+            EntityNukeTorex.statFacStandard(bullet.world, posX, posY, posZ, size == 0 ? 15 : size);
 		}
 	}
 }

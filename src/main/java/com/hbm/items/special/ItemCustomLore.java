@@ -22,6 +22,7 @@ import java.util.Random;
 public class ItemCustomLore extends ItemBakedBase {
 
 	EnumRarity rarity;
+	protected boolean hasEffect = false;
 	public ItemCustomLore(String s) {
 		super(s);
 		this.setCreativeTab(MainRegistry.controlTab);
@@ -90,28 +91,18 @@ public class ItemCustomLore extends ItemBakedBase {
 	@Override
 	@SideOnly(Side.CLIENT)
 	public boolean hasEffect(ItemStack stack) {
-		if(this == ModItems.rune_isa ||
-    			this == ModItems.rune_dagaz ||
-    			this == ModItems.rune_hagalaz ||
-    			this == ModItems.rune_jera ||
-    			this == ModItems.rune_thurisaz ||
-    			this == ModItems.egg_balefire_shard ||
-    			this == ModItems.egg_balefire ||
-    			this == ModItems.coin_maskman || 
-    			this == ModItems.coin_radiation || 
-    			this == ModItems.coin_worm || 
-    			this == ModItems.coin_ufo || 
-    			this == ModItems.coin_creeper) 
-		{
-    		return true;
-    	}
-		return super.hasEffect(stack);
+		return hasEffect;
 	}
 	
 	public ItemCustomLore setRarity(EnumRarity rarity) {
     	this.rarity = rarity;
 		return this;
     }
+
+	public ItemCustomLore setEffect() {
+		this.hasEffect = true;
+		return this;
+	}
 
 	@Override
 	@SideOnly(Side.CLIENT)

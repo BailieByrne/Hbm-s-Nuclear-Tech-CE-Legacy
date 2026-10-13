@@ -1,330 +1,249 @@
 package com.hbm.explosion;
 
-import com.hbm.config.BombConfig;
-import com.hbm.config.CompatibilityConfig;
 import com.hbm.interfaces.IExplosionRay;
-import com.hbm.util.Vec3NT;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagLongArray;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
+import net.minecraft.init.Blocks;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.Vec3d;
 
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.UUID;
 
 public class ExplosionNukeRayBatched implements IExplosionRay {
 
-	private final HashMap<ChunkPos, BitSet> perChunk = new HashMap<>();
-	private final List<ChunkPos> orderedChunks = new ArrayList<>();
-	private final CoordComparator comparator = new CoordComparator();
-	private boolean isContained = true;
-	private int posX;
-	private int posY;
-	private int posZ;
-	private final World world;
+    private static final float NUKE_RESISTANCE_CUTOFF = 2_000_000F;
+    private static final float INITIAL_ENERGY_FACTOR = 0.3F;
+    private static final IBlockState AIR = Blocks.AIR.getDefaultState();
+    private static final int UPDATE_FLAGS = 2;
 
-	private int strength;
-	private int radius;
+    private final World level;
+    private final int posX;
+    private final int posY;
+    private final int posZ;
+    private final int strength;
+    private final int radius;
 
-	private int gspNumMax;
-	private int gspNum;
-	private double gspX;
-	private double gspY;
+    private final int minY;
+    private final int maxY;
+    private final int worldHeight;
 
-	private static final int maxY = 255;
-	private static final int minY = 0;
+    private final Long2ObjectOpenHashMap<BitSet> perChunk = new Long2ObjectOpenHashMap<>();
+    private final int gspNumMax;
+    private long[] orderedChunks = new long[0];
+    private int orderedIndex = 0;
+    private int gspNum;
+    private double gspX;
+    private double gspY;
 
-	private boolean isAusf3Complete = false;
-	private int rayCheckInterval = 100;
-	private UUID detonator;
+    private boolean cacheComplete = false;
+    private boolean isContained = true;
 
-	public ExplosionNukeRayBatched(World world, int x, int y, int z, int strength, int radius) {
-		this.world = world;
-		this.posX = x;
-		this.posY = y;
-		this.posZ = z;
-		this.strength = strength;
-		this.radius = radius;
+    private int destructBit = -1;
+    private BitSet destructArray = null;
 
-		// Total number of points
-		this.gspNumMax = (int)(2.5 * Math.PI * Math.pow(this.strength, 2));
-		this.gspNum = 1;
+    @SuppressWarnings("unused")
+    private UUID detonator;
 
-		// The beginning of the generalized spiral points
-		this.gspX = Math.PI;
-		this.gspY = 0.0;
-		this.rayCheckInterval = 10000/radius;
-	}
+    public ExplosionNukeRayBatched(World level, int x, int y, int z, int strength, int radius) {
+        this.level = level;
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
+        this.strength = strength;
+        this.radius = radius;
 
-	private void generateGspUp(){
-		if (this.gspNum < this.gspNumMax) {
-			int k = this.gspNum + 1;
-			double hk = -1.0 + 2.0 * (k - 1.0) / (this.gspNumMax - 1.0);
-			this.gspX = Math.acos(hk);
+        this.minY = 0;
+        this.maxY = level.getHeight() - 1;
+        this.worldHeight = level.getHeight();
 
-			double prev_lon = this.gspY;
-			double lon = prev_lon + 3.6 / Math.sqrt(this.gspNumMax) / Math.sqrt(1.0 - hk * hk);
-			this.gspY = lon % (Math.PI * 2);
-		} else {
-			this.gspX = 0.0;
-			this.gspY = 0.0;
-		}
-		this.gspNum++;
-	}
+        this.gspNumMax = (int) (2.5 * Math.PI * strength * strength);
+        this.gspNum = 1;
+        this.gspX = Math.PI;
+        this.gspY = 0.0;
+    }
 
-	// Get Cartesian coordinates for spherical coordinates
-	// 90 X-Axis rotation for more efficient chunk scanning
-	private Vec3NT getSpherical2cartesian(){
-		double dx = Math.sin(this.gspX) * Math.cos(this.gspY);
-		double dy = Math.sin(this.gspX) * Math.sin(this.gspY);
-		double dz = Math.cos(this.gspX);
-		return Vec3NT.createVectorHelper(dx, dy, dz);
-	}
+    private static int chunkX(long packed) { return (int) packed; }
+    private static int chunkZ(long packed) { return (int) (packed >>> 32); }
 
-	public void addPos(int x, int y, int z){
-		chunk = new ChunkPos(x >> 4, z >> 4);
-        BitSet hitPositions = perChunk.computeIfAbsent(chunk, k -> new BitSet(65536));
+    public static float getNukeResistance(IBlockState state) {
+        if (state.getMaterial().isLiquid()) return 0.1F;
+        if (state.getBlock() == Blocks.SANDSTONE) return Blocks.STONE.getExplosionResistance(null);
+        if (state.getBlock() == Blocks.OBSIDIAN) return Blocks.STONE.getExplosionResistance(null) * 3.0F;
+        return state.getBlock().getExplosionResistance(null);
+    }
 
-        //we re-use the same pos instead of using individualized per-chunk ones to save on RAM
-        hitPositions.set(((255-y) << 8) + ((x - chunk.getXStart()) << 4) + (z - chunk.getZStart()));
-	}
-
-	int age = 0;
-
-	private void cacheChunksTick(int time) {
-		MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		long raysProcessed = 0;
-		long start = System.currentTimeMillis();
-
-		IBlockState blockState;
-		Block b;
-		int iX, iY, iZ, radius;
-		float rayStrength;
-		Vec3NT vec;
-		age++;
-		if(age == 120){
-			System.out.println("NTM C "+raysProcessed+" "+Math.round(10000D * 100D*gspNum/(double)gspNumMax)/10000D+"% "+gspNum+"/"+gspNumMax);
-			age = 0;
-		}
-		while(this.gspNumMax >= this.gspNum){
-			// Get Cartesian coordinates for spherical coordinates
-			vec = this.getSpherical2cartesian();
-
-			radius = this.radius;
-			rayStrength = strength * 0.3F;
-
-			//Finding the end of the ray
-			for(int r = 0; r < radius+1; r ++) {
-
-				iY = (int) Math.floor(posY + (vec.y * r));
-				
-				if(iY < minY || iY > maxY){
-					isContained = false;
-					break;
-				}
-
-				iX = (int) Math.floor(posX + (vec.x * r));
-				iZ = (int) Math.floor(posZ + (vec.z * r));
-
-
-				pos.setPos(iX, iY, iZ);
-				blockState = world.getBlockState(pos);
-				b = blockState.getBlock();
-				if(b.getExplosionResistance(null) >= 2_000_000)
-					break;
-
-				//Norwood: not ideal solution, but fixes insane blast doors actually blast proof when grenade lands inside block
-				rayStrength -= (float) (Math.pow(getNukeResistance(blockState, b)+1, 3 * ((float) (r = (r > 0) ? r : 1)) / ((float) radius))-1);
-
-
-
-				//save block positions in to-destroy-boolean[] until rayStrength is 0 
-				if(rayStrength > 0){
-					if(b != Blocks.AIR) {
-						//all-air chunks don't need to be buffered at all
-						addPos(iX, iY, iZ);
-					}
-					if(r >= radius) {
-						isContained = false;
-					}
-				} else {
-					break;
-				}
-			}
-			
-			// Raise one generalized spiral points
-			this.generateGspUp();
-			raysProcessed++;
-			if(raysProcessed % rayCheckInterval == 0 && System.currentTimeMillis()+1 > start + time) {
-				return;
-			}
-		} 
-		orderedChunks.addAll(perChunk.keySet());
-		orderedChunks.sort(comparator);
-		
-		isAusf3Complete = true;
-	}
-	
-	public static float getNukeResistance(IBlockState blockState, Block b) {
-		if(blockState.getMaterial().isLiquid()){
-			return 0.1F;
-		} else {
-			if(b == Blocks.SANDSTONE) return 4F;
-			if(b == Blocks.OBSIDIAN) return 18F;
-			return b.getExplosionResistance(null);
-		}
-	}
-
-	@Override
-	public void update(int processTimeMs) {
-        if(!CompatibilityConfig.isWarDim(world)){
-            isAusf3Complete = true;
-            return;
+    private void generateGspUp() {
+        if (this.gspNum < this.gspNumMax) {
+            int k = this.gspNum + 1;
+            double hk = -1.0 + 2.0 * (k - 1.0) / (this.gspNumMax - 1.0);
+            this.gspX = Math.acos(hk);
+            double prevLon = this.gspY;
+            double lon = prevLon + 3.6 / Math.sqrt(this.gspNumMax) / Math.sqrt(1.0 - hk * hk);
+            this.gspY = lon % (Math.PI * 2);
+        } else {
+            this.gspX = 0.0;
+            this.gspY = 0.0;
         }
-        if (isAusf3Complete)
-		    destructionTick(processTimeMs);
-        else cacheChunksTick(processTimeMs);
-	}
+        this.gspNum++;
+    }
 
-	@Override
-	public void cancel() {
-		isAusf3Complete = true;
-		orderedChunks.clear();
-		perChunk.clear();
-	}
+    private Vec3d sphericalToCartesian() {
+        double dx = Math.sin(this.gspX) * Math.cos(this.gspY);
+        double dy = Math.sin(this.gspX) * Math.sin(this.gspY);
+        double dz = Math.cos(this.gspX);
+        return new Vec3d(dx, dy, dz);
+    }
 
-	@Override
-	public boolean isComplete() {
-		return isAusf3Complete && perChunk.isEmpty();
-	}
+    private void addPos(int x, int y, int z) {
+        long key = ChunkPos.asLong(x >> 4, z >> 4);
+        BitSet hits = perChunk.get(key);
+        if (hits == null) {
+            hits = new BitSet(256 * worldHeight);
+            perChunk.put(key, hits);
+        }
+        hits.set(bitIndex(x & 0xF, y, z & 0xF));
+    }
 
-	@Override
-	public boolean isContained() {
-		return isContained;
-	}
+    private int bitIndex(int localX, int y, int localZ) {
+        return ((y - minY) << 8) | (localX << 4) | localZ;
+    }
 
-	@Override
-	public void setDetonator(UUID detonator) {
-		this.detonator = detonator;
-	}
+    private void cacheChunksTick(long timeMs) {
+        long deadline = System.currentTimeMillis() + timeMs;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
-	/** little comparator for roughly sorting chunks by distance to the center */
-	public class CoordComparator implements Comparator<ChunkPos> {
+        while (this.gspNum <= this.gspNumMax) {
+            Vec3d vec = sphericalToCartesian();
+            // Pole ray NaN: flips isContained on air.
+            if (Double.isNaN(vec.x) || Double.isNaN(vec.y) || Double.isNaN(vec.z)) {
+                generateGspUp();
+                continue;
+            }
+            float rayStrength = strength * INITIAL_ENERGY_FACTOR;
 
-		@Override
-		public int compare(ChunkPos o1, ChunkPos o2) {
+            for (int r = 0; r < radius + 1; r++) {
+                int iY = (int) Math.floor(posY + vec.y * r);
+                if (iY < minY || iY > maxY) {
+                    isContained = false;
+                    break;
+                }
 
-			int chunkX = ExplosionNukeRayBatched.this.posX >> 4;
-			int chunkZ = ExplosionNukeRayBatched.this.posZ >> 4;
+                int iX = (int) Math.floor(posX + vec.x * r);
+                int iZ = (int) Math.floor(posZ + vec.z * r);
 
-			int diff1 = Math.abs((chunkX - (o1.getXStart() >> 4))) + Math.abs((chunkZ - (o1.getZStart() >> 4)));
-			int diff2 = Math.abs((chunkX - (o2.getXStart() >> 4))) + Math.abs((chunkZ - (o2.getZStart() >> 4)));
-			
-			return Integer.compare(diff1, diff2);
-		}
-	}
+                pos.setPos(iX, iY, iZ);
+                IBlockState state = level.getBlockState(pos);
+                if (state.getBlock().getExplosionResistance(null) >= NUKE_RESISTANCE_CUTOFF) break;
 
-	public void destructionTick(int time){
-		long start = System.currentTimeMillis();
-		while(System.currentTimeMillis() < start + time){
-			processChunkBlocks(start, time);
-		}
-	}
+                int r0 = r > 0 ? r : 1;
+                rayStrength -= (float) (Math.pow(
+                        getNukeResistance(state) + 1,
+                        3.0 * r0 / radius) - 1.0);
 
-	BitSet hitArray;
-	ChunkPos chunk;
-	boolean needsNewHitArray = true;
-	int index = 0;
+                if (rayStrength > 0) {
+                    if (state.getMaterial() != Material.AIR) addPos(iX, iY, iZ);
+                    if (r >= radius) isContained = false;
+                } else {
+                    break;
+                }
+            }
 
-	public void processChunkBlocks(long start, int time){
-		if(!CompatibilityConfig.isWarDim(world)){
-			this.perChunk.clear();
-		}
-		if(this.perChunk.isEmpty()) return;
-		if(needsNewHitArray){
-			chunk = orderedChunks.get(0);
-			hitArray = perChunk.get(chunk);
-			index = hitArray.nextSetBit(0);
-			needsNewHitArray = false;
-		}
-		
-		int chunkX = chunk.getXStart();
-		int chunkZ = chunk.getZStart();
-		
-		MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		int blocksRemoved = 0;
-		while(index > -1) {
-			pos.setPos(((index >> 4) % 16) + chunkX, 255 - (index >> 8), (index % 16) + chunkZ);
-			world.setBlockToAir(pos);
-			index = hitArray.nextSetBit(index+1);
-			blocksRemoved++;
-			if(blocksRemoved % 256 == 0 && System.currentTimeMillis()+1 > start + time){
-				break;
-			}
-		}
+            generateGspUp();
+            if (System.currentTimeMillis() >= deadline) return;
+        }
 
-		if(index < 0){
-			perChunk.remove(chunk);
-			orderedChunks.remove(0);
-			needsNewHitArray = true;
-		}
-	}
-	
-	public void readEntityFromNBT(NBTTagCompound nbt) {
-		radius = nbt.getInteger("radius");
-		strength = nbt.getInteger("strength");
-		posX = nbt.getInteger("posX");
-		posY = nbt.getInteger("posY");
-		posZ = nbt.getInteger("posZ");
-		gspNumMax = (int)(2.5 * Math.PI * Math.pow(strength, 2));
-		rayCheckInterval = 10000/radius;
+        orderChunks();
+        cacheComplete = true;
+    }
 
-		if(nbt.hasKey("gspNum")){
-			gspNum = nbt.getInteger("gspNum");
-			isAusf3Complete = nbt.getBoolean("f3");
-			isContained = nbt.getBoolean("isContained");
+    private void orderChunks() {
+        int chunkX = posX >> 4;
+        int chunkZ = posZ >> 4;
+        long[] keys = perChunk.keySet().toLongArray();
+        long[] sortKeys = new long[keys.length];
+        for (int i = 0; i < keys.length; i++) {
+            int dist = Math.abs(chunkX - chunkX(keys[i])) + Math.abs(chunkZ - chunkZ(keys[i]));
+            sortKeys[i] = ((long) dist << 32) | i;
+        }
+        Arrays.sort(sortKeys);
+        orderedChunks = new long[keys.length];
+        for (int i = 0; i < keys.length; i++) orderedChunks[i] = keys[(int) sortKeys[i]];
+        orderedIndex = 0;
+    }
 
-			int i = 0;
-			while(nbt.hasKey("chunks"+i)){
-				NBTTagCompound c = (NBTTagCompound)nbt.getTag("chunks"+i);
+    private void destructionTick(long timeMs) {
+        long deadline = System.currentTimeMillis() + timeMs;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
-				NBTTagLongArray nbt1 = (NBTTagLongArray)c.getTag("cB");
-				perChunk.put(new ChunkPos(c.getInteger("cX"), c.getInteger("cZ")), BitSet.valueOf(nbt1.data));
-				i++;
-			}
-			if(isAusf3Complete){
-				orderedChunks.addAll(perChunk.keySet());
-				orderedChunks.sort(comparator);
-			}
-		}
-	}
+        while (orderedIndex < orderedChunks.length) {
+            long key = orderedChunks[orderedIndex];
+            if (destructArray == null) {
+                destructArray = perChunk.get(key);
+                destructBit = destructArray.nextSetBit(0);
+            }
 
-	public void writeEntityToNBT(NBTTagCompound nbt) {
-		nbt.setInteger("radius", radius);
-		nbt.setInteger("strength", strength);
-		nbt.setInteger("posX", posX);
-		nbt.setInteger("posY", posY);
-		nbt.setInteger("posZ", posZ);
-		
-		if(BombConfig.enableNukeNBTSaving){
-			nbt.setInteger("gspNum", gspNum);
-			nbt.setBoolean("f3", isAusf3Complete);
-			nbt.setBoolean("isContained", isContained);
-		
-			int i = 0;
-			for(Entry<ChunkPos, BitSet> e : perChunk.entrySet()){
-				NBTTagCompound c = new NBTTagCompound();
-				c.setInteger("cX", e.getKey().x);
-				c.setInteger("cZ", e.getKey().z);
-				c.setTag("cB", new NBTTagLongArray(e.getValue().toLongArray()));
-				nbt.setTag("chunks"+i, c.copy());
-				i++;
-			}
-		}
-	}
+            int chunkX = chunkX(key) << 4;
+            int chunkZ = chunkZ(key) << 4;
+            int removed = 0;
+            while (destructBit >= 0) {
+                int bit = destructBit;
+                int y = (bit >>> 8) + minY;
+                int localX = (bit >>> 4) & 0xF;
+                int localZ = bit & 0xF;
+                pos.setPos(chunkX | localX, y, chunkZ | localZ);
+                // Native flag 2 keeps per-block neighbor notifications deferred.
+                level.setBlockState(pos, AIR, UPDATE_FLAGS);
+                // Native Chunk.setBlockState already performs removal and placement hooks.
+                destructBit = destructArray.nextSetBit(bit + 1);
+                removed++;
+                if ((removed & 0xFF) == 0 && System.currentTimeMillis() >= deadline) return;
+            }
+
+            perChunk.remove(key);
+            destructArray = null;
+            orderedIndex++;
+        }
+    }
+
+    @Override
+    public void update(long msBudget) {
+        if (cacheComplete) destructionTick(msBudget);
+        else cacheChunksTick(msBudget);
+    }
+
+    @Override
+    public void cancel() {
+        cacheComplete = true;
+        perChunk.clear();
+        orderedChunks = new long[0];
+        orderedIndex = 0;
+        destructArray = null;
+        destructBit = -1;
+    }
+
+    @Override
+    public boolean isComplete() {
+        return cacheComplete && perChunk.isEmpty();
+    }
+
+    @Override
+    public boolean isContained() {
+        return isContained;
+    }
+
+    @Override
+    public void setDetonator(UUID detonator) {
+        this.detonator = detonator;
+    }
+
+    public Long2ObjectMap<BitSet> getPerChunk() {
+        return perChunk;
+    }
 }

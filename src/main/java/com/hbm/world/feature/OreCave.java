@@ -16,6 +16,7 @@ import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.Random;
+import java.util.function.IntPredicate;
 
 public class OreCave {
 
@@ -36,6 +37,7 @@ public class OreCave {
 
     private IBlockState fluid;
     private int dim = 0;
+    private IntPredicate dimensionGate;
     private final IBlockState stalactiteState;
     private final IBlockState stalagmiteState;
 
@@ -87,11 +89,19 @@ public class OreCave {
         return this;
     }
 
+    /** Optional dimension enablement, without changing the cave's density. */
+    public OreCave setDimensionGate(IntPredicate dimensionGate) {
+        this.dimensionGate = dimensionGate;
+        return this;
+    }
+
     @SubscribeEvent
     public void onDecorate(DecorateBiomeEvent.Pre event) {
 
         World world = event.getWorld();
-        if (world == null || world.provider == null || world.provider.getDimension() != this.dim) return;
+        if (world == null || world.provider == null) return;
+        int dimension = world.provider.getDimension();
+        if (dimensionGate == null ? dimension != this.dim : !dimensionGate.test(dimension)) return;
         if (world.isRemote) return;
 
         long seed = world.getSeed();

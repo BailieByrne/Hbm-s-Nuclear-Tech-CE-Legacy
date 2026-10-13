@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.fluid.Fluids;
 import com.hbm.items.ModItems;
@@ -14,7 +15,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerNukePrototype extends Container {
+public class ContainerNukePrototype extends Container implements IAutoRoutingContainer {
 
 	private TileEntityNukePrototype nukeTsar;
 
@@ -70,4 +71,9 @@ public class ContainerNukePrototype extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return nukeTsar.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

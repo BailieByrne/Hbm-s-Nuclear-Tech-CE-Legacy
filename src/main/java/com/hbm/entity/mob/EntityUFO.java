@@ -313,7 +313,7 @@ public class EntityUFO extends EntityFlying implements IMob, IRadiationImmune {
 		}
 		
 		if(this.deathTime == 19 && !world.isRemote) {
-			EntityNukeTorex.statFac(world, this.posX, this.posY, this.posZ, 25);
+			EntityNukeTorex.statFacStandard(world, this.posX, this.posY, this.posZ, 25);
 			world.spawnEntity(EntityNukeExplosionMK5.statFacNoRad(world, 25, posX + 0.5, posY + 0.5, posZ + 0.5).setDetonator(this));
             
 			List<EntityPlayer> players = world.getEntitiesWithinAABB(EntityPlayer.class, this.getEntityBoundingBox().grow(200, 200, 200));

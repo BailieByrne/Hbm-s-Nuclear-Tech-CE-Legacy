@@ -21,6 +21,8 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -48,7 +50,7 @@ public class RadioRec extends BlockContainer implements IGUIProvider {
 
     @Override
     public @NotNull IBlockState getStateForPlacement(@NotNull World world, @NotNull BlockPos pos, @NotNull EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer, @NotNull EnumHand hand) {
-        return this.getDefaultState().withProperty(FACING, EnumFacing.fromAngle(placer.rotationYaw).getOpposite());
+        return this.getDefaultState().withProperty(FACING, placer.getHorizontalFacing());
     }
 
     @Override
@@ -75,6 +77,16 @@ public class RadioRec extends BlockContainer implements IGUIProvider {
             case EAST -> 5;
             default -> 3;
         };
+    }
+
+    @Override
+    public @NotNull IBlockState withRotation(IBlockState state, Rotation rotation) {
+        return state.withProperty(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    public @NotNull IBlockState withMirror(IBlockState state, Mirror mirror) {
+        return state.withRotation(mirror.toRotation(state.getValue(FACING)));
     }
 
     @SuppressWarnings("deprecation")

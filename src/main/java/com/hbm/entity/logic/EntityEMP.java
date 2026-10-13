@@ -132,6 +132,11 @@ public class EntityEMP extends Entity implements IChunkLoader {
 	}
 
 	@Override
+	public boolean shouldBootstrapChunkLoader() {
+		return loaderTicket == null && !awaitingTicketRestore;
+	}
+
+	@Override
 	public void init(Ticket ticket) {
 		if(!world.isRemote) {
 			

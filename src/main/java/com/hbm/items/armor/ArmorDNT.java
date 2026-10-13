@@ -1,6 +1,5 @@
 package com.hbm.items.armor;
 
-import com.google.common.collect.Multimap;
 import com.hbm.capability.HbmCapability;
 import com.hbm.capability.HbmCapability.IHBMData;
 import com.hbm.handler.ArmorUtil;
@@ -23,6 +22,7 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -76,12 +76,10 @@ public class ArmorDNT extends ArmorFSBPowered implements IItemRendererProvider {
 		IHBMData props = HbmCapability.getData(player);
 		
 		// SPEED //
-		Multimap<String, AttributeModifier> multimap = super.getAttributeModifiers(EntityEquipmentSlot.CHEST, stack);
-		multimap.put(SharedMonsterAttributes.MOVEMENT_SPEED.getName(), new AttributeModifier(speed, "DNT SPEED", 0.25, 0));
-		player.getAttributeMap().removeAttributeModifiers(multimap);
-		
+		IAttributeInstance speedAttribute = player.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
+		speedAttribute.removeModifier(speed);
 		if(player.isSprinting()) {
-			player.getAttributeMap().applyAttributeModifiers(multimap);
+			speedAttribute.applyModifier(new AttributeModifier(speed, "DNT SPEED", 0.25, 0));
 		}
 
         if(!world.isRemote) {

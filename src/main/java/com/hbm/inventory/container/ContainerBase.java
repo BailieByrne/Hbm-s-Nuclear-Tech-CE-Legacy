@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotCraftingOutput;
 import com.hbm.inventory.slot.SlotFiltered;
@@ -21,7 +22,7 @@ import net.minecraftforge.items.IItemHandler;
  *
  * @author 70k
  **/
-public class ContainerBase extends Container {
+public class ContainerBase extends Container implements IAutoRoutingContainer {
 
     public IItemHandler tile;
     protected final TransferStrategy transferStrategy = TransferStrategy.builder(() -> this.tile.getSlots())
@@ -118,5 +119,10 @@ public class ContainerBase extends Container {
         }
 
         return true;
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

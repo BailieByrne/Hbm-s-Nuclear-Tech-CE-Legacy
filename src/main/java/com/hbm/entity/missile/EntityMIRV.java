@@ -93,7 +93,7 @@ public class EntityMIRV extends EntityThrowable implements IChunkLoader, IConsta
     		{
     	    	world.spawnEntity(EntityNukeExplosionMK5.statFac(world, BombConfig.mirvRadius, posX, posY, posZ).setDetonator(thrower));
     	    	if(BombConfig.enableNukeClouds) {
-					EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.mirvRadius);
+					EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.mirvRadius);
 				}
     		}
     		this.setDead();
@@ -140,6 +140,11 @@ public class EntityMIRV extends EntityThrowable implements IChunkLoader, IConsta
 	@Override
 	public RadarTargetType getTargetType() {
 		return RadarTargetType.MIRVLET;
+	}
+
+	@Override
+	public boolean shouldBootstrapChunkLoader() {
+		return loaderTicket == null && !awaitingTicketRestore;
 	}
 
 	@Override

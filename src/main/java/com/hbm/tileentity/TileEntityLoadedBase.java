@@ -149,8 +149,8 @@ public class TileEntityLoadedBase extends TileEntity implements ILoadedTile, IBu
     /**
      * {@inheritDoc}
      * only call super.deserialize() on noisy machines. It has no effect on others.<br>
-     * This happens on the <strong>Netty Client IO thread</strong>!
-     * Direct List modification is guaranteed to produce a CME.<br>
+     * Initial chunk data and BufPacket updates both apply on the client thread, preserving their
+     * arrival order and sharing ownership of client tile state.
      */
     @Override
     public void deserialize(ByteBuf buf) {

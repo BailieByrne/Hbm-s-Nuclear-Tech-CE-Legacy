@@ -243,7 +243,7 @@ public class Landmine extends BlockContainer implements IBomb {
                 if (rand.nextInt(100) == 0 || MainRegistry.polaroidID == 11) {
                     EntityNukeTorex.statFacBale(world, x + 0.5, y + 0.5, z + 0.5, BombConfig.fatmanRadius);
                 } else {
-                    EntityNukeTorex.statFac(world, x + 0.5, y + 0.5, z + 0.5, BombConfig.fatmanRadius);
+                    EntityNukeTorex.statFacStandard(world, x + 0.5, y + 0.5, z + 0.5, BombConfig.fatmanRadius);
                 }
             }
             case "mine_naval" -> {

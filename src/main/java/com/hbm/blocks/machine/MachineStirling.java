@@ -78,10 +78,7 @@ public class MachineStirling extends BlockDummyable implements ILookOverlay, ITo
     @Override
     public boolean onBlockActivated(World world, BlockPos blockPos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
 
-        if (world.isRemote) {
-            return true;
-
-        } else if (!player.isSneaking()) {
+        if (!player.isSneaking()) {
             int[] pos = this.findCore(world, blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
             if (pos == null)
@@ -91,6 +88,7 @@ public class MachineStirling extends BlockDummyable implements ILookOverlay, ITo
             int meta = stirling.getGeatMeta();
 
             if (!stirling.hasCog && !player.getHeldItem(EnumHand.MAIN_HAND).isEmpty() && player.getHeldItem(EnumHand.MAIN_HAND).getItem() == ModItems.gear_large && player.getHeldItem(EnumHand.MAIN_HAND).getItemDamage() == meta) {
+                if (world.isRemote) return true;
                 player.getHeldItem(EnumHand.MAIN_HAND).shrink(1);
                 stirling.hasCog = true;
                 stirling.markDirty();

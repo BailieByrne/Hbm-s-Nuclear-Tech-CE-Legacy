@@ -15,15 +15,15 @@ public class RenderFallingNuke extends Render<EntityFallingNuke> {
 
 	public static final IRenderFactory<EntityFallingNuke> FACTORY = (RenderManager man) -> {return new RenderFallingNuke(man);};
 	
-	private static final ResourceLocation objTesterModelRL = new ResourceLocation(/*"/assets/" + */Tags.MODID, "models/bombs/LilBoy.obj");
+	private static final ResourceLocation objTesterModelRL = new ResourceLocation(/*"/assets/" + */Tags.MODID, "models/bombs/lilboy.obj");
 	private IModelCustom boyModel;
     private ResourceLocation boyTexture;
-    private static final ResourceLocation gadget_rl = new ResourceLocation(Tags.MODID +":textures/models/bombs/gadget.png");
+    private static final ResourceLocation gadget_rl = new ResourceLocation(Tags.MODID +":textures/models/bombs/thegadget3_.png");
 	
 	protected RenderFallingNuke(RenderManager renderManager) {
 		super(renderManager);
 		boyModel = new HFRWavefrontObject(objTesterModelRL);
-		boyTexture = new ResourceLocation(Tags.MODID, "textures/models/bombs/CustomNuke.png");
+		boyTexture = new ResourceLocation(Tags.MODID, "textures/models/bombs/customnuke.png");
 	}
 
 	@Override
@@ -31,23 +31,20 @@ public class RenderFallingNuke extends Render<EntityFallingNuke> {
 		GlStateManager.pushMatrix();
         GlStateManager.translate((float)x, (float)y, (float)z);
         
-		switch(entity.getDataManager().get(EntityFallingNuke.FACING))
-		{
-		case NORTH:
-			GlStateManager.rotate(0, 0F, 1F, 0F);
-	        GlStateManager.translate(-2.0D, 0.0D, 0.0D); break;
-		case WEST:
-			GlStateManager.rotate(90, 0F, 1F, 0F);
-	        GlStateManager.translate(-2.0D, 0.0D, 0.0D); break;
-		case SOUTH:
-			GlStateManager.rotate(180, 0F, 1F, 0F);
-	        GlStateManager.translate(-2.0D, 0.0D, 0.0D); break;
-		case EAST:
-			GlStateManager.rotate(-90, 0F, 1F, 0F);
-	        GlStateManager.translate(-2.0D, 0.0D, 0.0D); break;
-	    default:
-	       	break;
-		}
+		switch(entity.getDataManager().get(EntityFallingNuke.FACING)) {
+        case 2:
+            GlStateManager.rotate(90, 0F, 1F, 0F);
+            GlStateManager.translate(-2.0D, 0.0D, 0.0D); break;
+        case 4:
+            GlStateManager.rotate(180, 0F, 1F, 0F);
+            GlStateManager.translate(-2.0D, 0.0D, 0.0D); break;
+        case 3:
+            GlStateManager.rotate(270, 0F, 1F, 0F);
+            GlStateManager.translate(-2.0D, 0.0D, 0.0D); break;
+        case 5:
+            GlStateManager.rotate(0, 0F, 1F, 0F);
+            GlStateManager.translate(-2.0D, 0.0D, 0.0D); break;
+        }
         
 		float f = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks;
 		

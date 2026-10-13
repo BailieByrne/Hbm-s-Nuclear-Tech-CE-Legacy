@@ -1267,7 +1267,7 @@ public class NBTStructure {
 
 			for (int z = box.minZ; z <= box.maxZ; z++) {
 				for (int x = box.minX; x <= box.maxX; x++) {
-					total += world.getHeight(new BlockPos(x, 0, z)).getY();
+					total += world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z)).getY();
 					iterations++;
 				}
 			}

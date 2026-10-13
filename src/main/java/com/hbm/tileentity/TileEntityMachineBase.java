@@ -130,6 +130,7 @@ public abstract class TileEntityMachineBase extends TileEntityLoadedBase impleme
     @Override
     public void setCustomName(String name) {
         this.customName = name;
+        markDirty();
     }
 
     public boolean isUseableByPlayer(EntityPlayer player) {
@@ -180,11 +181,13 @@ public abstract class TileEntityMachineBase extends TileEntityLoadedBase impleme
     @Override
     public @NotNull NBTTagCompound writeToNBT(NBTTagCompound compound) {
         compound.setTag("inventory", inventory.serializeNBT());
+        if (hasCustomName()) compound.setString("CustomName", customName);
         return super.writeToNBT(compound);
     }
 
     @Override
     public void readFromNBT(NBTTagCompound compound) {
+        customName = compound.getString("CustomName");
         if (compound.hasKey("inventory")) {
             int expected = inventory.getSlots();
             inventory.deserializeNBT(compound.getCompoundTag("inventory"));

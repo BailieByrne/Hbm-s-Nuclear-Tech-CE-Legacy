@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.items.tool.ItemPlasticBag;
 import com.hbm.util.InventoryUtil;
@@ -11,7 +12,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerPlasticBag extends Container {
+public class ContainerPlasticBag extends Container implements IAutoRoutingContainer {
 
     private ItemPlasticBag.InventoryPlasticBag bag;
 
@@ -56,5 +57,10 @@ public class ContainerPlasticBag extends Container {
     @Override
     public void onContainerClosed(EntityPlayer player) {
         super.onContainerClosed(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

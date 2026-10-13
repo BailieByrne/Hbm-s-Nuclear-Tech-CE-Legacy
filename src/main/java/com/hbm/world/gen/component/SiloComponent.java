@@ -13,7 +13,6 @@ import com.hbm.tileentity.bomb.TileEntityLandmine;
 import com.hbm.tileentity.bomb.TileEntityLaunchPadRusted;
 import com.hbm.tileentity.network.TileEntityRadioTorchBase;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockStairs;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -37,10 +36,12 @@ public class SiloComponent extends Component {
 
     @Override
     protected void writeStructureToNBT(NBTTagCompound tagCompound) {
+        this.setToNBT(tagCompound);
     }
 
     @Override
     protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
+        this.getFromNBT(tagCompound);
     }
 
     public SiloComponent(Random rand, int minX, int minZ) {
@@ -445,8 +446,8 @@ public class SiloComponent extends Component {
         setBlockState(world, ModBlocks.deco_computer.getStateFromMeta(decoModelN), 28, 22, 9, box);
         setBlockState(world, Blocks.LEVER.getStateFromMeta(6), 26, 22, 8, box); //placed on ground
         setBlockState(world, Blocks.LEVER.getStateFromMeta(6), 25, 22, 7, box);
-        setBlockState(world, Blocks.OAK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING, EnumFacing.SOUTH), 28, 21, 7, box);
-        setBlockState(world, Blocks.OAK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING, EnumFacing.WEST), 27, 21, 5, box);
+        setBlockState(world, Blocks.OAK_STAIRS.getStateFromMeta(stairS), 28, 21, 7, box);
+        setBlockState(world, Blocks.OAK_STAIRS.getStateFromMeta(stairW), 27, 21, 5, box);
 
         setBlockState(world, ModBlocks.tape_recorder.getStateFromMeta(decoE), 30, 21, 5, box);
         setBlockState(world, Blocks.FLOWER_POT.getStateFromMeta(0), 27, 21, 3, box);
@@ -471,7 +472,7 @@ public class SiloComponent extends Component {
         setBlockState(world, ModBlocks.capacitor_copper.getStateFromMeta(decoN), 22, 22, 1, box);
         fillWithBlocks(world, box, 20, 23, 1, 22, 23, 1, ModBlocks.deco_steel);
         setBlockState(world, ModBlocks.hev_battery.getStateFromMeta(0), 23, 21, 1, box);
-        setBlockState(world, Blocks.OAK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING, EnumFacing.WEST), 18, 21, 2, box);
+        setBlockState(world, Blocks.OAK_STAIRS.getStateFromMeta(stairW), 18, 21, 2, box);
         fillWithBlocks(world, box, 16, 21, 1, 16, 21, 3, ModBlocks.deco_steel);
 
         setBlockState(world, ModBlocks.deco_computer.getStateFromMeta(decoModelE), 16, 22, 2, box);
@@ -906,13 +907,13 @@ public class SiloComponent extends Component {
         placeLever(world, box, 2, true, 12, 18, 18);
         setBlockState(world, ModBlocks.machine_microwave.getStateFromMeta(decoE), 12, 18, 19, box);
         setBlockState(world, ModBlocks.hev_battery.getStateFromMeta(0), 12, 18, 20, box);
-        setBlockState(world, Blocks.OAK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING, EnumFacing.SOUTH), 8, 17, 17, box);
+        setBlockState(world, Blocks.OAK_STAIRS.getStateFromMeta(stairS), 8, 17, 17, box);
         fillWithMetadataBlocks(world, box, 8, 17, 19, 9, 17, 19, ModBlocks.reinforced_stone_stairs, stairS | 4);
         fillWithMetadataBlocks(world, box, 8, 17, 20, 9, 17, 20, ModBlocks.reinforced_stone_stairs, stairN | 4);
-        setBlockState(world, Blocks.OAK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING, EnumFacing.NORTH), 8, 17, 22, box);
-        setBlockState(world, Blocks.OAK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING, EnumFacing.EAST), 10, 17, 23, box);
-        setBlockState(world, Blocks.OAK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING, EnumFacing.SOUTH), 11, 17, 23, box);
-        setBlockState(world, Blocks.OAK_STAIRS.getDefaultState().withProperty(BlockStairs.FACING, EnumFacing.WEST), 12, 17, 23, box);
+        setBlockState(world, Blocks.OAK_STAIRS.getStateFromMeta(stairN), 8, 17, 22, box);
+        setBlockState(world, Blocks.OAK_STAIRS.getStateFromMeta(stairE), 10, 17, 23, box);
+        setBlockState(world, Blocks.OAK_STAIRS.getStateFromMeta(stairS), 11, 17, 23, box);
+        setBlockState(world, Blocks.OAK_STAIRS.getStateFromMeta(stairW), 12, 17, 23, box);
         fillWithMetadataBlocks(world, box, 10, 17, 25, 12, 17, 25, ModBlocks.reinforced_stone_stairs, stairN | 4);
         setBlockState(world, ModBlocks.deco_crt.getStateFromMeta(getCRTMeta(0)), 11, 18, 25, box);
 
@@ -1399,10 +1400,11 @@ public class SiloComponent extends Component {
     }
     //this might be a decent method to have in general actually
     protected StructureBoundingBox getRotatedBoundingBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
-        EnumFacing facing = this.getCoordBaseMode();
-        if (facing == null || facing == EnumFacing.NORTH || facing == EnumFacing.SOUTH) {
-            return new StructureBoundingBox(minX, minY, minZ, minX + maxX, minY + maxY, minZ + maxZ);
-        }
-        return new StructureBoundingBox(minX, minY, minZ, minX + maxZ, minY + maxY, minZ + maxX);
+        return switch (this.getCoordMode()) {
+            case 1 -> new StructureBoundingBox(minX - maxZ, minY, minZ, minX, minY + maxY, minZ + maxX);
+            case 2 -> new StructureBoundingBox(minX - maxX, minY, minZ - maxZ, minX, minY + maxY, minZ);
+            case 3 -> new StructureBoundingBox(minX, minY, minZ - maxX, minX + maxZ, minY + maxY, minZ);
+            default -> new StructureBoundingBox(minX, minY, minZ, minX + maxX, minY + maxY, minZ + maxZ);
+        };
     }
 }

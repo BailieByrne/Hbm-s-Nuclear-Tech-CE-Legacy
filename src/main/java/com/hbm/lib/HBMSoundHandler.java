@@ -16,6 +16,9 @@ public final class HBMSoundHandler {
     public static SoundEvent hephaestusRunning;
     public static SoundEvent siloopen;
     public static SoundEvent siloclose;
+    public static SoundEvent sliding_door_opened;
+    public static SoundEvent sliding_door_shut;
+    public static SoundEvent sliding_door_opening;
     public static SoundEvent pressOperate;
     public static SoundEvent laserBang;
     public static SoundEvent blockDebris;
@@ -666,6 +669,9 @@ public final class HBMSoundHandler {
         transitionSealOpen = register("block.door.transitionseal");
         siloopen = register("block.door.siloopen");
         siloclose = register("block.door.siloclose");
+        sliding_door_opened = register("block.door.sliding_door_opened");
+        sliding_door_shut = register("block.door.sliding_door_shut");
+        sliding_door_opening = register("block.door.sliding_door_opening");
         garage = register("block.door.garage");
         garage_stop = register("block.door.garagestop");
         door_spinny = register("block.door.lever");

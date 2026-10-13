@@ -1,6 +1,8 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotSmelting;
+import com.hbm.inventory.slot.SlotUpgrade;
 import com.hbm.tileentity.machine.TileEntityFurnaceIron;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -9,6 +11,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class ContainerFurnaceIron extends ContainerBase {
+
+    private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(5)
+            .genericMachineRange(0, 5)
+            .build();
 	
 	protected TileEntityFurnaceIron furnace;
 	
@@ -24,7 +30,7 @@ public class ContainerFurnaceIron extends ContainerBase {
 		//output
 		this.addSlotToContainer(new SlotSmelting(invPlayer.player, furnace.inventory, 3, 125, 35));
 		//upgrade
-		this.addSlotToContainer(new SlotItemHandler(furnace.inventory, 4, 17, 35));
+		this.addSlotToContainer(new SlotUpgrade(furnace.inventory, 4, 17, 35));
 		
 		for(int i = 0; i < 3; i++) {
 			for(int j = 0; j < 9; j++) {
@@ -47,18 +53,18 @@ public class ContainerFurnaceIron extends ContainerBase {
             rStack = stack.copy();
 
             if (index == 3) {
-                if(!handleSmeltingTransfer(slot, stack, rStack, 6, this.inventorySlots.size())) {
+				if(!handleSmeltingTransfer(slot, stack, rStack, 5, this.inventorySlots.size())) {
                     return ItemStack.EMPTY;
                 }
             }
-			else if(index <= 5) {
-				if(!this.mergeItemStack(stack, 6, this.inventorySlots.size(), true)) {
+			else if(index <= 4) {
+				if(!this.mergeItemStack(stack, 5, this.inventorySlots.size(), true)) {
 					return ItemStack.EMPTY;
 				}
 				
 				slot.onSlotChange(stack, rStack);
 				
-			} else if(!this.mergeItemStack(stack, 0, 3, false)) {
+			} else if(!this.mergeItemStack(stack, 0, 5, false)) {
 				return ItemStack.EMPTY;
 			}
 
@@ -71,6 +77,11 @@ public class ContainerFurnaceIron extends ContainerBase {
 
 		return rStack;
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 
 	@Override
 	public boolean canInteractWith(EntityPlayer player) {

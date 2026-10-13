@@ -72,8 +72,11 @@ public class MachineHephaestus extends BlockDummyable implements ILookOverlay {
     @Override
     public boolean onBlockActivated(World world, @NotNull BlockPos pos, @NotNull IBlockState state, @NotNull EntityPlayer player,
                                     @NotNull EnumHand hand, @NotNull EnumFacing facing, float hitX, float hitY, float hitZ) {
+        if (world.isRemote) return player.isSneaking()
+                || player.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof IItemFluidIdentifier
+                && this.findCoreTE(world, pos) instanceof TileEntityMachineHephaestus;
 
-        if (!world.isRemote && !player.isSneaking()) {
+        if (!player.isSneaking()) {
 
             if (player.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof IItemFluidIdentifier) {
                 BlockPos corePos = this.findCore(world, pos);

@@ -3,7 +3,7 @@ package com.hbm.potion;
 import com.hbm.Tags;
 import com.hbm.blocks.ModBlocks;
 import com.hbm.blocks.bomb.BlockTaint;
-import com.hbm.capability.HbmLivingCapability;
+import com.hbm.capability.HbmLivingProps;
 import com.hbm.config.CompatibilityConfig;
 import com.hbm.config.ServerConfig;
 import com.hbm.entity.mob.EntityCreeperTainted;
@@ -110,8 +110,7 @@ public class HbmPotion extends Potion {
 			ContaminationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, (float)(level + 1F) * 0.05F);
 		}
 		else if(this == radaway) {
-			if(entity.hasCapability(HbmLivingCapability.EntityHbmPropsProvider.ENT_HBM_PROPS_CAP, null))
-				entity.getCapability(HbmLivingCapability.EntityHbmPropsProvider.ENT_HBM_PROPS_CAP, null).decreaseRads((level+1)*0.05F);
+			HbmLivingProps.incrementRadiation(entity, -(level + 1D));
 		}
         else if(this == bang) {
 			if(CompatibilityConfig.isWarDim(entity.world)){

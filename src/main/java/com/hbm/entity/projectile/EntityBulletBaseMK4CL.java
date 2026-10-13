@@ -32,6 +32,11 @@ public class EntityBulletBaseMK4CL extends EntityBulletBaseMK4 implements IChunk
     }
 
     @Override
+    public boolean shouldBootstrapChunkLoader() {
+        return loaderTicket == null && !awaitingTicketRestore;
+    }
+
+    @Override
     public void init(ForgeChunkManager.Ticket ticket) {
         if(!world.isRemote && ticket != null) {
             if(loaderTicket == null) {

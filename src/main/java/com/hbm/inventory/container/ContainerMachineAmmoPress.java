@@ -1,5 +1,7 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.inventory.recipes.AmmoPressRecipes;
 import com.hbm.tileentity.machine.TileEntityMachineAmmoPress;
@@ -11,12 +13,21 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineAmmoPress extends Container {
+public class ContainerMachineAmmoPress extends Container implements IAutoRoutingContainer {
 
     private final TileEntityMachineAmmoPress press;
+    private final TransferStrategy autoRoutingStrategy;
 
     public ContainerMachineAmmoPress(InventoryPlayer playerInv, TileEntityMachineAmmoPress tile) {
         press = tile;
+        TransferStrategy.Builder routing = TransferStrategy.builder(10);
+        for (int i = 0; i < 9; i++) {
+            final int input = i;
+            routing.rule(i, i + 1, stack -> press.selectedRecipe >= 0 && press.selectedRecipe < AmmoPressRecipes.recipes.size()
+                    && AmmoPressRecipes.recipes.get(press.selectedRecipe).input[input] != null
+                    && AmmoPressRecipes.recipes.get(press.selectedRecipe).input[input].matchesRecipe(stack, true));
+        }
+        autoRoutingStrategy = routing.build();
 
         //Inputs
         for(int i = 0; i < 3; i++) {
@@ -35,6 +46,11 @@ public class ContainerMachineAmmoPress extends Container {
         for(int i = 0; i < 9; i++) {
             this.addSlotToContainer(new Slot(playerInv, i, 8 + i * 18, 176));
         }
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return autoRoutingStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 
     @Override

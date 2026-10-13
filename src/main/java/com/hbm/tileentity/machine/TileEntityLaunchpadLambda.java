@@ -13,10 +13,13 @@ import com.hbm.inventory.gui.GUILaunchpadLambda;
 import com.hbm.items.ISatChip;
 import com.hbm.items.ModItems;
 import com.hbm.lib.HBMSoundHandler;
+import com.hbm.lib.DirPos;
+import com.hbm.lib.ForgeDirection;
 import com.hbm.lib.Library;
 import com.hbm.main.MainRegistry;
 import com.hbm.sound.AudioWrapper;
 import com.hbm.tileentity.IGUIProvider;
+import com.hbm.tileentity.IConnectionAnchors;
 import com.hbm.tileentity.TileEntityMachineBase;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.gui.GuiScreen;
@@ -26,6 +29,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ITickable;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
@@ -34,7 +38,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.jetbrains.annotations.NotNull;
 
 @AutoRegister(name = "tileentity_launchpad_lambda")
-public class TileEntityLaunchpadLambda extends TileEntityMachineBase implements ITickable, IEnergyReceiverMK2, IFluidStandardReceiverMK2, IGUIProvider, IControlReceiver {
+public class TileEntityLaunchpadLambda extends TileEntityMachineBase implements ITickable, IEnergyReceiverMK2, IFluidStandardReceiverMK2, IGUIProvider, IControlReceiver, IConnectionAnchors {
 
 	public long power;
 	public static final long maxPower = 1_000_000;
@@ -63,6 +67,7 @@ public class TileEntityLaunchpadLambda extends TileEntityMachineBase implements 
 	public boolean autolaunch = false;
 
 	private AudioWrapper audio;
+	private DirPos[] conPos;
 
 	public static final int COUNTDOWN_DURATION = 200;
 	public int countdown;
@@ -83,6 +88,10 @@ public class TileEntityLaunchpadLambda extends TileEntityMachineBase implements 
 	public void update() {
 
 		if(!world.isRemote) {
+			for (DirPos port : getConPos()) {
+				this.trySubscribe(world, port.getPos(), port.getDir());
+				for (FluidTankNTM tank : tanks) this.trySubscribe(tank.getTankType(), world, port.getPos(), port.getDir());
+			}
 
 			this.power = Library.chargeTEFromItems(inventory, 6, power, maxPower);
 
@@ -392,6 +401,31 @@ public class TileEntityLaunchpadLambda extends TileEntityMachineBase implements 
 		if(slot == 1) return stack.getItem() instanceof ISatChip;
 		if(slot == 6) return stack.getItem() instanceof IBatteryItem;
 		return true;
+	}
+
+	@Override
+	public int[] getAccessibleSlotsFromSide(EnumFacing side) {
+		return new int[]{0, 1};
+	}
+
+	@Override
+	public boolean canExtractItem(int slot, ItemStack stack, int amount) {
+		return false;
+	}
+
+	@Override
+	public DirPos[] getConPos() {
+		if (conPos == null) {
+			ForgeDirection dir = ForgeDirection.getOrientation(this.getBlockMetadata() - 10);
+			ForgeDirection rot = dir.getRotation(ForgeDirection.UP);
+			conPos = new DirPos[5];
+			for (int i = 0; i < conPos.length; i++) {
+				int lateral = i + 2;
+				conPos[i] = new DirPos(pos.getX() + dir.offsetX * 8 - rot.offsetX * lateral, pos.getY() + 1,
+						pos.getZ() + dir.offsetZ * 8 - rot.offsetZ * lateral, dir);
+			}
+		}
+		return conPos;
 	}
 
 	@Override public long getPower() { return this.power; }

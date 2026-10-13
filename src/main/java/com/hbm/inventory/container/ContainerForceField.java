@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.items.ModItems;
@@ -13,9 +14,9 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerForceField extends Container {
+public class ContainerForceField extends Container implements IAutoRoutingContainer {
 
-	private TileEntityForceField diFurnace;
+	public final TileEntityForceField diFurnace;
 
     private static final TransferStrategy TRANSFER_STRATEGY = TransferStrategy.builder(3)
                                                                               .rule(0, 1, Library::isBattery)
@@ -63,4 +64,9 @@ public class ContainerForceField extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return diFurnace.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

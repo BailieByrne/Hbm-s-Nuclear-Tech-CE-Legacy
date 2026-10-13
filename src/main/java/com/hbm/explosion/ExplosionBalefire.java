@@ -136,8 +136,9 @@ public class ExplosionBalefire {
             }
 
             for(int i = depth; i > depth - 5; i--) {
-                if(worldObj.getBlockState(pos.setPos(pX, i, pZ)).getMaterial() == Material.ROCK) //mlbv: was == Blocks.stone; loosened for compatibility.
-                    worldObj.setBlockState(pos.setPos(pX, i, pZ), ModBlocks.sellafield_slaked.getDefaultState());
+                IBlockState floor = worldObj.getBlockState(pos.setPos(pX, i, pZ));
+                if(floor.getMaterial() == Material.ROCK && floor.getBlockHardness(worldObj, pos) >= 0F)
+                    worldObj.setBlockState(pos, ModBlocks.sellafield_slaked.getDefaultState());
             }
         }
     }

@@ -3,6 +3,7 @@ package com.hbm.handler;
 import com.hbm.tileentity.IGUIProvider;
 import com.hbm.util.EnumUtil;
 import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -35,6 +36,11 @@ public class GuiHandler implements IGuiHandler {
 			return ((IGUIProvider) item.getItem()).provideContainer(ID, player, world, x, y, z);
 		}
 		
+		Entity entity = world.getEntityByID(x);
+		if (entity instanceof IGUIProvider) {
+			return ((IGUIProvider) entity).provideContainer(ID, player, world, x, y, z);
+		}
+
 		return null;
 	}
 
@@ -62,6 +68,11 @@ public class GuiHandler implements IGuiHandler {
 			return ((IGUIProvider) item.getItem()).provideGUI(ID, player, world, x, y, z);
 		}
 		
+		Entity entity = world.getEntityByID(x);
+		if (entity instanceof IGUIProvider) {
+			return ((IGUIProvider) entity).provideGUI(ID, player, world, x, y, z);
+		}
+
 		return null;
 	}
 

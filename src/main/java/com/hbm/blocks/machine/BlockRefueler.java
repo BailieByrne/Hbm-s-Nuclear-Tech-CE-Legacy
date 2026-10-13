@@ -78,7 +78,10 @@ public class BlockRefueler extends BlockContainerBakeable {
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing side, float hitX, float hitY, float hitZ) {
-        if (!world.isRemote && !player.isSneaking()) {
+        if (world.isRemote) return player.isSneaking()
+                || player.getHeldItem(hand).getItem() instanceof IItemFluidIdentifier
+                && world.getTileEntity(pos) instanceof TileEntityRefueler;
+        if (!player.isSneaking()) {
             ItemStack held = player.getHeldItem(hand);
             if (!held.isEmpty() && held.getItem() instanceof IItemFluidIdentifier) {
                 TileEntity te = world.getTileEntity(pos);

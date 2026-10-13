@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.items.machine.IItemFluidIdentifier;
 import com.hbm.tileentity.machine.TileEntityHeaterOilburner;
@@ -11,7 +12,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerOilburner extends Container {
+public class ContainerOilburner extends Container implements IAutoRoutingContainer {
     private final TileEntityHeaterOilburner heater;
 
     private static final TransferStrategy TRANSFER_STRATEGY = TransferStrategy.builder(3)
@@ -50,5 +51,10 @@ public class ContainerOilburner extends Container {
     @Override
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index) {
         return InventoryUtil.transferStack(this.inventorySlots, index, this.TRANSFER_STRATEGY, playerIn);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

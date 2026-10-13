@@ -531,7 +531,7 @@ public class EntityModBeam extends Entity implements IProjectile {
 	    		
 	    		this.world.spawnEntity(EntityNukeExplosionMK5.statFac(world, BombConfig.gadgetRadius, posX, posY, posZ).setDetonator(shootingEntity));
                 if(BombConfig.enableNukeClouds) {
-                    EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.gadgetRadius);
+                    EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.gadgetRadius);
                 }
     		}
     	}

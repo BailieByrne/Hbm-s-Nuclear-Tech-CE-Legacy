@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.block.BlockAir;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.Rotation;
@@ -65,111 +66,116 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase implements ITi
 
     @Override
     public void update() {
-        if (getDoorType() == null && this.getBlockType() instanceof BlockDoorGeneric)
-            setDoorType(((BlockDoorGeneric) this.getBlockType()).type);
-        try {
-            Consumer<TileEntityDoorGeneric> update = getDoorType().onDoorUpdate();
-            if (update != null) {
-                update.accept(this);
+        if (getBlockMetadata() < 12) return;
+        if (getDoorType() == null) {
+            invalidate();
+            return;
+        }
+        Consumer<TileEntityDoorGeneric> update = getDoorType().onDoorUpdate();
+        if (update != null) {
+            update.accept(this);
+        }
+        if (state == DoorState.OPENING) {
+            openTicks++;
+            if (openTicks >= getDoorType().timeToOpen()) {
+                openTicks = getDoorType().timeToOpen();
             }
+        } else if (state == DoorState.CLOSING) {
+            openTicks--;
+            if (openTicks <= 0) {
+                openTicks = 0;
+            }
+        }
+
+        if (!world.isRemote) {
+            int[][] ranges = getDoorType().getDoorOpenRanges();
+            ForgeDirection dir = ForgeDirection.getOrientation(getBlockMetadata() - BlockDummyable.offset);
             if (state == DoorState.OPENING) {
-                openTicks++;
-                if (openTicks >= getDoorType().timeToOpen()) {
-                    openTicks = getDoorType().timeToOpen();
+                for (int i = 0; i < ranges.length; i++) {
+                    int[] range = ranges[i];
+                    BlockPos startPos = new BlockPos(range[0], range[1], range[2]);
+                    float time = getDoorType().getDoorRangeOpenTime(openTicks, i);
+                    for (int j = 0; j < Math.abs(range[3]); j++) {
+                        if ((float) j / (Math.abs(range[3] - 1)) > time) break;
+                        for (int k = 0; k < range[4]; k++) {
+                            new BlockPos(0, 0, 0);
+                            BlockPos add = switch (EnumFacing.Axis.values()[range[5]]) {
+                                case X -> new BlockPos(0, k, Math.signum(range[3]) * j);
+                                case Y -> new BlockPos(k, Math.signum(range[3]) * j, 0);
+                                case Z -> new BlockPos(Math.signum(range[3]) * j, k, 0);
+                            };
+                            Rotation r = dir.getBlockRotation();
+                            if (dir.toEnumFacing().getAxis() == EnumFacing.Axis.X)
+                                r = r.add(Rotation.CLOCKWISE_180);
+                            BlockPos finalPos = startPos.add(add).rotate(r).add(pos);
+                            if (finalPos.equals(this.pos)) {
+                                this.shouldUseBB = false;
+                            } else {
+                                ((BlockDummyable) getBlockType()).makeExtra(world, finalPos.getX(), finalPos.getY(), finalPos.getZ());
+                            }
+                        }
+                    }
                 }
             } else if (state == DoorState.CLOSING) {
-                openTicks--;
-                if (openTicks <= 0) {
-                    openTicks = 0;
-                }
-            }
-
-            if (!world.isRemote) {
-                int[][] ranges = getDoorType().getDoorOpenRanges();
-                ForgeDirection dir = ForgeDirection.getOrientation(getBlockMetadata() - BlockDummyable.offset);
-                if (state == DoorState.OPENING) {
-                    for (int i = 0; i < ranges.length; i++) {
-                        int[] range = ranges[i];
-                        BlockPos startPos = new BlockPos(range[0], range[1], range[2]);
-                        float time = getDoorType().getDoorRangeOpenTime(openTicks, i);
-                        for (int j = 0; j < Math.abs(range[3]); j++) {
-                            if ((float) j / (Math.abs(range[3] - 1)) > time) break;
-                            for (int k = 0; k < range[4]; k++) {
-                                new BlockPos(0, 0, 0);
-                                BlockPos add = switch (EnumFacing.Axis.values()[range[5]]) {
-                                    case X -> new BlockPos(0, k, Math.signum(range[3]) * j);
-                                    case Y -> new BlockPos(k, Math.signum(range[3]) * j, 0);
-                                    case Z -> new BlockPos(Math.signum(range[3]) * j, k, 0);
-                                };
-                                Rotation r = dir.getBlockRotation();
-                                if (dir.toEnumFacing().getAxis() == EnumFacing.Axis.X)
-                                    r = r.add(Rotation.CLOCKWISE_180);
-                                BlockPos finalPos = startPos.add(add).rotate(r).add(pos);
-                                if (finalPos.equals(this.pos)) {
-                                    this.shouldUseBB = true;
-                                } else {
-                                    ((BlockDummyable) getBlockType()).makeExtra(world, finalPos.getX(), finalPos.getY(), finalPos.getZ());
-                                }
-                            }
-                        }
-                    }
-                } else if (state == DoorState.CLOSING) {
-                    for (int i = 0; i < ranges.length; i++) {
-                        int[] range = ranges[i];
-                        BlockPos startPos = new BlockPos(range[0], range[1], range[2]);
-                        float time = getDoorType().getDoorRangeOpenTime(openTicks, i);
-                        for (int j = Math.abs(range[3]) - 1; j >= 0; j--) {
-                            if ((float) j / (Math.abs(range[3] - 1)) < time) break;
-                            for (int k = 0; k < range[4]; k++) {
-                                new BlockPos(0, 0, 0);
-                                BlockPos add = switch (EnumFacing.Axis.values()[range[5]]) {
-                                    case X -> new BlockPos(0, k, Math.signum(range[3]) * j);
-                                    case Y -> new BlockPos(k, Math.signum(range[3]) * j, 0);
-                                    case Z -> new BlockPos(Math.signum(range[3]) * j, k, 0);
-                                };
-                                Rotation r = dir.getBlockRotation();
-                                if (dir.toEnumFacing().getAxis() == EnumFacing.Axis.X)
-                                    r = r.add(Rotation.CLOCKWISE_180);
-                                BlockPos finalPos = startPos.add(add).rotate(r).add(pos);
-                                if (finalPos.equals(this.pos)) {
-                                    this.shouldUseBB = false;
-                                } else {
-                                    ((BlockDummyable) getBlockType()).removeExtra(world, finalPos.getX(), finalPos.getY(), finalPos.getZ());
-                                }
+                for (int i = 0; i < ranges.length; i++) {
+                    int[] range = ranges[i];
+                    BlockPos startPos = new BlockPos(range[0], range[1], range[2]);
+                    float time = getDoorType().getDoorRangeOpenTime(openTicks, i);
+                    for (int j = Math.abs(range[3]) - 1; j >= 0; j--) {
+                        if ((float) j / (Math.abs(range[3] - 1)) < time) break;
+                        for (int k = 0; k < range[4]; k++) {
+                            new BlockPos(0, 0, 0);
+                            BlockPos add = switch (EnumFacing.Axis.values()[range[5]]) {
+                                case X -> new BlockPos(0, k, Math.signum(range[3]) * j);
+                                case Y -> new BlockPos(k, Math.signum(range[3]) * j, 0);
+                                case Z -> new BlockPos(Math.signum(range[3]) * j, k, 0);
+                            };
+                            Rotation r = dir.getBlockRotation();
+                            if (dir.toEnumFacing().getAxis() == EnumFacing.Axis.X)
+                                r = r.add(Rotation.CLOCKWISE_180);
+                            BlockPos finalPos = startPos.add(add).rotate(r).add(pos);
+                            if (finalPos.equals(this.pos)) {
+                                this.shouldUseBB = false;
+                            } else {
+                                ((BlockDummyable) getBlockType()).removeExtra(world, finalPos.getX(), finalPos.getY(), finalPos.getZ());
                             }
                         }
                     }
                 }
-                if (state == DoorState.OPENING && openTicks == getDoorType().timeToOpen()) {
-                    state = DoorState.OPEN;
-                    broadcastControlEvt();
-                }
-                if (state == DoorState.CLOSING && openTicks == 0) {
-                    state = DoorState.CLOSED;
-                    broadcastControlEvt();
-
-                    // With door finally closed, mark chunk for rad update since door is now rad resistant
-                    // No need to update when open as well, as opening door should update
-                    RadiationSystemNT.markSectionsForRebuild(world, getOccupiedSections());
-                }
-                //PacketDispatcher.wrapper.sendToAllAround(new TEDoorAnimationPacket(pos, (byte) state.ordinal(), (byte) (shouldUseBB ? 1 : 0)),
-                //        new TargetPoint(world.provider.getDimension(), pos.getX(), pos.getY(), pos.getZ(), 100));
-
-                this.networkPackNT(100);
-
-                // T-Flip-Flop
-                boolean isPowered = redstonePower > 0;
-                if (isPowered && !wasPowered) {
-                    tryToggle(-1); // -1 for no passcode check with redstone
-                }
-                wasPowered = isPowered;
-
-                if (redstonePower == -1) {
-                    redstonePower = 0;
-                }
             }
-        } catch (NullPointerException e) {} // Th3_Sl1ze: it's caused while generating structures containing these doors.
-        // and no, delayed tick didn't solve the problem.
+            if (state == DoorState.OPENING && openTicks == getDoorType().timeToOpen()) {
+                state = DoorState.OPEN;
+                broadcastControlEvt();
+            }
+            if (state == DoorState.CLOSING && openTicks == 0) {
+                state = DoorState.CLOSED;
+                broadcastControlEvt();
+
+                // With door finally closed, mark chunk for rad update since door is now rad resistant
+                // No need to update when open as well, as opening door should update
+                RadiationSystemNT.markSectionsForRebuild(world, getOccupiedSections());
+            }
+            //PacketDispatcher.wrapper.sendToAllAround(new TEDoorAnimationPacket(pos, (byte) state.ordinal(), (byte) (shouldUseBB ? 1 : 0)),
+            //        new TargetPoint(world.provider.getDimension(), pos.getX(), pos.getY(), pos.getZ(), 100));
+
+            this.networkPackNT(100);
+
+            boolean isPowered = redstonePower > 0;
+            if (MachineConfig.holdDoorRedstone) {
+                if (redstonePower == -1 && state == DoorState.OPEN) {
+                    tryToggle(-1);
+                } else if (isPowered && state == DoorState.CLOSED) {
+                    tryToggle(-1);
+                }
+            } else if (isPowered && !wasPowered) {
+                tryToggle(-1);
+            }
+            wasPowered = isPowered;
+
+            if (redstonePower == -1) {
+                redstonePower = 0;
+            }
+        }
     }
 
     @Override
@@ -190,14 +196,20 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase implements ITi
     }
 
     public boolean tryToggle() {
+        return tryToggle((EntityPlayer) null);
+    }
+
+    public boolean tryToggle(EntityPlayer player) {
+        if (isLocked() && player == null) return false;
+        if (state == DoorState.CLOSED && redstonePower > 0) return false;
         if (state == DoorState.CLOSED) {
-            if (!world.isRemote) {
+            if (!world.isRemote && canAccess(player)) {
                 open();
                 broadcastControlEvt();
             }
             return true;
         } else if (state == DoorState.OPEN) {
-            if (!world.isRemote) {
+            if (!world.isRemote && canAccess(player)) {
                 close();
                 broadcastControlEvt();
             }
@@ -270,49 +282,91 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase implements ITi
     @Override
     @SideOnly(Side.CLIENT)
     public void handleNewState(DoorState newState) {
-        if (this.state != newState) {
-            if (this.state == DoorState.CLOSED && newState == DoorState.OPENING) {
-                if (audio == null) {
-                    audio = MainRegistry.proxy.getLoopedSoundStartStop(world, getDoorType().getOpenSoundLoop(), getDoorType().getOpenSoundStart(),
-                            getDoorType().getOpenSoundEnd(), SoundCategory.BLOCKS, pos.getX(), pos.getY(), pos.getZ(), getDoorType().getSoundVolume(), 1);
-                    audio.startSound();
-                }
-                if (audio2 == null && getDoorType().getSoundLoop2() != null) {
-                    audio2 = MainRegistry.proxy.getLoopedSoundStartStop(world, getDoorType().getSoundLoop2(), null, null, SoundCategory.BLOCKS,
-                            pos.getX(), pos.getY(), pos.getZ(), getDoorType().getSoundVolume(), 1);
-                    audio2.startSound();
-                }
-            }
-            if (this.state == DoorState.OPEN && newState == DoorState.CLOSING) {
-                if (audio == null) {
-                    audio = MainRegistry.proxy.getLoopedSoundStartStop(world, getDoorType().getCloseSoundLoop(), getDoorType().getCloseSoundStart(),
-                            getDoorType().getCloseSoundEnd(), SoundCategory.BLOCKS, pos.getX(), pos.getY(), pos.getZ(), getDoorType().getSoundVolume(), 1);
-                    audio.startSound();
-                }
-                if (audio2 == null && getDoorType().getSoundLoop2() != null) {
-                    audio2 = MainRegistry.proxy.getLoopedSoundStartStop(world, getDoorType().getSoundLoop2(), null, null, SoundCategory.BLOCKS,
-                            pos.getX(), pos.getY(), pos.getZ(), getDoorType().getSoundVolume(), 1);
-                    audio2.startSound();
-                }
-            }
-            if (this.state.isMovingState() && newState.isStationaryState()) {
-                if (audio != null) {
-                    audio.stopSound();
-                    audio = null;
-                }
-                if (audio2 != null) {
-                    audio2.stopSound();
-                    audio2 = null;
-                }
-            }
 
-            this.state = newState;
-            if(state.isMovingState()) {
-                animStartTime = System.currentTimeMillis();
-                currentAnimation = this.doorType.getSEDNAAnim(state, this.skinIndex);
-            }
-        }
-    }
+		if(this.state != newState) {
+			DoorDecl doorType = getDoorType();
+
+			if(this.state == DoorState.CLOSED && newState == DoorState.OPENING) { // Door transitioning to open
+				if(audio != null) {
+					audio.stopSound();
+					audio.setKeepAlive(0);
+				}
+
+				if(doorType.getOpenSoundLoop() != null) {
+					audio = MainRegistry.proxy.getLoopedSound(doorType.getOpenSoundLoop(), SoundCategory.BLOCKS, pos.getX(), pos.getY(), pos.getZ(), getVolume(), 10F, 1F);
+					audio.startSound();
+				}
+
+				if(doorType.getOpenSoundStart() != null) {
+					world.playSound(pos.getX(), pos.getY(), pos.getZ(), doorType.getOpenSoundStart(), SoundCategory.BLOCKS, getVolume(), 1F, false);
+				}
+
+				if(doorType.getSoundLoop2() != null) {
+					if(audio2 != null) audio2.stopSound();
+
+					audio2 = MainRegistry.proxy.getLoopedSound(doorType.getSoundLoop2(), SoundCategory.BLOCKS, pos.getX(), pos.getY(), pos.getZ(), getVolume(), 10F, 1F);
+					audio2.startSound();
+				}
+			}
+
+			if(this.state == DoorState.OPEN && newState == DoorState.CLOSING) { // Door transitioning to closed
+				if(audio != null) {
+					audio.stopSound();
+				}
+
+				if(doorType.getCloseSoundLoop() != null) {
+					audio = MainRegistry.proxy.getLoopedSound(doorType.getCloseSoundLoop(), SoundCategory.BLOCKS, pos.getX(), pos.getY(), pos.getZ(), getVolume(), 10F, 1F);
+					audio.startSound();
+				}
+
+				if(doorType.getCloseSoundStart() != null) {
+					world.playSound(pos.getX(), pos.getY(), pos.getZ(), doorType.getCloseSoundStart(), SoundCategory.BLOCKS, getVolume(), 1F, false);
+				}
+
+				if(doorType.getSoundLoop2() != null) {
+					if(audio2 != null) audio2.stopSound();
+
+					audio2 = MainRegistry.proxy.getLoopedSound(doorType.getSoundLoop2(), SoundCategory.BLOCKS, pos.getX(), pos.getY(), pos.getZ(), getVolume(), 10F, 1F);
+					audio2.startSound();
+				}
+			}
+
+			if(newState == DoorState.OPEN || newState == DoorState.CLOSED) { // Door finished any transition
+				if(audio != null) {
+					audio.stopSound();
+					audio = null;
+				}
+				if(audio2 != null) {
+					audio2.stopSound();
+					audio2 = null;
+				}
+			}
+
+			if(this.state == DoorState.OPENING && newState == DoorState.OPEN) { // Door finished transitioning to open
+				if(doorType.getOpenSoundEnd() != null) {
+					world.playSound(pos.getX(), pos.getY(), pos.getZ(), doorType.getOpenSoundEnd(), SoundCategory.BLOCKS, getVolume(), 1F, false);
+				}
+			}
+
+			if(this.state == DoorState.CLOSING && newState == DoorState.CLOSED) { // Door finished transitioning to closed
+				if(doorType.getCloseSoundEnd() != null) {
+					world.playSound(pos.getX(), pos.getY(), pos.getZ(), doorType.getCloseSoundEnd(), SoundCategory.BLOCKS, getVolume(), 1F, false);
+				}
+			}
+
+
+			this.state = newState;
+
+			if(newState == DoorState.OPENING || newState == DoorState.CLOSING) {
+				animStartTime = System.currentTimeMillis();
+				currentAnimation = this.doorType.getSEDNAAnim(newState, this.skinIndex);
+			}
+		}
+	}
+
+    public float getVolume() {
+		return getVolume(doorType.getSoundVolume());
+	}
 
     public int getSkinIndex() {
         return skinIndex;
@@ -525,10 +579,6 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase implements ITi
             activatedBlocks.add(pos);
             if (redstonePower == -1) {
                 redstonePower = 0;
-
-                if(MachineConfig.holdDoorRedstone) {
-                    tryToggle();
-                }
             }
             redstonePower++;
         } else if (contained && !powered) {
@@ -536,10 +586,6 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase implements ITi
             redstonePower--;
             if (redstonePower == 0) {
                 redstonePower = -1;
-
-                if(MachineConfig.holdDoorRedstone) {
-                    tryToggle();
-                }
             }
         }
     }

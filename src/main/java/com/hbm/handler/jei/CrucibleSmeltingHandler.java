@@ -121,7 +121,9 @@ public class CrucibleSmeltingHandler implements IRecipeCategory<CrucibleSmelting
         List<Wrapper> list = new ArrayList<>();
         HashMap<RecipesCommon.AStack, List<ItemStack>> smelting = CrucibleRecipes.getSmeltingRecipes();
         for (Map.Entry<RecipesCommon.AStack, List<ItemStack>> e : smelting.entrySet()) {
-            list.add(new Wrapper(e.getKey(), e.getValue()));
+            if (!e.getKey().extractForJEI().isEmpty()) {
+                list.add(new Wrapper(e.getKey(), e.getValue()));
+            }
         }
         return list;
     }

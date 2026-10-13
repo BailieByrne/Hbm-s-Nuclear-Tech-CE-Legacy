@@ -107,7 +107,7 @@ public class TileEntityMachineWoodBurner extends TileEntityMachineBase implement
 								ItemStack container = inventory.getStackInSlot(0).getItem().getContainerItem(inventory.getStackInSlot(0));
 								inventory.getStackInSlot(0).shrink(1);
 								if (inventory.getStackInSlot(0).isEmpty() && !container.isEmpty())
-									inventory.setStackInSlot(0, container.getItem().getContainerItem(container));
+									inventory.setStackInSlot(0, container.copy());
 								this.markChanged();
 							}
 						}
@@ -181,7 +181,7 @@ public class TileEntityMachineWoodBurner extends TileEntityMachineBase implement
 		ForgeDirection rot = dir.getRotation(ForgeDirection.UP);
 
 		return new DirPos[] {
-				new DirPos(this.pos.getX() - dir.offsetX * 2, this.pos.getY(), this.pos.getZ() - dir.offsetZ * 2, rot.getOpposite()),
+				new DirPos(this.pos.getX() - dir.offsetX * 2, this.pos.getY(), this.pos.getZ() - dir.offsetZ * 2, dir.getOpposite()),
 				new DirPos(this.pos.getX() - dir.offsetX * 2 + rot.offsetX, this.pos.getY(), this.pos.getZ() - dir.offsetZ * 2 + rot.offsetZ, dir.getOpposite())
 		};
 	}
@@ -211,18 +211,15 @@ public class TileEntityMachineWoodBurner extends TileEntityMachineBase implement
 	protected boolean processAsh(int level, EnumAshType type, int threshold) {
 
 		if(level >= threshold) {
-			for(int i = 0; i < 5; i++) {
-				if(inventory.getStackInSlot(i).isEmpty()) {
-					inventory.setStackInSlot(i, OreDictManager.DictFrame.fromOne(ModItems.powder_ash, type));
-					ashLevelWood -= threshold;
-					return true;
-				} else if(inventory.getStackInSlot(i).getCount() < inventory.getStackInSlot(i).getMaxStackSize() && inventory.getStackInSlot(i).getItem() == ModItems.powder_ash && inventory.getStackInSlot(i).getItemDamage() == type.ordinal()) {
-					inventory.getStackInSlot(i).grow(1);
-					return true;
-				}
+			if(inventory.getStackInSlot(1).isEmpty()) {
+				inventory.setStackInSlot(1, OreDictManager.DictFrame.fromOne(ModItems.powder_ash, type));
+				return true;
+			} else if(inventory.getStackInSlot(1).getCount() < inventory.getStackInSlot(1).getMaxStackSize() && inventory.getStackInSlot(1).getItem() == ModItems.powder_ash && inventory.getStackInSlot(1).getItemDamage() == type.ordinal()) {
+				inventory.getStackInSlot(1).grow(1);
+				return true;
 			}
 		}
-		
+
 		return false;
 	}
 

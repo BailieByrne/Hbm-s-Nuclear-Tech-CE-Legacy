@@ -1,5 +1,8 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
+
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.tileentity.machine.TileEntityMachineFunnel;
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,7 +13,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerFunnel extends Container {
+public class ContainerFunnel extends Container implements IAutoRoutingContainer {
+
+    private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(18).genericMachineRange(0, 9).build();
 
     private final TileEntityMachineFunnel funnel;
 
@@ -63,5 +68,10 @@ public class ContainerFunnel extends Container {
         }
 
         return rStack;
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

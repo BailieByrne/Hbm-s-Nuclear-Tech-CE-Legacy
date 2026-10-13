@@ -222,7 +222,6 @@ public class PhasedStructureGenerator implements IWorldGenerator {
         }
         ChunkProviderServer provider = server.getChunkProvider();
         PendingValidationJob job = null;
-        int minY = Integer.MAX_VALUE;
 
         for (int i = 0, heightPointsSize = heightPoints.size(); i < heightPointsSize; i++) {
             long point = heightPoints.getLong(i);
@@ -247,13 +246,10 @@ public class PhasedStructureGenerator implements IWorldGenerator {
                 cached = chunk.getHeightValue(localX, localZ);
                 pending.heightPointHeights[i] = cached;
             }
-            if (cached < minY) {
-                minY = cached;
-            }
         }
 
         if (job == null) {
-            pending.cachedMinHeight = minY;
+            pending.cachedOriginHeight = pending.heightPointHeights[0];
             return null;
         }
         return job;
@@ -266,7 +262,6 @@ public class PhasedStructureGenerator implements IWorldGenerator {
             return true;
         }
         ChunkProviderServer provider = world.getChunkProvider();
-        int minY = Integer.MAX_VALUE;
         for (int i = 0, size = heightPoints.size(); i < size; i++) {
             long point = heightPoints.getLong(i);
             int cached = pending.heightPointHeights[i];
@@ -280,12 +275,9 @@ public class PhasedStructureGenerator implements IWorldGenerator {
                 cached = chunk.getHeightValue(Library.getBlockPosX(point) & 15, Library.getBlockPosZ(point) & 15);
                 pending.heightPointHeights[i] = cached;
             }
-            if (cached < minY) {
-                minY = cached;
-            }
         }
         if (waitingOn.isEmpty()) {
-            pending.cachedMinHeight = minY;
+            pending.cachedOriginHeight = pending.heightPointHeights[0];
         }
         return waitingOn.isEmpty();
     }
@@ -457,7 +449,7 @@ public class PhasedStructureGenerator implements IWorldGenerator {
         final long layoutSeed;
         private @Nullable LongArrayList heightPoints;
         private int[] heightPointHeights;
-        private int cachedMinHeight = Integer.MIN_VALUE;
+        private int cachedOriginHeight = Integer.MIN_VALUE;
 
         PendingValidationStructure(long origin, IPhasedStructure structure, Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<Object>> layout, long worldSeed, long layoutSeed) {
             this.origin = origin;
@@ -474,7 +466,13 @@ public class PhasedStructureGenerator implements IWorldGenerator {
                     heightPointHeights = PhasedConstants.ZERO_INT_ARRAY;
                     return heightPoints = PhasedConstants.EMPTY;
                 }
-                heightPoints = points;
+                if (!points.isEmpty() && points.getLong(0) != origin) {
+                    heightPoints = new LongArrayList(points.size() + 1);
+                    heightPoints.add(origin);
+                    heightPoints.addAll(points);
+                } else {
+                    heightPoints = points;
+                }
                 heightPointHeights = new int[heightPoints.size()];
                 Arrays.fill(heightPointHeights, Integer.MIN_VALUE);
             }
@@ -482,11 +480,11 @@ public class PhasedStructureGenerator implements IWorldGenerator {
         }
 
         boolean hasCachedHeight() {
-            return cachedMinHeight != Integer.MIN_VALUE;
+            return cachedOriginHeight != Integer.MIN_VALUE;
         }
 
-        int getCachedMinHeight() {
-            return cachedMinHeight;
+        int getCachedOriginHeight() {
+            return cachedOriginHeight;
         }
 
         boolean cacheHeightFromLoadedChunks(WorldServer server) {
@@ -495,7 +493,6 @@ public class PhasedStructureGenerator implements IWorldGenerator {
                 return true;
             }
             ChunkProviderServer provider = server.getChunkProvider();
-            int minY = Integer.MAX_VALUE;
             boolean allCached = true;
             for (int i = 0, size = points.size(); i < size; i++) {
                 long point = points.getLong(i);
@@ -512,15 +509,11 @@ public class PhasedStructureGenerator implements IWorldGenerator {
                     cached = chunk.getHeightValue(x & 15, z & 15);
                     heightPointHeights[i] = cached;
                 }
-                int height = cached;
-                if (height < minY) {
-                    minY = height;
-                }
             }
             if (!allCached) {
                 return false;
             }
-            cachedMinHeight = minY;
+            cachedOriginHeight = heightPointHeights[0];
             return true;
         }
     }

@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.tileentity.machine.TileEntityAshpit;
@@ -10,7 +11,7 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
-public class ContainerAshpit extends Container {
+public class ContainerAshpit extends Container implements IAutoRoutingContainer {
 
     protected TileEntityAshpit ashpit;
 
@@ -42,5 +43,10 @@ public class ContainerAshpit extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return ashpit.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

@@ -326,7 +326,6 @@ public class WeaponRecipes {
         CraftingManager.addRecipeAuto(new ItemStack(ModItems.custom_amat, 1), " C ", "MMM", "AAA", 'C', CU.plate(), 'A', AL.plate(), 'M', ItemCell.getFullCell(Fluids.AMAT) );
         CraftingManager.addRecipeAuto(new ItemStack(ModItems.custom_dirty, 1), " C ", "WLW", "WLW", 'C', CU.plate(), 'L', PB.plate(), 'W', ModItems.nuclear_waste );
         CraftingManager.addRecipeAuto(new ItemStack(ModItems.custom_schrab, 1), " C ", "LUL", "LUL", 'C', CU.plate(), 'L', PB.plate(), 'U', SA326.ingot() );
-        CraftingManager.addRecipeAuto(new ItemStack(ModItems.custom_sol, 1), " C ", "LUL", "LUL", 'C', CU.plate(), 'L', PB.plate(), 'U', SA327.ingot());
         CraftingManager.addRecipeAuto(new ItemStack(ModItems.custom_euph, 1), " C ", "LUL", "LUL", 'C', CU.plate(), 'L', PB.plate(), 'U', EUPH.ingot());
 
         CraftingManager.addRecipeAuto(new ItemStack(ModBlocks.lamp_demon, 1), " D ", "S S", 'D', ModItems.demon_core_closed, 'S', STEEL.ingot() );

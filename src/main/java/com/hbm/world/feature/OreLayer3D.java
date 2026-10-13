@@ -13,6 +13,7 @@ import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.Random;
+import java.util.function.IntPredicate;
 
 public class OreLayer3D {
     private static final int MIN_Y = 6;
@@ -30,6 +31,7 @@ public class OreLayer3D {
     private double threshold;
     private final IBlockState oreState;
     private int dim = 0;
+    private IntPredicate dimensionGate;
     private double[][] cacheX;
     private double[][] cacheZ;
     private double[][] cacheY;
@@ -47,6 +49,12 @@ public class OreLayer3D {
 
     public OreLayer3D setDimension(int dim) {
         this.dim = dim;
+        return this;
+    }
+
+    /** Optional dimension enablement, without changing the layer's density. */
+    public OreLayer3D setDimensionGate(IntPredicate dimensionGate) {
+        this.dimensionGate = dimensionGate;
         return this;
     }
 
@@ -70,7 +78,9 @@ public class OreLayer3D {
     public void onDecorate(DecorateBiomeEvent.Pre event) {
 
         World world = event.getWorld();
-        if (world == null || world.provider == null || world.provider.getDimension() != this.dim) return;
+        if (world == null || world.provider == null) return;
+        int dimension = world.provider.getDimension();
+        if (dimensionGate == null ? dimension != this.dim : !dimensionGate.test(dimension)) return;
         if (world.isRemote) return;
 
         long seed = world.getSeed();

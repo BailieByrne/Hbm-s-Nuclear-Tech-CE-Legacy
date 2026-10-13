@@ -79,6 +79,28 @@ public final class SectionGeometry {
         }
     }
 
+    /** Re-captures setting-dependent models after renderer shutdown, before new chunk jobs. */
+    public static void refreshModels(BlockModelShapes shapes, Block... blocks) {
+        if (!Minecraft.getMinecraft().isCallingFromMinecraftThread())
+            throw new IllegalStateException("Section geometry model refresh must run on the client thread");
+        var meshes = new Reference2ObjectOpenHashMap<IBlockState, Mesh>(published);
+        for (Block block : blocks) {
+            for (IBlockState state : block.getBlockState().getValidStates()) {
+                Mesh mesh = capture(shapes.getModelForState(state), state);
+                if (mesh == null) meshes.remove(state);
+                else meshes.put(state, mesh);
+                ((ISectionGeometryState) state).hbm$sectioned(mesh != null);
+            }
+        }
+        published = meshes;
+        INACTIVE.clear();
+        ACTIVE.clear();
+        ENTRIES.clear();
+        cachedBytes = 0;
+        var world = Minecraft.getMinecraft().world;
+        if (world != null) INDEX.reload(world);
+    }
+
     private static void publish(BlockModelShapes shapes) {
         for (IBlockState state : published.keySet()) ((ISectionGeometryState) state).hbm$sectioned(false);
         var meshes = new Reference2ObjectOpenHashMap<IBlockState, Mesh>();

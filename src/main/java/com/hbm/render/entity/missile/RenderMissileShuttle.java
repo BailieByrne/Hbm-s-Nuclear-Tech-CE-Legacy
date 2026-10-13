@@ -3,7 +3,6 @@ package com.hbm.render.entity.missile;
 import com.hbm.entity.missile.EntityMissileShuttle;
 import com.hbm.interfaces.AutoRegister;
 import com.hbm.main.ResourceManager;
-import com.hbm.render.NTMRenderHelper;
 import com.hbm.util.RenderUtil;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.Render;
@@ -24,10 +23,6 @@ public class RenderMissileShuttle extends Render<EntityMissileShuttle> {
         boolean prevLighting = RenderUtil.isLightingEnabled();
         int prevShade = RenderUtil.getShadeModel();
         if (!prevLighting) GlStateManager.enableLighting();
-		double[] pos = NTMRenderHelper.getRenderPosFromMissile(missile, partialTicks);
-		x = pos[0];
-		y = pos[1];
-		z = pos[2];
         GlStateManager.translate(x, y, z);
         float yaw = missile.prevRotationYaw + (missile.rotationYaw - missile.prevRotationYaw) * partialTicks - 90.0F;
         float pitch = missile.prevRotationPitch + (missile.rotationPitch - missile.prevRotationPitch) * partialTicks;

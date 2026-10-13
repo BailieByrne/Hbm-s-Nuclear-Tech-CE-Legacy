@@ -21,6 +21,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Mirror;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
@@ -112,6 +113,11 @@ public class BlockDecoCRT extends BlockDecoModel<BlockEnums.DecoCRTEnum> {
             ModelResourceLocation inv = new ModelResourceLocation(new ResourceLocation(Tags.MODID, getRegistryName().getPath() + "_item_" + m), "inventory");
             ModelLoader.setCustomModelResourceLocation(item, m, inv);
         }
+    }
+
+    @Override
+    public @NotNull IBlockState withMirror(IBlockState state, Mirror mirror) {
+        return state.withProperty(META, INBTBlockTransformable.mirrorMetaDecoModelLow(state.getValue(META), mirror));
     }
 
     @Override

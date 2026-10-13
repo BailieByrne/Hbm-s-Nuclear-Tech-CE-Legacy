@@ -1,6 +1,7 @@
 package com.hbm.inventory.container;
 
 import com.hbm.inventory.FluidContainerRegistry;
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.items.machine.IItemFluidIdentifier;
@@ -13,19 +14,20 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerSILEX extends Container {
+public class ContainerSILEX extends Container implements IAutoRoutingContainer {
 
-	private TileEntitySILEX silex;
+	public final TileEntitySILEX silex;
 
-	private final TransferStrategy transferStrategy = TransferStrategy.builder(11)
+	private final TransferStrategy transferStrategy;
+
+	public ContainerSILEX(InventoryPlayer invPlayer, TileEntitySILEX te) {
+		silex = te;
+		transferStrategy = TransferStrategy.builder(11)
                                                                       .rule(0, 1, s -> !(s.getItem() instanceof IItemFluidIdentifier) && FluidContainerRegistry.getFluidContent(s, silex.tank.getTankType()) == 0)
                                                                       .rule(1, 2, s -> s.getItem() instanceof IItemFluidIdentifier)
                                                                       .rule(2, 4, s -> FluidContainerRegistry.getFluidContent(s, silex.tank.getTankType()) > 0)
                                                                       .rule(4, 11, _ -> false)
                                                                       .build();
-
-	public ContainerSILEX(InventoryPlayer invPlayer, TileEntitySILEX te) {
-		silex = te;
 
 		//Input
 		this.addSlotToContainer(new SlotItemHandler(te.inventory, 0, 80, 12));
@@ -67,4 +69,9 @@ public class ContainerSILEX extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return silex.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.transferStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

@@ -19,7 +19,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
-import net.minecraft.world.gen.structure.template.TemplateManager;
 
 import java.util.Random;
 
@@ -47,15 +46,7 @@ public class CivilianFeatures {
 			super();
 		}
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
 
-		}
-
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		/** Constructor for this feature; takes coordinates for bounding box */
 		public NTMHouse1(Random rand, int minX, int minZ) {
@@ -155,15 +146,7 @@ public class CivilianFeatures {
 			super();
 		}
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
-			
-		}
 
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public NTMHouse2(Random rand, int minX, int minZ) {
 			super(rand, minX, 64, minZ, 15, 5, 9);
@@ -268,7 +251,7 @@ public class CivilianFeatures {
 			this.setBlockState(world, ModBlocks.crate_can.getDefaultState(), 1, 1, 9 - 4, box);
 			if(!hasPlacedLoot[0]) {
 				this.setBlockState(world,
-						Blocks.CHEST.getDefaultState().withProperty(BlockHorizontal.FACING, getDirection(EnumFacing.SOUTH)),
+						Blocks.CHEST.getDefaultState().withProperty(BlockHorizontal.FACING, EnumFacing.SOUTH),
 						1, 1, 9 - 2, box);
 				WeightedRandomChestContentFrom1710.generateChestContents(rand, ItemPool.getPool(ItemPoolsComponent.POOL_MACHINE_PARTS), world.getTileEntity(new BlockPos(this.getXWithOffset(1, 9 - 2),
 						this.getYWithOffset(1), this.getZWithOffset(1, 9 - 2))), 10);
@@ -283,7 +266,7 @@ public class CivilianFeatures {
 			//House 2
 			if(!hasPlacedLoot[1]) {
 				this.setBlockState(world,
-						Blocks.CHEST.getDefaultState().withProperty(BlockHorizontal.FACING, getDirection(EnumFacing.SOUTH)),
+						Blocks.CHEST.getDefaultState().withProperty(BlockHorizontal.FACING, EnumFacing.SOUTH),
 						15 - 5, 1, 1, box);
 				WeightedRandomChestContentFrom1710.generateChestContents(rand, ItemPool.getPool(ItemPoolsLegacy.POOL_ANTENNA), world.getTileEntity(new BlockPos(this.getXWithOffset(15 - 5, 1),
 						this.getYWithOffset(1), this.getZWithOffset(15 - 5, 1))), 10);
@@ -314,15 +297,7 @@ public class CivilianFeatures {
 			super();
 		}
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
-			
-		}
 
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		/** Constructor for this feature; takes coordinates for bounding box */
 		public NTMLab1(Random rand, int minX, int minZ) {
@@ -464,15 +439,7 @@ public class CivilianFeatures {
 			super();
 		}
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
-			
-		}
 
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public NTMLab2(Random rand, int minX, int minZ) {
 			super(rand, minX, 64, minZ, 12, 11, 8);
@@ -659,15 +626,7 @@ public class CivilianFeatures {
 			super();
 		}
 
-		@Override
-		protected void writeStructureToNBT(NBTTagCompound tagCompound) {
-			
-		}
 
-		@Override
-		protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_) {
-
-		}
 
 		public RuralHouse1(Random rand, int minX, int minZ) {
 			super(rand, minX, 64, minZ, 14, 8, 14);

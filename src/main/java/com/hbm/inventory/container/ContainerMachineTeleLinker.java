@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.machine.TileEntityMachineTeleLinker;
 import com.hbm.util.InventoryUtil;
@@ -10,7 +11,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachineTeleLinker extends Container {
+public class ContainerMachineTeleLinker extends Container implements IAutoRoutingContainer {
 
 	private TileEntityMachineTeleLinker teleLinker;
 
@@ -50,4 +51,9 @@ public class ContainerMachineTeleLinker extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return teleLinker.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

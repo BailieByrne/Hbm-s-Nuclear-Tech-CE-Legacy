@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotBattery;
 import com.hbm.items.machine.ItemFELCrystal;
@@ -13,9 +14,9 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerFEL extends Container {
+public class ContainerFEL extends Container implements IAutoRoutingContainer {
 
-	private TileEntityFEL fel;
+	public final TileEntityFEL fel;
 
     private static final TransferStrategy TRANSFER_STRATEGY = TransferStrategy.builder(2)
                                                                               .rule(0, 1, Library::isBattery)
@@ -52,4 +53,9 @@ public class ContainerFEL extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return fel.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

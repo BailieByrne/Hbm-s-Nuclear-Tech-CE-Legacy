@@ -4,6 +4,8 @@ import com.hbm.interfaces.AutoRegister;
 import com.hbm.interfaces.IConstantRenderer;
 import com.hbm.lib.HBMSoundHandler;
 import com.hbm.main.MainRegistry;
+import com.hbm.util.BobMathUtil;
+import com.hbm.util.TrackerUtil;
 import com.hbm.util.Vec3NT;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
@@ -596,21 +598,15 @@ public class EntityNukeTorex extends Entity implements IConstantRenderer {
 		SHOCK
 	}
 
-    /**
-     * Spawns a standard Torex. Does play sound!
-     */
-	public static void statFac(World world, double x, double y, double z, float scale) {
-		EntityNukeTorex torex = new EntityNukeTorex(world).setScale(MathHelper.clamp(scale * 0.01F, 0.25F, 5F));
-		torex.setPosition(x, y, z);
-		world.spawnEntity(torex);
-	}
+	public static void statFacStandard(World world, double x, double y, double z, float scale) { statFac(world, x, y, z, scale, 0); }
+	public static void statFacBale(World world, double x, double y, double z, float scale) { statFac(world, x, y, z, scale, 1); }
 
-    /**
-     * Spawns a Torex, balefire variant. Does play sound!
-     */
-	public static void statFacBale(World world, double x, double y, double z, float scale) {
-		EntityNukeTorex torex = new EntityNukeTorex(world).setScale(MathHelper.clamp(scale * 0.01F, 0.25F, 5F)).setType(1);
+	public static void statFac(World world, double x, double y, double z, float scale, int type) {
+		EntityNukeTorex torex = new EntityNukeTorex(world).setScale(MathHelper.clamp((float) BobMathUtil.squirt(scale * 0.01) * 1.5F, 0.5F, 5F));
+		torex.setType(type);
 		torex.setPosition(x, y, z);
+		torex.forceSpawn = true;
 		world.spawnEntity(torex);
+		TrackerUtil.setTrackingRange(world, torex, 1000);
 	}
 }

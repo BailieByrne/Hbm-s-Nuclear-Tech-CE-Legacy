@@ -101,10 +101,6 @@ public final class RadiationSystemNT {
     /** Also used as old-mass scratch inside {@code remapPocketMass}: dead before densities are written. */
     static final ThreadLocal<double[]> TL_DENSITIES = ThreadLocal.withInitial(() -> new double[MAX_POCKETS]);
 
-    static final ThreadLocal<double[]> TL_ADD = ThreadLocal.withInitial(() -> new double[MAX_POCKETS + 1]);
-    static final ThreadLocal<double[]> TL_SET = ThreadLocal.withInitial(() -> new double[MAX_POCKETS + 1]);
-    /** Seq 0 = no set queued */
-    static final ThreadLocal<long[]> TL_BEST_SET_SEQ = ThreadLocal.withInitial(() -> new long[MAX_POCKETS + 1]);
     /** Must be cleaned after use! */
     static final ThreadLocal<int[]> TL_TEMP_ARRAY = ThreadLocal.withInitial(() -> new int[MAX_POCKETS]);
     static final ThreadLocal<int[]> TL_TOUCHED = ThreadLocal.withInitial(() -> new int[512]);
@@ -260,7 +256,7 @@ public final class RadiationSystemNT {
 
         if (kind == KIND_NONE || data.dirtyCk.isDirty(ck, sy)) {
             int local = Library.blockPosToLocal(posLong);
-            data.queueAdd(sck, local, amount);
+            data.queueIncrement(sck, local, amount, max);
             if (kind == KIND_NONE) data.dirtyCk.add(ck, ownerId, sy);
             chunk.markDirty();
             return;
@@ -319,7 +315,7 @@ public final class RadiationSystemNT {
 
         if (kind == KIND_NONE || data.dirtyCk.isDirty(ck, sy)) {
             int local = Library.blockPosToLocal(posLong);
-            data.queueAdd(sck, local, -amount);
+            data.queueDecrement(sck, local, amount);
             if (kind == KIND_NONE) data.dirtyCk.add(ck, ownerId, sy);
             chunk.markDirty();
             return;
@@ -1235,7 +1231,7 @@ public final class RadiationSystemNT {
         int[] dirtyChunkMasksScratchArr = new int[4096];
         long pocketToDestroy = Long.MIN_VALUE;
         int workEpoch, executionSampleCount;
-        long workEpochSalt, profSteps, setSeq;
+        long workEpochSalt, profSteps;
         double profTotalMs, profMaxMs, executionTimeAccumulator;
         DoubleArrayList profSamplesMs;
 
@@ -1917,15 +1913,17 @@ public final class RadiationSystemNT {
 
         void queueSet(long sck, int local, double density) {
             long ck = Library.sectionToChunkLong(sck);
-            long sckl = packSectionLocal(sck, local);
-            long seq = ++setSeq;
-            editsFor(ck).putSet(sckl, density, seq);
+            editsFor(ck).append(packSectionLocal(sck, local), EditTable.SET, density, 0.0D);
         }
 
-        void queueAdd(long sck, int local, double delta) {
+        void queueIncrement(long sck, int local, double amount, double max) {
             long ck = Library.sectionToChunkLong(sck);
-            long sckl = packSectionLocal(sck, local);
-            editsFor(ck).addTo(sckl, delta);
+            editsFor(ck).append(packSectionLocal(sck, local), EditTable.INCREMENT, amount, max);
+        }
+
+        void queueDecrement(long sck, int local, double amount) {
+            long ck = Library.sectionToChunkLong(sck);
+            editsFor(ck).append(packSectionLocal(sck, local), EditTable.DECREMENT, amount, 0.0D);
         }
 
         void clearQueuedWrites() {
@@ -1946,51 +1944,32 @@ public final class RadiationSystemNT {
             if (edits == null || edits.isEmpty()) return;
             int sy = Library.getSectionY(sectionKey);
             if ((edits.touchedSyMask & (1 << sy)) == 0) return;
-            double[] addPocket = TL_ADD.get();
-            double[] setPocket = TL_SET.get();
-            long[] bestSeq = TL_BEST_SET_SEQ.get();
-
-            Arrays.fill(addPocket, 0, pocketCount, 0.0d);
-            Arrays.fill(setPocket, 0, pocketCount, 0.0d);
-            Arrays.fill(bestSeq, 0, pocketCount, 0L);
-
-            int e = edits.epoch;
-            int n = edits.slotSize;
-            int[] slots = edits.slots;
-            int[] st = edits.stamps;
             long[] keys = edits.keys;
-            double[] addAcc = edits.addAcc;
-            double[] setV = edits.setVal;
-            long[] setS = edits.setSeq;
-            byte[] flags = edits.flags;
-
-            for (int i = 0; i < n; i++) {
-                int pos = slots[i];
-                assert st[pos] == e;
-                long k = keys[pos];
-                if (stripLocal(k) != sectionKey) continue;
-                int local = (int) ((k >>> 4) & 0xFFFL);
-                int pi;
-                if (pocketData == null) {
-                    pi = 0;
-                } else {
-                    pi = pocketData[local];
-                    if (pi < 0 || pi >= pocketCount) continue;
-                }
-                double dAdd = addAcc[pos];
-                if (dAdd != 0.0d) addPocket[pi] += dAdd;
-                if ((flags[pos] & EditTable.HAS_SET) != 0) {
-                    long seq = setS[pos];
-                    if (Long.compareUnsigned(seq, bestSeq[pi]) > 0) {
-                        bestSeq[pi] = seq;
-                        setPocket[pi] = setV[pos];
+            double[] values = edits.values;
+            double[] maxima = edits.maxima;
+            byte[] operations = edits.operations;
+            for (int i = 0, count = edits.size; i < count; i++) {
+                long key = keys[i];
+                if (stripLocal(key) != sectionKey) continue;
+                int local = (int) ((key >>> 4) & 0xFFFL);
+                int pocket = pocketData == null ? 0 : pocketData[local];
+                if (pocket < 0 || pocket >= pocketCount) continue;
+                double current = densityOut[pocket];
+                switch (operations[i]) {
+                    case EditTable.SET -> densityOut[pocket] = sanitize(values[i]);
+                    case EditTable.INCREMENT -> {
+                        double max = maxima[i];
+                        if (current >= max) continue;
+                        double next = current + values[i];
+                        if (next > max) next = max;
+                        densityOut[pocket] = sanitize(next);
                     }
+                    case EditTable.DECREMENT -> {
+                        if (current == 0.0D && minBound == 0.0D) continue;
+                        densityOut[pocket] = sanitize(current - values[i]);
+                    }
+                    default -> throw new IllegalStateException("Unknown radiation edit operation: " + operations[i]);
                 }
-            }
-
-            for (int p = 0; p < pocketCount; p++) {
-                double base = bestSeq[p] != 0L ? setPocket[p] : densityOut[p];
-                densityOut[p] = sanitize(base + addPocket[p]);
             }
         }
 
@@ -3818,129 +3797,47 @@ public final class RadiationSystemNT {
         }
     }
 
+    /** Deferred operations retain call order even when different positions share one rebuilt pocket. */
     static final class EditTable {
-        static final float LOAD_FACTOR = 0.6f;
-        static final byte HAS_SET = 1;
+        static final byte SET = 1, INCREMENT = 2, DECREMENT = 3;
 
-        long[] keys, setSeq;
-        double[] addAcc, setVal;
-        int[] stamps, slots;
-        byte[] flags;
-        int touchedSyMask, mask, size, epoch, slotSize;
+        long[] keys;
+        double[] values, maxima;
+        byte[] operations;
+        int size, touchedSyMask;
 
         EditTable(int cap) {
             keys = new long[cap];
-            addAcc = new double[cap];
-            setVal = new double[cap];
-            setSeq = new long[cap];
-            flags = new byte[cap];
-            stamps = new int[cap];
-            slots = new int[16];
-            mask = cap - 1;
-            epoch = 1;
-            touchedSyMask = 0;
+            values = new double[cap];
+            maxima = new double[cap];
+            operations = new byte[cap];
         }
 
         boolean isEmpty() {
-            return slotSize == 0;
+            return size == 0;
         }
 
         void clear() {
             size = 0;
-            slotSize = 0;
-            int e = epoch + 1;
-            if (e == 0) {
-                Arrays.fill(stamps, 0);
-                e = 1;
-            }
-            epoch = e;
             touchedSyMask = 0;
         }
 
-        void ensureCapacityForAdd() {
-            if (size + 1 <= (int) (keys.length * LOAD_FACTOR)) return;
-            rehash(HashCommon.nextPowerOfTwo(keys.length + (keys.length >>> 1) + 16));
-        }
-
-        int findOrInsert(long k) {
-            ensureCapacityForAdd();
-            int pos = SectionKeyHash.hash(k) & mask;
-            while (true) {
-                if (stamps[pos] != epoch) {
-                    stamps[pos] = epoch;
-                    keys[pos] = k;
-                    addAcc[pos] = 0.0d;
-                    setVal[pos] = 0.0d;
-                    setSeq[pos] = 0L;
-                    flags[pos] = 0;
-                    size++;
-                    int i = slotSize;
-                    if (i == slots.length) slots = Arrays.copyOf(slots, slots.length + (slots.length >>> 1) + 16);
-                    slots[i] = pos;
-                    slotSize = i + 1;
-                    return pos;
-                }
-                if (keys[pos] == k) return pos;
-                pos = (pos + 1) & mask;
+        void append(long key, byte operation, double value, double max) {
+            int index = size;
+            if (index == keys.length) {
+                int cap = WorldRadiationData.grow(keys.length, index + 1);
+                keys = Arrays.copyOf(keys, cap);
+                values = Arrays.copyOf(values, cap);
+                maxima = Arrays.copyOf(maxima, cap);
+                operations = Arrays.copyOf(operations, cap);
             }
-        }
-
-        void putSet(long k, double v, long seq) {
-            int pos = findOrInsert(k);
-            flags[pos] |= HAS_SET;
-            setVal[pos] = v;
-            setSeq[pos] = seq;
-            addAcc[pos] = 0.0d;
-            touchedSyMask |= 1 << ((int) k & 15);
-        }
-
-        void addTo(long k, double dv) {
-            int pos = findOrInsert(k);
-            if ((flags[pos] & HAS_SET) != 0) return;
-            addAcc[pos] += dv;
-            touchedSyMask |= 1 << ((int) k & 15);
-        }
-
-        void rehash(int newCap) {
-            long[] newKeys = new long[newCap];
-            double[] newAdd = new double[newCap];
-            double[] newSetV = new double[newCap];
-            long[] newSetS = new long[newCap];
-            byte[] newFlags = new byte[newCap];
-            int[] newStamps = new int[newCap];
-
-            int newMask = newCap - 1;
-            int[] newSlots = new int[Math.max(slots.length, slotSize)];
-            int ns = 0;
-
-            int e = epoch;
-            for (int i = 0; i < slotSize; i++) {
-                int oldPos = slots[i];
-                if (stamps[oldPos] != e) continue;
-                long k = keys[oldPos];
-
-                int pos = SectionKeyHash.hash(k) & newMask;
-                while (newStamps[pos] == e) pos = (pos + 1) & newMask;
-
-                newStamps[pos] = e;
-                newKeys[pos] = k;
-                newAdd[pos] = addAcc[oldPos];
-                newSetV[pos] = setVal[oldPos];
-                newSetS[pos] = setSeq[oldPos];
-                newFlags[pos] = flags[oldPos];
-                newSlots[ns++] = pos;
-            }
-
-            keys = newKeys;
-            addAcc = newAdd;
-            setVal = newSetV;
-            setSeq = newSetS;
-            flags = newFlags;
-            stamps = newStamps;
-            mask = newMask;
-            slots = newSlots;
-            slotSize = ns;
-            size = ns;
+            keys[index] = key;
+            values[index] = value;
+            maxima[index] = max;
+            operations[index] = operation;
+            size = index + 1;
+            touchedSyMask |= 1 << ((int) key & 15);
         }
     }
+
 }

@@ -1173,10 +1173,12 @@ public class Fluids {
     }
 
     private static void registerForgeFluidCompat(FluidType fluid, ResourceLocation textureStill, ResourceLocation textureFlowing, int color) {
+        // FluidType stores RGB; Forge tank renderers consume ARGB.
+        int forgeColor = 0xFF000000 | color;
         Fluid compatFluid = new FluidNTM(fluid.getFFName(),
-                textureStill, textureFlowing, color, fluid)
+                textureStill, textureFlowing, forgeColor, fluid)
                 .setTemperature(fluid.temperature + 273) // Fluid#setTemperature accepts Kelvin, not Celsius
-                .setColor(color)
+                .setColor(forgeColor)
                 .setDensity(1000)
                 .setViscosity(fluid.hasTrait(FT_Viscous.class) ? 6000 : 1000);
 

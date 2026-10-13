@@ -15,10 +15,11 @@ import net.minecraftforge.common.ForgeChunkManager.Ticket;
  * during deserialization as well, so persisted entities can request a new ticket before Forge has a
  * chance to hand back the restored one.
  *
- * <p>3. Request tickets lazily once the entity is actually live on the server, usually from the
- * first server-side {@code onUpdate()} or from an explicit opt-in method such as a
- * {@code setChunkLoading()} toggle. If the entity was read from NBT, give the restore callback a
- * short grace period before requesting a new ticket.
+ * <p>3. Bootstrap fresh tickets after successful server admission through
+ * {@code Entity.onAddedToWorld()}. The first {@code onUpdate()} can be withheld until a ticket
+ * already forces the current chunk. Keep update-time retries and explicit opt-in methods such as
+ * {@code setChunkLoading()}. If the entity was read from NBT, give the restore callback a short
+ * grace period before requesting a new ticket.
  *
  * <p>4. If {@link #init(Ticket) init(Ticket)} receives a duplicate ticket while one is already bound, release the
  * new ticket immediately instead of silently leaking it.
@@ -31,6 +32,9 @@ import net.minecraftforge.common.ForgeChunkManager.Ticket;
  * reconstruct the ticket itself from NBT.
  */
 public interface IChunkLoader {
+
+	/** Whether an admitted server entity needs a fresh ticket, honoring restore grace and opt-in state. */
+	boolean shouldBootstrapChunkLoader();
 
 	void init(Ticket ticket);
 	void loadNeighboringChunks(int newChunkX, int newChunkZ);

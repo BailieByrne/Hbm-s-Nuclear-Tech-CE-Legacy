@@ -91,12 +91,14 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.init.MobEffects;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.EnumHandSide;
 import net.minecraft.util.MovementInput;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
@@ -1129,42 +1131,8 @@ public class ModEventHandlerClient {
         AbstractClientPlayer player = (AbstractClientPlayer) plr;
 
         ModelPlayer renderer = evt.getRenderer().getMainModel();
-        for (int i = 0; i < 4; i++) {
 
-            ItemStack armor = plr.inventory.armorItemInSlot(i);
-            boolean hasHelmet = isFSBArmor(armor);
-            boolean hasChest = isFSBArmor(armor);
-            boolean hasLeggings = isFSBArmor(armor);
-            boolean hasBoots = isFSBArmor(armor);
-            if (hasHelmet) {
-                renderer.bipedHeadwear.showModel = false;
-            }
-
-            if (hasChest) {
-                renderer.bipedBodyWear.showModel = false;
-                renderer.bipedLeftArmwear.showModel = false;
-                renderer.bipedRightArmwear.showModel = false;
-            }
-
-            if (hasLeggings || hasBoots) {
-                renderer.bipedLeftLegwear.showModel = false;
-                renderer.bipedRightLegwear.showModel = false;
-            }
-        }
-
-        if (!player.getHeldItem(EnumHand.MAIN_HAND).isEmpty() && player.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof ItemGunBaseNT) {
-            renderer.rightArmPose = ArmPose.BOW_AND_ARROW;
-        }
-        if (!player.getHeldItem(EnumHand.OFF_HAND).isEmpty() && player.getHeldItem(EnumHand.OFF_HAND).getItem() instanceof ItemGunBaseNT) {
-            renderer.leftArmPose = ArmPose.BOW_AND_ARROW;
-        }
-
-        if (!player.getHeldItem(EnumHand.MAIN_HAND).isEmpty() && player.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof IHoldableWeapon) {
-            renderer.rightArmPose = ArmPose.BOW_AND_ARROW;
-        }
-        if (!player.getHeldItem(EnumHand.OFF_HAND).isEmpty() && player.getHeldItem(EnumHand.OFF_HAND).getItem() instanceof IHoldableWeapon) {
-            renderer.leftArmPose = ArmPose.BOW_AND_ARROW;
-        }
+        applyHeldWeaponPoses(player, renderer);
         JetpackHandler.preRenderPlayer(player);
 
         ResourceLocation cloak = RenderAccessoryUtility.getCloakFromPlayer(player);
@@ -1181,16 +1149,38 @@ public class ModEventHandlerClient {
             event.setCanceled(true);
         }
         if (event.getEntity() instanceof AbstractClientPlayer player && event.getRenderer().getMainModel() instanceof ModelBiped renderer) {
+            // RenderPlayer's vanilla visibility setup runs after RenderPlayerEvent.Pre.
+            applyHeldWeaponPoses(player, renderer);
+            if (renderer instanceof ModelPlayer) {
+                ModelPlayer model = (ModelPlayer) renderer;
+                if (isFSBArmor(player.getItemStackFromSlot(EntityEquipmentSlot.HEAD))) {
+                    model.bipedHeadwear.showModel = false;
+                }
+                if (isFSBArmor(player.getItemStackFromSlot(EntityEquipmentSlot.CHEST))) {
+                    model.bipedBodyWear.showModel = false;
+                    model.bipedLeftArmwear.showModel = false;
+                    model.bipedRightArmwear.showModel = false;
+                }
+                if (isFSBArmor(player.getItemStackFromSlot(EntityEquipmentSlot.LEGS)) ||
+                        isFSBArmor(player.getItemStackFromSlot(EntityEquipmentSlot.FEET))) {
+                    model.bipedLeftLegwear.showModel = false;
+                    model.bipedRightLegwear.showModel = false;
+                }
+            }
+        }
+    }
 
-            if (!player.getHeldItem(EnumHand.MAIN_HAND).isEmpty() && player.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof ItemGunBaseNT) {
-                renderer.rightArmPose = ArmPose.BOW_AND_ARROW;
-            }
-            if (!player.getHeldItem(EnumHand.MAIN_HAND).isEmpty() && player.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof IHoldableWeapon) {
-                renderer.rightArmPose = ArmPose.BOW_AND_ARROW;
-            }
-            if (!player.getHeldItem(EnumHand.OFF_HAND).isEmpty() && player.getHeldItem(EnumHand.OFF_HAND).getItem() instanceof IHoldableWeapon) {
-                renderer.leftArmPose = ArmPose.BOW_AND_ARROW;
-            }
+    private static void applyHeldWeaponPoses(EntityPlayer player, ModelBiped renderer) {
+        boolean mainHandIsRight = player.getPrimaryHand() == EnumHandSide.RIGHT;
+        ItemStack main = player.getHeldItem(EnumHand.MAIN_HAND);
+        if (main.getItem() instanceof ItemGunBaseNT || main.getItem() instanceof IHoldableWeapon) {
+            if (mainHandIsRight) renderer.rightArmPose = ArmPose.BOW_AND_ARROW;
+            else renderer.leftArmPose = ArmPose.BOW_AND_ARROW;
+        }
+        ItemStack off = player.getHeldItem(EnumHand.OFF_HAND);
+        if (off.getItem() instanceof ItemGunBaseNT || off.getItem() instanceof IHoldableWeapon) {
+            if (mainHandIsRight) renderer.leftArmPose = ArmPose.BOW_AND_ARROW;
+            else renderer.rightArmPose = ArmPose.BOW_AND_ARROW;
         }
     }
 

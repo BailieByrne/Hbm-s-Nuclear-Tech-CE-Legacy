@@ -159,7 +159,7 @@ public class NukeMan extends BlockContainer implements IBomb {
 	    	world.spawnEntity(mk5);
 
 	    	if (BombConfig.enableNukeClouds) {
-				EntityNukeTorex.statFac(world, x + 0.5, y + 0.5, z + 0.5, BombConfig.manRadius);
+				EntityNukeTorex.statFacStandard(world, x + 0.5, y + 0.5, z + 0.5, BombConfig.manRadius);
 			}
 		}
     	

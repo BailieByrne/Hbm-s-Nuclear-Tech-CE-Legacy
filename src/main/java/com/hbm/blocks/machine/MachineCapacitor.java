@@ -2,6 +2,7 @@ package com.hbm.blocks.machine;
 
 import com.hbm.api.energymk2.IEnergyProviderMK2;
 import com.hbm.api.energymk2.IEnergyReceiverMK2;
+import com.hbm.api.energymk2.Nodespace;
 import com.hbm.blocks.ILookOverlay;
 import com.hbm.blocks.IPersistentInfoProvider;
 import com.hbm.blocks.ITooltipProvider;
@@ -22,6 +23,7 @@ import net.minecraft.block.BlockDirectional;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.util.ITooltipFlag;
@@ -101,6 +103,21 @@ public class MachineCapacitor extends BlockContainer implements ILookOverlay, IP
     @SideOnly(Side.CLIENT)
     public BlockRenderLayer getRenderLayer() {
         return BlockRenderLayer.CUTOUT;
+    }
+
+    @Override
+    public boolean isOpaqueCube(IBlockState state) {
+        return false;
+    }
+
+    @Override
+    public boolean isFullCube(IBlockState state) {
+        return false;
+    }
+
+    @Override
+    public BlockFaceShape getBlockFaceShape(IBlockAccess world, IBlockState state, BlockPos pos, EnumFacing face) {
+        return BlockFaceShape.UNDEFINED;
     }
 
     @Override
@@ -198,9 +215,47 @@ public class MachineCapacitor extends BlockContainer implements ILookOverlay, IP
         public long lastPowerReceived;
         public long lastPowerSent;
         private boolean destroyedByCreativePlayer = false;
+        private int lastInputDirection = -1;
 
         public TileEntityCapacitor(long maxPower) {
             this.maxPower = maxPower;
+        }
+
+        @Override
+        public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
+            return oldState.getBlock() != newState.getBlock();
+        }
+
+        @Override
+        public void updateContainingBlockInfo() {
+            super.updateContainingBlockInfo();
+            if (lastInputDirection < 0 || world.getBlockState(pos).getValue(FACING).getIndex() == lastInputDirection) return;
+
+            for (EnumFacing direction : EnumFacing.VALUES) {
+                BlockPos endpoint = pos.offset(direction);
+                removeNetworkMemberships(endpoint);
+                EnumFacing busDirection = null;
+                while (world.isBlockLoaded(endpoint)) {
+                    IBlockState state = world.getBlockState(endpoint);
+                    if (state.getBlock() != ModBlocks.capacitor_bus) {
+                        if (busDirection != null) removeNetworkMemberships(endpoint);
+                        break;
+                    }
+                    EnumFacing current = state.getValue(FACING);
+                    if (busDirection == null) busDirection = current;
+                    if (busDirection != current) break;
+                    endpoint = endpoint.offset(busDirection);
+                }
+            }
+            lastInputDirection = -1;
+        }
+
+        private void removeNetworkMemberships(BlockPos endpoint) {
+            Nodespace.PowerNode node = Nodespace.getNode(world, endpoint);
+            if (node != null && node.net != null) {
+                node.net.removeReceiver(this);
+                node.net.removeProvider(this);
+            }
         }
 
         @Override
@@ -234,6 +289,7 @@ public class MachineCapacitor extends BlockContainer implements ILookOverlay, IP
                 }
 
                 this.trySubscribe(world, this.pos.getX() + opp.offsetX, this.pos.getY() + opp.offsetY, this.pos.getZ() + opp.offsetZ, opp);
+                lastInputDirection = opp.ordinal();
 
                 networkPackNT(15);
 

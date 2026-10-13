@@ -47,8 +47,11 @@ public class MachineDrain extends BlockDummyable implements ILookOverlay {
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+        if (world.isRemote) return player.isSneaking()
+                || player.getHeldItem(hand).getItem() instanceof IItemFluidIdentifier
+                && this.findCoreTE(world, pos) instanceof TileEntityMachineDrain;
 
-        if(!world.isRemote && !player.isSneaking()) {
+        if(!player.isSneaking()) {
 
             if(!player.getHeldItem(hand).isEmpty() && player.getHeldItem(hand).getItem() instanceof IItemFluidIdentifier) {
                 int[] posC = this.findCore(world, pos.getX(), pos.getY(), pos.getZ());

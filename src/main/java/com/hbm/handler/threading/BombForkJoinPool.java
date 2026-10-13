@@ -6,11 +6,11 @@ import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceCollection;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
 public final class BombForkJoinPool {
 
@@ -31,17 +31,18 @@ public final class BombForkJoinPool {
             if (pool == null || pool.isShutdown()) {
                 int workers = computeWorkers();
                 pool = new ForkJoinPool(workers, ForkJoinPool.defaultForkJoinWorkerThreadFactory,
-                        BombForkJoinPool::crashOnWorkerFailure, false);
+                        BombForkJoinPool::logWorkerFailure, false);
             }
             refs++;
             return pool;
         }
     }
 
-    public static void release() {
+    public static void release(ForkJoinPool acquiredPool) {
         ForkJoinPool toShutdown;
         synchronized (LOCK) {
-            if (refs <= 0) return;
+            if (acquiredPool != pool) return;
+            if (refs <= 0) throw new IllegalStateException("BombForkJoinPool reference underflow");
             refs--;
             toShutdown = maybeShutdownLocked();
         }
@@ -50,9 +51,10 @@ public final class BombForkJoinPool {
         }
     }
 
-    public static void register(int dimensionId, IJobCancellable job) {
-        if (job == null || dimensionId == Integer.MIN_VALUE) return;
+    public static void register(ForkJoinPool acquiredPool, int dimensionId, IJobCancellable job) {
+        if (job == null || dimensionId == Integer.MIN_VALUE || acquiredPool == null) return;
         synchronized (LOCK) {
+            if (acquiredPool != pool) return;
             ReferenceOpenHashSet<IJobCancellable> set = JOBS_BY_DIM.get(dimensionId);
             if (set == null) {
                 set = new ReferenceOpenHashSet<>();
@@ -62,10 +64,11 @@ public final class BombForkJoinPool {
         }
     }
 
-    public static void unregister(int dimensionId, IJobCancellable job) {
-        if (job == null || dimensionId == Integer.MIN_VALUE) return;
+    public static void unregister(ForkJoinPool acquiredPool, int dimensionId, IJobCancellable job) {
+        if (job == null || dimensionId == Integer.MIN_VALUE || acquiredPool == null) return;
         ForkJoinPool toShutdown = null;
         synchronized (LOCK) {
+            if (acquiredPool != pool) return;
             ReferenceOpenHashSet<IJobCancellable> set = JOBS_BY_DIM.get(dimensionId);
             if (set == null) return;
             set.remove(job);
@@ -133,12 +136,26 @@ public final class BombForkJoinPool {
         }
         if (jobs != null) {
             for (IJobCancellable job : jobs) {
-                job.cancelJob();
+                try {
+                    job.cancelJob();
+                } catch (Throwable t) {
+                    MainRegistry.logger.error("Failed to cancel bomb job on server stop", t);
+                }
             }
         }
         if (toStop != null && !toStop.isShutdown()) {
-            toStop.shutdownNow();
+            // Jobs already reject publication; queued tasks must still run their resource-release paths.
+            toStop.shutdown();
         }
+    }
+
+    /** Waits for deterministic blast work; workers park chunk requests rather than waiting on the server. */
+    public static boolean awaitQuiet(long timeoutMs) {
+        ForkJoinPool current;
+        synchronized (LOCK) {
+            current = pool;
+        }
+        return current == null || current.awaitQuiescence(timeoutMs, TimeUnit.MILLISECONDS);
     }
 
     private static ForkJoinPool maybeShutdownLocked() {
@@ -156,10 +173,7 @@ public final class BombForkJoinPool {
         return Math.max(1, workers);
     }
 
-    private static void crashOnWorkerFailure(Thread thread, Throwable error) {
-        MainRegistry.logger.fatal("Bomb ForkJoinPool worker crashed in {}", thread.getName(), error);
-        FMLCommonHandler.instance().raiseException(error, "Bomb ForkJoinPool worker crashed", true);
-        if (error instanceof Error) throw (Error) error;
-        throw new RuntimeException(error);
+    private static void logWorkerFailure(Thread thread, Throwable error) {
+        MainRegistry.logger.error("Bomb ForkJoinPool worker crashed in {}", thread.getName(), error);
     }
 }

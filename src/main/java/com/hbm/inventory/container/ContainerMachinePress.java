@@ -1,6 +1,8 @@
 package com.hbm.inventory.container;
 
 import com.hbm.inventory.slot.SlotFiltered;
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.machine.TileEntityMachinePress;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -12,9 +14,10 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerMachinePress extends Container {
+public class ContainerMachinePress extends Container implements IAutoRoutingContainer {
 
     private final TileEntityMachinePress press;
+    private final TransferStrategy autoRoutingStrategy;
 
     private int lastSpeed;
     private int lastBurnTime;
@@ -22,6 +25,13 @@ public class ContainerMachinePress extends Container {
 
     public ContainerMachinePress(InventoryPlayer invPlayer, TileEntityMachinePress te) {
         this.press = te;
+        autoRoutingStrategy = TransferStrategy.builder(13)
+                .rule(0, 1, stack -> press.isItemValidForSlot(0, stack))
+                .rule(1, 2, stack -> press.isItemValidForSlot(1, stack))
+                .rule(2, 3, stack -> press.isItemValidForSlot(2, stack))
+                .genericMachineRange(4)
+                .ruleDispatchMode(TransferStrategy.RuleDispatchMode.FALLTHROUGH_ON_FAILURE)
+                .build();
 
         // Slot 0: Fuel
         this.addSlotToContainer(new SlotItemHandler(te.inventory, 0, 26, 53));
@@ -88,6 +98,11 @@ public class ContainerMachinePress extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer playerIn) {
         return this.press.isUsableByPlayer(playerIn);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return autoRoutingStrategy.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 
     @Override

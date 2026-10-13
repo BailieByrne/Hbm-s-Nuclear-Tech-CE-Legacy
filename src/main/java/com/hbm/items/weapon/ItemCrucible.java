@@ -40,11 +40,29 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 public class ItemCrucible extends ItemSwordCutter implements IPostRender {
 
-	public static boolean doSpecialClick = false;
+	private static final Map<EntityPlayerMP, ItemStack> specialClicks = new WeakHashMap<>();
+
+	public static void setSpecialClick(EntityPlayerMP player, boolean pressed) {
+		if(pressed) specialClicks.put(player, player.getHeldItemMainhand());
+		else specialClicks.remove(player);
+	}
+
+	private static boolean isSpecialClick(EntityLivingBase entity) {
+		if(!(entity instanceof EntityPlayerMP player)) return false;
+		ItemStack pressed = specialClicks.get(player);
+		if(pressed == null) return false;
+		if(!player.isEntityAlive() || player.isSpectator() || pressed != player.getHeldItemMainhand()) {
+			specialClicks.remove(player);
+			return false;
+		}
+		return true;
+	}
 	
 	public ItemCrucible(float damage, double movement, ToolMaterial material, String s) {
 		super(damage, movement, material, s);
@@ -81,7 +99,7 @@ public class ItemCrucible extends ItemSwordCutter implements IPostRender {
 			super.onEntitySwing(entityLiving, stack);
 			return true;
 		}
-		if(!doSpecialClick){
+		if(!isSpecialClick(entityLiving)){
 			EnumHand hand = stack == entityLiving.getHeldItemMainhand() ? EnumHand.MAIN_HAND : EnumHand.OFF_HAND;
 			
 			NBTTagCompound nbt = new NBTTagCompound();
@@ -103,6 +121,10 @@ public class ItemCrucible extends ItemSwordCutter implements IPostRender {
 	
 	@Override
 	public void onUpdate(@NotNull ItemStack stack, @NotNull World worldIn, @NotNull Entity entityIn, int itemSlot, boolean isSelected) {
+		if(entityIn instanceof EntityPlayerMP player && specialClicks.get(player) == stack
+				&& (!isSelected || !player.isEntityAlive() || player.isSpectator() || player.getHeldItemMainhand() != stack)) {
+			specialClicks.remove(player);
+		}
 		if(isSelected && worldIn.isRemote && getCharges(stack) > 0 && entityIn instanceof EntityPlayer){
 			updateClient(worldIn, (EntityPlayer) entityIn, itemSlot);
 		}
@@ -131,7 +153,7 @@ public class ItemCrucible extends ItemSwordCutter implements IPostRender {
 	
 	@Override
 	public boolean hitEntity(ItemStack stack, EntityLivingBase victim, EntityLivingBase attacker) {
-		if(!doSpecialClick){
+		if(!isSpecialClick(attacker)){
 			discharge(stack);
 			if(!attacker.world.isRemote && getCharges(stack) > 0 && !victim.isEntityAlive()) {
 				int count = Math.min((int)Math.ceil(victim.getMaxHealth() / 3D), 250);

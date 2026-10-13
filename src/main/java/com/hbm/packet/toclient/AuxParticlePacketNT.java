@@ -62,7 +62,8 @@ public class AuxParticlePacketNT extends ThreadedPacket {
     public void fromBytes(ByteBuf buf) {
         PacketBuffer pbuf = new PacketBuffer(buf);
         try {
-            if (pbuf.readBoolean()) {
+            this.legacy = pbuf.readBoolean();
+            if (this.legacy) {
                 this.nbt = pbuf.readCompoundTag();
             } else {
                 this.effect = pbuf.readEnumValue(HbmEffectNT.class);
@@ -98,13 +99,12 @@ public class AuxParticlePacketNT extends ThreadedPacket {
             Minecraft.getMinecraft().addScheduledTask(() -> {
                 if (Minecraft.getMinecraft().world == null) return;
 
-                if (m.nbt != null) {
-                    if (m.nbt.hasKey("label", Constants.NBT.TAG_STRING)) {
-                        m.nbt.setString("label", I18nUtil.resolveKey(m.nbt.getString("label")));
-                    }
-                    if (m.legacy) MainRegistry.proxy.effectNT(m.nbt);
-                    else MainRegistry.proxy.effectNT(m.effect, m.posX, m.posY, m.posZ, m.nbt);
+                if (m.legacy && m.nbt == null) return;
+                if (m.nbt != null && m.nbt.hasKey("label", Constants.NBT.TAG_STRING)) {
+                    m.nbt.setString("label", I18nUtil.resolveKey(m.nbt.getString("label")));
                 }
+                if (m.legacy) MainRegistry.proxy.effectNT(m.nbt);
+                else MainRegistry.proxy.effectNT(m.effect, m.posX, m.posY, m.posZ, m.nbt);
             });
             return null;
         }

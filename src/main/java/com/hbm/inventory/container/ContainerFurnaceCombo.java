@@ -1,5 +1,8 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
+import com.hbm.inventory.TransferStrategy;
+
 import com.hbm.inventory.slot.SlotSmelting;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.tileentity.machine.TileEntityFurnaceCombination;
@@ -10,6 +13,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
 public class ContainerFurnaceCombo extends ContainerBase {
+
+    private static final TransferStrategy AUTO_ROUTING_STRATEGY = TransferStrategy.builder(4).genericMachineRange(0, 1).build();
 
     protected TileEntityFurnaceCombination furnace;
 
@@ -72,5 +77,10 @@ public class ContainerFurnaceCombo extends ContainerBase {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return furnace.isUseableByPlayer(player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return AUTO_ROUTING_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

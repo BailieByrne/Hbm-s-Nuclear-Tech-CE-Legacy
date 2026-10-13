@@ -24,6 +24,7 @@ public class CableSwitch extends BlockContainer {
 
 	public CableSwitch(Material materialIn, String s) {
 		super(materialIn);
+		this.setDefaultState(this.blockState.getBaseState().withProperty(STATE, false));
 		this.setTranslationKey(s);
 		this.setRegistryName(s);
 		

@@ -22,14 +22,6 @@ public class BombConfig {
 	public static int riggedStarRange = 50;
 	public static int riggedStarTicks = 60 * 20;
 
-	public static int maxCustomTNTRadius = 150;
-	public static int maxCustomNukeRadius = 200;
-	public static int maxCustomHydroRadius = 350;
-	public static int maxCustomDirtyRadius = 200;
-	public static int maxCustomBaleRadius = 350;
-	public static int maxCustomSchrabRadius = 250;
-	public static int maxCustomSolRadius = 350;
-	public static int maxCustomEuphLvl = 20;
 	
 	public static int mk5 = 50;
 	public static int blastSpeed = 1024;
@@ -39,10 +31,16 @@ public class BombConfig {
 	public static int limitExplosionLifespan = 0;
 	public static boolean disableNuclear = false;
 	public static boolean enableNukeClouds = true;
-	public static boolean enableNukeNBTSaving = true;
 	public static boolean chunkloading = true;
 	public static int explosionAlgorithm = 2;
 	public static int maxThreads = -1;
+	public static int blastChunksInFlight = 0;
+
+	/** Resolved at use; zero selects the native processor-based admission depth. */
+	public static int chunksInFlight() {
+		int configured = blastChunksInFlight;
+		return configured > 0 ? configured : Math.max(64, Runtime.getRuntime().availableProcessors() * 8);
+	}
 	
 	public static void loadFromConfig(Configuration config) {
 		Property propGadget = config.get(CommonConfig.CATEGORY_NUKES, "3.00_gadgetRadius", 150);
@@ -95,39 +93,6 @@ public class BombConfig {
 		propRS2.setComment("Time in ticks before the Rigged Star Blaster Energy Cell explodes after being dropped - default 60s");
 		riggedStarTicks = propRS2.getInt();
 
-		Property propTNT = config.get(CommonConfig.CATEGORY_NUKES, "3.16_maxCustomTNTRadius", 150);
-		propTNT.setComment("Maximum TNT radius of custom nukes - default 150m");
-		maxCustomTNTRadius = propTNT.getInt();
-
-		Property propNuke = config.get(CommonConfig.CATEGORY_NUKES, "3.17_maxCustomNukeRadius", 200);
-		propNuke.setComment("Maximum Nuke radius of custom nukes - default 200m");
-		maxCustomNukeRadius = propNuke.getInt();
-
-		Property propHydro = config.get(CommonConfig.CATEGORY_NUKES, "3.18_maxCustomHydroRadius", 350);
-		propHydro.setComment("Maximum Thermonuclear radius of custom nukes - default 350m");
-		maxCustomHydroRadius = propHydro.getInt();
-
-		Property propDirty = config.get(CommonConfig.CATEGORY_NUKES, "3.19_maxCustomDirtyRadius", 200);
-		propDirty.setComment("Maximum fallout additional radius that can be added to custom nukes - default 200m");
-		maxCustomDirtyRadius = propDirty.getInt();
-		
-		Property propBale = config.get(CommonConfig.CATEGORY_NUKES, "3.20_maxCustomBaleRadius", 350);
-		propBale.setComment("Maximum balefire radius of custom nukes - default 350m");
-		maxCustomBaleRadius = propBale.getInt();
-
-		Property propSchrab = config.get(CommonConfig.CATEGORY_NUKES, "3.21_maxCustomSchrabRadius", 250);
-		propSchrab.setComment("Maximum Antischrabidium radius of custom nukes - default 250m");
-		maxCustomSchrabRadius = propSchrab.getInt();
-
-		Property propSol = config.get(CommonConfig.CATEGORY_NUKES, "3.22_maxCustomSolRadius", 350);
-		propSol.setComment("Maximum Solinium radius of custom nukes - default 350m");
-		maxCustomSolRadius = propSol.getInt();
-		
-		Property propEuph = config.get(CommonConfig.CATEGORY_NUKES, "3.23_maxCustomEuphLvl", 20);
-		propEuph.setComment("Maximum Euphemium Lvl of custom nukes (1Lvl = 100 Rays) - default 20");
-		maxCustomEuphLvl = propEuph.getInt();
-		
-        
 		Property propLimitExplosionLifespan = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.00_limitExplosionLifespan", 0);
 		propLimitExplosionLifespan.setComment("How long an explosion can be unloaded until it dies in seconds. Based of system time. 0 disables the effect");
 		limitExplosionLifespan = propLimitExplosionLifespan.getInt();
@@ -160,10 +125,6 @@ public class BombConfig {
 		enableNukeCloudsP.setComment("WARNING: AN OLD CONFIG OPTION. Allows for nuclear explosion to even happen.");
 		enableNukeClouds = enableNukeCloudsP.getBoolean(true);
 
-		Property enableNukeNBTSavingP = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.09_enableNukeNBTSaving", true);
-		enableNukeNBTSavingP.setComment("If true then nukes will save the blocks they want to destroy so they can resume work rather then restart after a crash/reload. For big nukes this can take a while tho.");
-		enableNukeNBTSaving = enableNukeNBTSavingP.getBoolean();
-
 		Property chunkloadingP = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.10_enableChunkLoading", true);
 		chunkloadingP.setComment("Allows mk5 explosion to generate new chunks.");
 		chunkloading = chunkloadingP.getBoolean(true);
@@ -175,6 +136,10 @@ public class BombConfig {
 		Property maxThreadsP = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.11.1_explosionMaxThreads", -1);
 		maxThreadsP.setComment("Configures the maximum thread count for the threaded DDA explosion algorithm.\n -N = CPU count - N, 0 = CPU count, N = N");
 		maxThreads = maxThreadsP.getInt();
+
+		Property chunksInFlightP = config.get(CommonConfig.CATEGORY_EXPLOSIONS, "6.11.2_blastChunksInFlight", 0);
+		chunksInFlightP.setComment("Maximum blast chunk requests in flight. 0 selects max(64, CPU count * 8).");
+		blastChunksInFlight = chunksInFlightP.getInt();
 
 	}
 }

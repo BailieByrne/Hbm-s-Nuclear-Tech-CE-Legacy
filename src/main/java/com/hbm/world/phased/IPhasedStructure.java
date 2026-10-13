@@ -35,7 +35,7 @@ public interface IPhasedStructure {
                 return null;
             }
         }
-        int newY = pending.getCachedMinHeight();
+        int newY = pending.getCachedOriginHeight();
 
         if (newY > 0 && newY < world.getHeight()) {
             int x = Library.getBlockPosX(pending.origin);
@@ -59,7 +59,9 @@ public interface IPhasedStructure {
     }
 
     /**
-     * Points used to determine the y of the structure.
+     * Surface points which must be populated before validation. The scheduler
+     * includes the original origin first and uses its height, preserving the
+     * caller's surface anchor while still waiting for every validation point.
      *
      * @param origin point of the origin, only x and z should be used.
      */

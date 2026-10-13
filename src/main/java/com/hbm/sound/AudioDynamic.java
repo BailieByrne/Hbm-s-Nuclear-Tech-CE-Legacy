@@ -21,6 +21,7 @@ public class AudioDynamic extends MovingSound {
 	public int timeSinceKA;
 	public boolean shouldExpire = false;
 	private final boolean nonLegacy;
+	private boolean refreshVolumeOnStart;
 	// shitty addition that should make looped sounds on tools and guns work right
 	// position updates happen automatically and if the parent is the client player, volume is always on max
 	public Entity parentEntity = null;
@@ -51,6 +52,16 @@ public class AudioDynamic extends MovingSound {
 
 	@Override
 	public void update() {
+		refreshPlaybackVolume();
+		if (nonLegacy && this.shouldExpire) {
+			if (this.timeSinceKA > this.keepAlive) {
+				this.stop();
+			}
+			this.timeSinceKA++;
+		}
+	}
+
+	private void refreshPlaybackVolume() {
 		EntityPlayerSP player = Minecraft.getMinecraft().player;
 		float f;
 
@@ -72,12 +83,6 @@ public class AudioDynamic extends MovingSound {
 				volume = maxVolume;
 			}
 
-			if (this.shouldExpire) {
-				if (this.timeSinceKA > this.keepAlive) {
-					this.stop();
-				}
-				this.timeSinceKA++;
-			}
 		} else {
 			if (player != null && player != parentEntity) {
 				f = (float) Math.sqrt(Math.pow(xPosF - player.posX, 2)
@@ -98,13 +103,13 @@ public class AudioDynamic extends MovingSound {
 		}
 	}
 
-	
 	public void start() {
 		// SoundManager.isSoundPlaying() can return false while `this` is still a value in
 		// playingSounds (Paulscode dropped the source but the 20-tick stop-time grace hasn't
 		// elapsed). Re-entering playSound() then crashes HashBiMap with "value already present".
 		SoundHandler handler = Minecraft.getMinecraft().getSoundHandler();
 		if(handler.sndManager.invPlayingSounds.containsKey(this)) return;
+		if (refreshVolumeOnStart) refreshPlaybackVolume();
 		handler.playSound(this);
 	}
 	
@@ -112,6 +117,15 @@ public class AudioDynamic extends MovingSound {
 		Minecraft.getMinecraft().getSoundHandler().stopSound(this);
 	}
 	
+	public boolean isAudible() {
+		refreshPlaybackVolume();
+		return volume > 0F;
+	}
+
+	public void setRefreshVolumeOnStart(boolean refresh) {
+		this.refreshVolumeOnStart = refresh;
+	}
+
 	public void setVolume(float volume) {
 		this.maxVolume = volume;
 	}

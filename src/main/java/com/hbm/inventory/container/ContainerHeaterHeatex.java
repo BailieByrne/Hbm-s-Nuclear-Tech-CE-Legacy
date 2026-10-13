@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.tileentity.machine.TileEntityHeaterHeatex;
 import com.hbm.util.InventoryUtil;
@@ -10,7 +11,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerHeaterHeatex extends Container {
+public class ContainerHeaterHeatex extends Container implements IAutoRoutingContainer {
 
 	private TileEntityHeaterHeatex heater;
 
@@ -43,4 +44,9 @@ public class ContainerHeaterHeatex extends Container {
 	public boolean canInteractWith(EntityPlayer player) {
 		return heater.isUseableByPlayer(player);
 	}
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

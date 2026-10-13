@@ -17,12 +17,15 @@ import net.minecraftforge.client.settings.KeyBindingMap;
 import net.minecraftforge.client.settings.KeyModifier;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
+import net.minecraftforge.fml.common.gameevent.InputEvent.MouseInputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import java.lang.invoke.MethodHandle;
 
@@ -37,6 +40,7 @@ public class HbmKeybinds {
 	public static KeyBinding magnetKey = new KeyBinding(category + ".toggleMagnet", Keyboard.KEY_Z, category);
 	public static KeyBinding reloadKey = new KeyBinding(category + ".reload", Keyboard.KEY_R, category);
 	public static KeyBinding dashKey = new KeyBinding(category + ".dash", Keyboard.KEY_LSHIFT, category);
+	public static KeyBinding trainKey = new KeyBinding(category + ".trainInv", Keyboard.KEY_R, category);
 
 	public static KeyBinding craneUpKey = new KeyBinding(category + ".craneMoveUp", Keyboard.KEY_UP, category);
 	public static KeyBinding craneDownKey = new KeyBinding(category + ".craneMoveDown", Keyboard.KEY_DOWN, category);
@@ -50,6 +54,7 @@ public class HbmKeybinds {
 	public static KeyBinding abilityAlt = new KeyBinding(category + ".abilityAlt", Keyboard.KEY_LMENU, category);
 	public static KeyBinding copyToolAlt = new KeyBinding(category + ".copyToolAlt", Keyboard.KEY_LMENU, category);
 	public static KeyBinding copyToolCtrl = new KeyBinding(category + ".copyToolCtrl", Keyboard.KEY_LCONTROL, category);
+	public static KeyBinding gunPrimaryKey = new KeyBinding(category + ".gunPrimary", -100, category);
 	public static KeyBinding gunSecondaryKey = new KeyBinding(category + ".gunSecondary", -99, category);
 	public static KeyBinding gunTertiaryKey = new KeyBinding(category + ".gunTertitary", -98, category);
 	
@@ -60,7 +65,9 @@ public class HbmKeybinds {
 		ClientRegistry.registerKeyBinding(magnetKey);
 		ClientRegistry.registerKeyBinding(reloadKey);
 		ClientRegistry.registerKeyBinding(dashKey);
+		ClientRegistry.registerKeyBinding(trainKey);
 
+		ClientRegistry.registerKeyBinding(gunPrimaryKey);
 		ClientRegistry.registerKeyBinding(gunSecondaryKey);
 		ClientRegistry.registerKeyBinding(gunTertiaryKey);
 
@@ -76,7 +83,15 @@ public class HbmKeybinds {
 		ClientRegistry.registerKeyBinding(qmaw);
 	}
 
-	@SubscribeEvent
+	@SideOnly(Side.CLIENT)
+	@SubscribeEvent(priority = EventPriority.LOW)
+	public void mouseEvent(MouseInputEvent event) {
+		handleOverlap(Mouse.getEventButtonState(), Mouse.getEventButton() - 100);
+		handleProps(Mouse.getEventButtonState(), Mouse.getEventButton() - 100);
+	}
+
+	@SideOnly(Side.CLIENT)
+	@SubscribeEvent(priority = EventPriority.LOW)
 	public void keyEvent(KeyInputEvent event) {
 
 		/// OVERLAP HANDLING ///
@@ -124,7 +139,7 @@ public class HbmKeybinds {
 		if(!player.getHeldItemMainhand().isEmpty() && player.getHeldItemMainhand().getItem() instanceof ItemGunBaseNT
 				&& props.getKeyPressed(EnumKeybind.GUN_PRIMARY)) {
 			Minecraft mc = Minecraft.getMinecraft();
-			KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
+			mc.gameSettings.keyBindAttack.pressed = false;
 			mc.leftClickCounter = 2;
 			if(mc.playerController != null) {
 				mc.playerController.resetBlockRemoving();
@@ -150,7 +165,8 @@ public class HbmKeybinds {
 		TOOL_CTRL,
 		GUN_PRIMARY,
 		GUN_SECONDARY,
-		GUN_TERTIARY;
+		GUN_TERTIARY,
+		TRAIN;
 
         public static final EnumKeybind[] VALUES = values();
 	}
@@ -162,7 +178,19 @@ public class HbmKeybinds {
 	/** Handles keybind overlap. Make sure this runs first before referencing the keybinds set by the extprops */
 	public static void handleOverlap(boolean state, int keyCode) {
 		Minecraft mc = Minecraft.getMinecraft();
-		if(GeneralConfig.enableKeybindOverlap && isValidKeyCode(keyCode) && (mc.currentScreen == null || mc.currentScreen.allowUserInput)) {
+		if(!isValidKeyCode(keyCode) || (mc.currentScreen != null && !mc.currentScreen.allowUserInput)) return;
+
+		EntityPlayer player = mc.player;
+		boolean heldGun = player != null && player.getHeldItemMainhand().getItem() instanceof ItemGunBaseNT;
+		if(heldGun) {
+			// Canceled Forge MouseEvents never reach vanilla's logical key update.
+			updateGunBinding(gunPrimaryKey, state, keyCode);
+			updateGunBinding(gunSecondaryKey, state, keyCode);
+			updateGunBinding(gunTertiaryKey, state, keyCode);
+			updateGunBinding(reloadKey, state, keyCode);
+		}
+
+		if(GeneralConfig.enableKeybindOverlap) {
             KeyBindingMap HASH;
             try {
                 HASH = (KeyBindingMap) hashHandle.invokeExact();
@@ -170,49 +198,38 @@ public class HbmKeybinds {
                 throw new RuntimeException(t);
             }
 
-			//if anything errors here, run ./gradlew clean setupDecompWorkSpace
 			for (KeyBinding key : KeyBinding.KEYBIND_ARRAY.values()) {
 				if (key.getKeyCode() != keyCode || key.getKeyCode() == 0) continue;
 				if (!key.getKeyConflictContext().isActive()) continue;
-
 				KeyModifier mod = key.getKeyModifier();
 				if (mod != KeyModifier.NONE && !mod.isActive()) continue;
 				if (HASH.lookupActive(key.getKeyCode()) == key && !category.equals(key.getKeyCategory())) continue;
-
 				key.pressed = state;
-				if (state && key.pressTime == 0) {
-					key.pressTime = 1;
-				}
-			}
-
-			/// GUN HANDLING ///
-			boolean gunKey = keyCode == mc.gameSettings.keyBindAttack.getKeyCode() ||
-					keyCode == HbmKeybinds.gunSecondaryKey.getKeyCode() ||
-					keyCode == HbmKeybinds.gunTertiaryKey.getKeyCode() || keyCode == HbmKeybinds.reloadKey.getKeyCode();
-
-			EntityPlayer player = mc.player;
-
-			if(!player.getHeldItemMainhand().isEmpty() && player.getHeldItemMainhand().getItem() instanceof ItemGunBaseNT) {
-
-				/* Shoot in favor of attacking */
-				if(gunKey && keyCode == mc.gameSettings.keyBindAttack.getKeyCode()) {
-					mc.gameSettings.keyBindAttack.pressed = false;
-					mc.gameSettings.keyBindAttack.pressTime = 0;
-				}
-
-				/* Shoot in favor of interacting */
-				/*if(gunKey && keyCode == mc.gameSettings.keyBindUseItem.getKeyCode()) {
-					mc.gameSettings.keyBindUseItem.pressed = false;
-					mc.gameSettings.keyBindUseItem.pressTime = 0;
-				}*/
-
-				/* Scope in favor of picking */
-				if(gunKey && keyCode == mc.gameSettings.keyBindPickBlock.getKeyCode()) {
-					mc.gameSettings.keyBindPickBlock.pressed = false;
-					mc.gameSettings.keyBindPickBlock.pressTime = 0;
-				}
+				if (state && key.pressTime == 0) key.pressTime = 1;
 			}
 		}
+
+		if(heldGun) {
+			boolean gunKey = keyCode == gunPrimaryKey.getKeyCode() || keyCode == gunSecondaryKey.getKeyCode() ||
+					keyCode == gunTertiaryKey.getKeyCode() || keyCode == reloadKey.getKeyCode();
+			if(gunKey && keyCode == mc.gameSettings.keyBindAttack.getKeyCode()) {
+				mc.gameSettings.keyBindAttack.pressed = false;
+				mc.gameSettings.keyBindAttack.pressTime = 0;
+			}
+			if(gunKey && keyCode == mc.gameSettings.keyBindPickBlock.getKeyCode()) {
+				mc.gameSettings.keyBindPickBlock.pressed = false;
+				mc.gameSettings.keyBindPickBlock.pressTime = 0;
+			}
+		}
+	}
+
+	private static void updateGunBinding(KeyBinding binding, boolean state, int keyCode) {
+		if(binding.getKeyCode() != keyCode) return;
+		KeyModifier modifier = binding.getKeyModifier();
+		if(state && (!binding.getKeyConflictContext().isActive() ||
+				(modifier != KeyModifier.NONE && !modifier.isActive()))) return;
+		binding.pressed = state;
+		if(state && binding.pressTime == 0) binding.pressTime = 1;
 	}
 
 	public static void handleProps(boolean state, int keyCode) {

@@ -13,6 +13,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,9 @@ public class ItemDesignatorArtyRange extends ItemBase {
         ItemStack stack = player.getHeldItem(hand);
         if (!stack.hasTagCompound()) return new ActionResult<>(EnumActionResult.FAIL, stack);
 
-        BlockPos pos = Library.rayTrace(player, 500, 1).getBlockPos();
+        RayTraceResult hit = Library.rayTrace(player, 500, 1);
+        if (hit == null) return new ActionResult<>(EnumActionResult.PASS, stack);
+        BlockPos pos = hit.getBlockPos();
 
         if (!world.isRemote) {
             TileEntity te = world.getTileEntity(new BlockPos(stack.getTagCompound().getInteger("x"), stack.getTagCompound().getInteger("y"), stack.getTagCompound().getInteger("z")));

@@ -72,6 +72,7 @@ public abstract class TileEntityLaunchPadBase extends TileEntityMachineBase impl
 	public static void registerLaunchables() {
 
 		//Tier 0
+		missiles.put(new ComparableStack(ModItems.missile_test), EntityMissileTest::new);
 		missiles.put(new ComparableStack(ModItems.missile_micro), EntityMissileMicro::new);
 		missiles.put(new ComparableStack(ModItems.missile_schrabidium), EntityMissileSchrabidium::new);
 		missiles.put(new ComparableStack(ModItems.missile_bhole), EntityMissileBHole::new);
@@ -100,7 +101,6 @@ public abstract class TileEntityLaunchPadBase extends TileEntityMachineBase impl
 		missiles.put(new ComparableStack(ModItems.missile_nuclear_cluster), EntityMissileMirv::new);
 		missiles.put(new ComparableStack(ModItems.missile_volcano), EntityMissileVolcano::new);
 		missiles.put(new ComparableStack(ModItems.missile_doomsday), EntityMissileDoomsday::new);
-		missiles.put(new ComparableStack(ModItems.missile_n2), EntityMissileN2::new);
 		
 		missiles.put(new ComparableStack(ModItems.missile_stealth), EntityMissileStealth::new);
 	}
@@ -340,6 +340,18 @@ public abstract class TileEntityLaunchPadBase extends TileEntityMachineBase impl
     public Entity instantiateMissile(int targetX, int targetZ) {
         ItemStack stack = inventory.getStackInSlot(0);
         if (stack.isEmpty()) return null;
+        MissileFactory factory = missiles.get(new ComparableStack(stack).makeSingular());
+        if (factory != null) {
+            EntityMissileBaseNT missile = factory.create(world, pos.getX() + 0.5F,
+                    pos.getY() + (float) getLaunchOffset(), pos.getZ() + 0.5F, targetX, targetZ);
+            if (GeneralConfig.enableExtendedLogging) {
+                MainRegistry.logger.info("[MISSILE] Tried to launch missile at {} / {} / {} to {} / {}!",
+                        pos.getX(), pos.getY(), pos.getZ(), targetX, targetZ);
+            }
+            byte rot = (byte) MathHelper.clamp(this.getBlockMetadata() - 10, 2, 5);
+            missile.getDataManager().set(EntityMissileBaseNT.ROT_IDX, rot);
+            return missile;
+        }
         if (stack.getItem() == ModItems.missile_anti_ballistic) {
             EntityMissileAntiBallistic missile = new EntityMissileAntiBallistic(world);
             missile.posX = pos.getX() + 0.5D;
@@ -347,20 +359,8 @@ public abstract class TileEntityLaunchPadBase extends TileEntityMachineBase impl
             missile.posZ = pos.getZ() + 0.5D;
             return missile;
         }
-        MissileFactory factory = missiles.get(new ComparableStack(stack).makeSingular());
-        if (factory == null) return null;
-        EntityMissileBaseNT missile = factory.create(world, pos.getX() + 0.5F, pos.getY() + (float) getLaunchOffset(), pos.getZ() + 0.5F, targetX, targetZ);
-        if (GeneralConfig.enableExtendedLogging) {
-            MainRegistry.logger.info("[MISSILE] Tried to launch missile at {} / {} / {} to {} / {}!", pos.getX(), pos.getY(), pos.getZ(), targetX,
-                    targetZ);
-        }
-        byte rot = (byte) MathHelper.clamp(this.getBlockMetadata() - 10, 2, 5);
-        if (missile instanceof EntityMissileTier4) {
-            missile.getDataManager().set(EntityMissileTier4.ROT_IDX, rot);
-        }
-        return missile;
+        return null;
     }
-	
 	public void finalizeLaunch(Entity missile) {
 		Entity detonatorEntity = ModContext.DETONATOR_CONTEXT.get();
 		if (detonatorEntity instanceof EntityLivingBase entityLivingBase){
@@ -383,27 +383,22 @@ public abstract class TileEntityLaunchPadBase extends TileEntityMachineBase impl
 	
 	public BombReturnCode launchFromDesignator() {
 		if(!canLaunch()) return BombReturnCode.ERROR_MISSING_COMPONENT;
-		
 		boolean needsDesignator = needsDesignator(inventory.getStackInSlot(0).getItem());
-
-		int targetX = 0;
-		int targetZ = 0;
-		
+		int targetX = pos.getX();
+		int targetZ = pos.getZ();
 		if(!inventory.getStackInSlot(1).isEmpty() && inventory.getStackInSlot(1).getItem() instanceof IDesignatorItem designator) {
-
-            if(!designator.isReady(world, inventory.getStackInSlot(1), pos.getX(), pos.getY(), pos.getZ()) && needsDesignator) return BombReturnCode.ERROR_MISSING_COMPONENT;
-			
-			Vec3d coords = designator.getCoords(world, inventory.getStackInSlot(1), pos.getX(), pos.getY(), pos.getZ());
-			targetX = (int) Math.floor(coords.x);
-			targetZ = (int) Math.floor(coords.z);
-			
-		} else {
-			if(needsDesignator) return BombReturnCode.ERROR_MISSING_COMPONENT;
+			if(needsDesignator) {
+				if(!designator.isReady(world, inventory.getStackInSlot(1), pos.getX(), pos.getY(), pos.getZ()))
+					return BombReturnCode.ERROR_MISSING_COMPONENT;
+				Vec3d coords = designator.getCoords(world, inventory.getStackInSlot(1), pos.getX(), pos.getY(), pos.getZ());
+				targetX = (int) Math.floor(coords.x);
+				targetZ = (int) Math.floor(coords.z);
+			}
+		} else if(needsDesignator) {
+			return BombReturnCode.ERROR_MISSING_COMPONENT;
 		}
-		
 		return this.launchToCoordinate(targetX, targetZ);
 	}
-	
 	public BombReturnCode launchToEntity(Entity entity) {
 		if(!canLaunch()) return BombReturnCode.ERROR_MISSING_COMPONENT;
 		
@@ -531,6 +526,11 @@ public abstract class TileEntityLaunchPadBase extends TileEntityMachineBase impl
 		return new Object[] {false};
 	}
 
+	@Callback(direct = true)
+	@Optional.Method(modid = "opencomputers")
+	public Object[] getPos(Context context, Arguments args) {
+		return new Object[] {pos.getX(), pos.getY(), pos.getZ()};
+	}
 	@Override
 	@Optional.Method(modid = "opencomputers")
 	public String[] methods() {
@@ -539,7 +539,8 @@ public abstract class TileEntityLaunchPadBase extends TileEntityMachineBase impl
 				"getFluid",
 				"canLaunch",
 				"getTier",
-				"launch"
+				"launch",
+				"getPos"
 		};
 	}
 
@@ -552,6 +553,7 @@ public abstract class TileEntityLaunchPadBase extends TileEntityMachineBase impl
             case ("canLaunch") -> canLaunch(context, args);
             case ("getTier") -> getTier(context, args);
             case ("launch") -> launch(context, args);
+            case ("getPos") -> getPos(context, args);
             default -> throw new NoSuchMethodException();
         };
     }

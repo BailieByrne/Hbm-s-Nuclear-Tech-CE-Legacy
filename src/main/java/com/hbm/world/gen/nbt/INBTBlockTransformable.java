@@ -1,6 +1,7 @@
 package com.hbm.world.gen.nbt;
 
 import net.minecraft.block.Block;
+import net.minecraft.util.Mirror;
 
 /**
  * Copy-pasted from 1.7 master rev 84601f685fea0a92d11f1a28e0b1e0a1742a27c2.
@@ -109,6 +110,24 @@ public interface INBTBlockTransformable {
         };
 
         return type | rot;
+    }
+
+    static int mirrorMetaDecoModelHigh(int meta, Mirror mirror) {
+        boolean flip = switch (mirror) {
+            case LEFT_RIGHT -> (meta & 8) == 0;
+            case FRONT_BACK -> (meta & 8) != 0;
+            default -> false;
+        };
+        return flip ? meta ^ 4 : meta;
+    }
+
+    static int mirrorMetaDecoModelLow(int meta, Mirror mirror) {
+        boolean flip = switch (mirror) {
+            case LEFT_RIGHT -> (meta & 1) == 0;
+            case FRONT_BACK -> (meta & 1) != 0;
+            default -> false;
+        };
+        return flip ? meta ^ 2 : meta;
     }
 
     static int transformMetaStairs(int meta, int coordBaseMode) {

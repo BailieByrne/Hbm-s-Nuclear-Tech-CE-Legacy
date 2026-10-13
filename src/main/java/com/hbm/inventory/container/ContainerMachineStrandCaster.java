@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.inventory.slot.SlotNonRetarded;
@@ -13,7 +14,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerMachineStrandCaster extends Container {
+public class ContainerMachineStrandCaster extends Container implements IAutoRoutingContainer {
 
   protected TileEntityMachineStrandCaster caster;
 
@@ -57,4 +58,9 @@ public class ContainerMachineStrandCaster extends Container {
   public boolean canInteractWith(@NotNull EntityPlayer player) {
     return caster.isUseableByPlayer(player);
   }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
+    }
 }

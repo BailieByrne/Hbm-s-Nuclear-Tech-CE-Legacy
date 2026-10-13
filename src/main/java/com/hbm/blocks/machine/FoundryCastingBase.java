@@ -89,14 +89,11 @@ public abstract class FoundryCastingBase extends BlockContainer implements ICruc
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        if (world.isRemote) {
-            return true;
-        }
-
         TileEntityFoundryCastingBase cast = (TileEntityFoundryCastingBase) world.getTileEntity(pos);
         if (cast == null) return false;
 
         if (!cast.inventory.getStackInSlot(1).isEmpty()) {
+            if (world.isRemote) return true;
             if (!player.inventory.addItemStackToInventory(cast.inventory.getStackInSlot(1).copy())) {
                 world.spawnEntity(new EntityItem(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, cast.inventory.getStackInSlot(1).copy()));
             } else {
@@ -110,17 +107,11 @@ public abstract class FoundryCastingBase extends BlockContainer implements ICruc
 
         ItemStack heldItem = player.getHeldItem(hand);
         //insert mold
-        if (!heldItem.isEmpty() && heldItem.getItem() == ModItems.mold) {
+        if (!heldItem.isEmpty() && heldItem.getItem() == ModItems.mold && cast.inventory.getStackInSlot(0).isEmpty()) {
             Mold mold = ((ItemMold) heldItem.getItem()).getMold(heldItem);
 
             if (mold.size == cast.getMoldSize()) {
-                if (!cast.inventory.getStackInSlot(0).isEmpty()) {
-                    ItemStack prevMold = cast.inventory.getStackInSlot(0);
-                    if (!player.inventory.addItemStackToInventory(prevMold)) {
-                        world.spawnEntity(new EntityItem(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, prevMold));
-                    }
-                }
-
+                if (world.isRemote) return true;
                 ItemStack newMold = heldItem.copy();
                 newMold.setCount(1);
                 cast.inventory.setStackInSlot(0, newMold); // Set mold in Slot 0
@@ -136,6 +127,7 @@ public abstract class FoundryCastingBase extends BlockContainer implements ICruc
 
         //shovel scrap
         if (!heldItem.isEmpty() && heldItem.getItem() instanceof ItemTool && heldItem.getItem().getToolClasses(heldItem).contains("shovel")) {
+            if (world.isRemote) return true;
             if (cast.amount > 0) {
                 ItemStack scrap = ItemScraps.create(new MaterialStack(cast.type, cast.amount));
                 if (!player.inventory.addItemStackToInventory(scrap)) {

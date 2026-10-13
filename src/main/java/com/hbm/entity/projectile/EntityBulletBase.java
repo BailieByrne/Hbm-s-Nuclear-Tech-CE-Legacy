@@ -576,7 +576,7 @@ public class EntityBulletBase extends Entity implements IProjectile {
 					EntityNukeTorex.statFacBale(world, pos.getX() + 0.5, pos.getY() + 5, pos.getZ() + 0.5, config.nuke);
 				}
 				else{
-					EntityNukeTorex.statFac(world, pos.getX() + 0.5, pos.getY() + 5, pos.getZ() + 0.5, config.nuke);
+					EntityNukeTorex.statFacStandard(world, pos.getX() + 0.5, pos.getY() + 5, pos.getZ() + 0.5, config.nuke);
 				}
 			}
 			world.playSound(null, posX, posY, posZ, HBMSoundHandler.mukeExplosion, SoundCategory.HOSTILE, 15.0F, 1.0F);

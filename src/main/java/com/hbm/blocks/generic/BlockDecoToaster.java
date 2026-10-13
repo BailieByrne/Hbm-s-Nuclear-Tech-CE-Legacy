@@ -21,6 +21,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Mirror;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -82,6 +83,10 @@ public class BlockDecoToaster extends BlockDecoModel<BlockEnums.DecoToasterEnum>
                 int meta = (m << 2) | orient;
                 ModelResourceLocation mrlWorld = new ModelResourceLocation(getRegistryName(), "meta=" + meta);
                 event.getModelRegistry().putObject(mrlWorld, bakedWorld);
+                if (m == 0) {
+                    ModelResourceLocation wrapped = new ModelResourceLocation(getRegistryName(), "meta=" + (12 | orient));
+                    event.getModelRegistry().putObject(wrapped, bakedWorld);
+                }
             }
 
             IBakedModel bakedItem = BlockDecoBakedModel.forItem(wavefront, sprite, 0.5F, 0.25F, 0.5F,
@@ -93,12 +98,12 @@ public class BlockDecoToaster extends BlockDecoModel<BlockEnums.DecoToasterEnum>
 
     @Override
     public @NotNull ItemStack getPickBlock(IBlockState state, RayTraceResult target, World world, BlockPos pos, EntityPlayer player) {
-        return new ItemStack(Item.getItemFromBlock(this), 1, state.getValue(META) >> 2);
+        return new ItemStack(Item.getItemFromBlock(this), 1, (state.getValue(META) % 12) / 4);
     }
 
     @Override
     public @NotNull List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
-        return Collections.singletonList(new ItemStack(Item.getItemFromBlock(this), 1, state.getValue(META) >> 2));
+        return Collections.singletonList(new ItemStack(Item.getItemFromBlock(this), 1, (state.getValue(META) % 12) / 4));
     }
 
     @Override
@@ -121,6 +126,11 @@ public class BlockDecoToaster extends BlockDecoModel<BlockEnums.DecoToasterEnum>
                 return new ModelResourceLocation(loc, "meta=" + state.getValue(META));
             }
         };
+    }
+
+    @Override
+    public @NotNull IBlockState withMirror(IBlockState state, Mirror mirror) {
+        return state.withProperty(META, INBTBlockTransformable.mirrorMetaDecoModelLow(state.getValue(META), mirror));
     }
 
     @Override

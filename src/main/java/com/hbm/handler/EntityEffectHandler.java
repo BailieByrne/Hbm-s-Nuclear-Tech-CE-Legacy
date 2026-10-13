@@ -169,7 +169,7 @@ public class EntityEffectHandler {
             float background = (v instanceof Number) ? ((Number) v).floatValue() : 0f;
             double radD = Math.max(0D, offset + background);
             if (radD > 0D) {
-                ContaminationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, (float) (radD / 20D));
+                ContaminationUtil.contaminate(entity, HazardType.RADIATION, ContaminationType.CREATIVE, radD / 20D);
             }
 
 			if(entity.world.isRaining() && RadiationConfig.cont > 0 && AuxSavedData.getThunder(entity.world) > 0 && entity.world.canBlockSeeSky(pos)) {

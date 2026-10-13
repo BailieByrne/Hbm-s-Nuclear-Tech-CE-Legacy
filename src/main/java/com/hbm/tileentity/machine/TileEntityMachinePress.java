@@ -225,7 +225,7 @@ public class TileEntityMachinePress extends TileEntityMachineBase implements ITi
 
 	@Override
 	public int[] getAccessibleSlotsFromSide(EnumFacing e) {
-		return e == EnumFacing.DOWN ? new int[]{3} : new int[]{0, 1, 2};
+		return new int[]{0, 1, 2, 3};
 	}
 
 	@Override
@@ -238,7 +238,7 @@ public class TileEntityMachinePress extends TileEntityMachineBase implements ITi
 		return switch (i){
 			case 0 -> TileEntityFurnace.getItemBurnTime(stack) > 0;
 			case 1 -> stack.getItem() instanceof ItemStamp;
-			case 2 -> !(stack.getItem() instanceof ItemStamp) && TileEntityFurnace.getItemBurnTime(stack) <= 0;
+			case 2 -> !(stack.getItem() instanceof ItemStamp);
 			case 3 -> false;
 			default -> i >= 4 && i <= 12;
 		};

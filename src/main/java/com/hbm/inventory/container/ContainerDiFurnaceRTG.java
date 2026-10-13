@@ -1,5 +1,6 @@
 package com.hbm.inventory.container;
 
+import com.hbm.inventory.IAutoRoutingContainer;
 import com.hbm.inventory.TransferStrategy;
 import com.hbm.inventory.slot.SlotFiltered;
 import com.hbm.items.machine.ItemRTGPellet;
@@ -12,7 +13,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.SlotItemHandler;
 
-public class ContainerDiFurnaceRTG extends Container {
+public class ContainerDiFurnaceRTG extends Container implements IAutoRoutingContainer {
 	private TileEntityDiFurnaceRTG bFurnace;
 	// private int progress;
 
@@ -57,5 +58,10 @@ public class ContainerDiFurnaceRTG extends Container {
 	@Override
     public ItemStack transferStackInSlot(EntityPlayer player, int index) {
         return InventoryUtil.transferStack(this.inventorySlots, index, this.TRANSFER_STRATEGY, player);
+    }
+
+    @Override
+    public boolean isAutomaticInsertionAllowed(int slot, ItemStack stack) {
+        return this.TRANSFER_STRATEGY.isAutomaticInsertionAllowed(this.inventorySlots, slot, stack);
     }
 }

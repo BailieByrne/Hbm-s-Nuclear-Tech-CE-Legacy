@@ -1,5 +1,6 @@
 package com.hbm.entity.missile;
 
+import com.google.common.collect.ImmutableSet;
 import com.hbm.api.entity.IRadarDetectableNT;
 import com.hbm.entity.logic.IChunkLoader;
 import com.hbm.entity.projectile.EntityThrowableInterp;
@@ -14,6 +15,9 @@ import com.hbm.util.TrackerUtil;
 import net.minecraft.entity.EntityTrackerEntry;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
@@ -30,9 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class EntityMissileBaseNT extends EntityThrowableInterp implements IChunkLoader, IRadarDetectableNT {
-    // not sure why you're making a parameter you're using only in tier 4 missiles..
-    // that causes a nasty classcastexception crash
-    // public static final DataParameter<Byte> pr3 = EntityDataManager.createKey(EntityMissileBaseNT.class, DataSerializers.BYTE);
+    public static final DataParameter<Byte> ROT_IDX = EntityDataManager.createKey(EntityMissileBaseNT.class, DataSerializers.BYTE);
 
     public int startX;
     public int startZ;
@@ -99,6 +101,7 @@ public abstract class EntityMissileBaseNT extends EntityThrowableInterp implemen
     @Override
     protected void entityInit() {
         super.entityInit();
+        this.dataManager.register(ROT_IDX, (byte) 5);
     }
 
     @Override
@@ -116,15 +119,10 @@ public abstract class EntityMissileBaseNT extends EntityThrowableInterp implemen
         if (!world.isRemote) {
             requestChunkLoaderTicketIfNeeded();
         }
-        this.prevPosX = this.posX;
-        this.prevPosY = this.posY;
-        this.prevPosZ = this.posZ;
+        this.lastTickPosX = this.posX;
+        this.lastTickPosY = this.posY;
+        this.lastTickPosZ = this.posZ;
         super.onUpdate();
-
-        if (this.health <= 0) { //check its not been blown up
-            this.killMissile();
-            return;
-        }
 
         if (velocity < 4) {
             velocity += MathHelper.clamp(this.ticksExisted / 60D * 0.05D, 0, 0.05);
@@ -164,6 +162,7 @@ public abstract class EntityMissileBaseNT extends EntityThrowableInterp implemen
             this.rotationYaw = (float) (Math.atan2(targetX - posX, targetZ - posZ) * 180.0D / Math.PI);
             float f2 = MathHelper.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
             this.rotationPitch = (float) (Math.atan2(this.motionY, f2) * 180.0D / Math.PI) - 90;
+            while (this.rotationPitch - this.prevRotationPitch < -180F) this.prevRotationPitch -= 360F;
 
             EntityTrackerEntry tracker = TrackerUtil.getTrackerEntry((WorldServer) world, this.getEntityId());
             if (tracker != null) {
@@ -174,6 +173,9 @@ public abstract class EntityMissileBaseNT extends EntityThrowableInterp implemen
         } else {
             this.spawnContrail();
         }
+        while (this.rotationPitch - this.prevRotationPitch >= 180F) this.prevRotationPitch += 360F;
+        while (this.rotationYaw - this.prevRotationYaw < -180F) this.prevRotationYaw -= 360F;
+        while (this.rotationYaw - this.prevRotationYaw >= 180F) this.prevRotationYaw += 360F;
     }
 
     public boolean hasPropulsion() {
@@ -313,6 +315,11 @@ public abstract class EntityMissileBaseNT extends EntityThrowableInterp implemen
     }
 
     @Override
+    public boolean shouldBootstrapChunkLoader() {
+        return loaderTicket == null && !awaitingTicketRestore;
+    }
+
+    @Override
     public void init(Ticket ticket) {
         if (!world.isRemote) {
 
@@ -351,7 +358,7 @@ public abstract class EntityMissileBaseNT extends EntityThrowableInterp implemen
 
     public void clearChunkLoader() {
         if (!world.isRemote && loaderTicket != null) {
-            for (ChunkPos chunk : loadedChunks) {
+            for (ChunkPos chunk : ImmutableSet.copyOf(loaderTicket.getChunkList())) {
                 ForgeChunkManager.unforceChunk(loaderTicket, chunk);
             }
             loadedChunks.clear();

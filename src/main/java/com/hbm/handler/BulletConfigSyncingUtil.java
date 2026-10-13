@@ -241,6 +241,7 @@ private static HashMap<Integer, BulletConfiguration> configSet = new HashMap<Int
 	public static void loadConfigsForSync() {
 		
 		configSet.put(TEST_CONFIG, BulletConfigFactory.getTestConfig());
+		configSet.put(TURBINE, GunEnergyFactory.getTurbineConfig());
 
 		configSet.put(SHELL_NORMAL, GunCannonFactory.getShellConfig());
 		configSet.put(SHELL_EXPLOSIVE, GunCannonFactory.getShellExplosiveConfig());

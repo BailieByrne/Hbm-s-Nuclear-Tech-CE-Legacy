@@ -21,6 +21,7 @@ import com.hbm.handler.threading.PacketThreading;
 import com.hbm.interfaces.AutoRegister;
 import com.hbm.items.weapon.sedna.ItemGunBaseSedna;
 import com.hbm.lib.HBMSoundHandler;
+import com.hbm.lib.Library;
 import com.hbm.main.MainRegistry;
 import com.hbm.packet.toclient.AuxParticlePacketNT;
 import com.hbm.particle.helper.HbmEffectNT;
@@ -86,6 +87,11 @@ public class EntityBulletBaseNT extends EntityThrowableInterp implements IBullet
 
     public BulletConfiguration getConfig() {
         return config;
+    }
+
+    @Override
+    protected RayTraceResult rayTraceBlocks(Vec3d start, Vec3d end) {
+        return Library.rayTraceBlocksForProjectile(world, start, end, false, true, false);
     }
 
     public EntityBulletBaseNT(World world) {
@@ -473,7 +479,7 @@ public class EntityBulletBaseNT extends EntityThrowableInterp implements IBullet
         if(config.nuke > 0 && !world.isRemote) {
             world.spawnEntity(EntityNukeExplosionMK5.statFac(world, config.nuke, posX, posY, posZ).setDetonator(thrower));
             if(MainRegistry.polaroidID == 11 || rand.nextInt(100) == 0) EntityNukeTorex.statFacBale(world, posX, posY + 0.5, posZ, config.nuke);
-            else EntityNukeTorex.statFac(world, posX, posY + 0.5, posZ, config.nuke);
+            else EntityNukeTorex.statFacStandard(world, posX, posY + 0.5, posZ, config.nuke);
         }
         BlockPos pos = new BlockPos(bX, bY, bZ);
         if(config.destroysBlocks && !world.isRemote) {
