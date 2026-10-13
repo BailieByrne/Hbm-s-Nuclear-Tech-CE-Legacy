@@ -479,7 +479,7 @@ public class EntityBulletBaseNT extends EntityThrowableInterp implements IBullet
         if(config.nuke > 0 && !world.isRemote) {
             world.spawnEntity(EntityNukeExplosionMK5.statFac(world, config.nuke, posX, posY, posZ).setDetonator(thrower));
             if(MainRegistry.polaroidID == 11 || rand.nextInt(100) == 0) EntityNukeTorex.statFacBale(world, posX, posY + 0.5, posZ, config.nuke);
-            else EntityNukeTorex.statFac(world, posX, posY + 0.5, posZ, config.nuke);
+            else EntityNukeTorex.statFacStandard(world, posX, posY + 0.5, posZ, config.nuke);
         }
         BlockPos pos = new BlockPos(bX, bY, bZ);
         if(config.destroysBlocks && !world.isRemote) {

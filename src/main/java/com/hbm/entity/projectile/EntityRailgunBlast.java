@@ -109,7 +109,7 @@ public class EntityRailgunBlast extends Entity implements IChunkLoader {
 				
 				world.spawnEntity(EntityNukeExplosionMK5.statFac(world, BombConfig.missileRadius>>1, posX, posY, posZ));
 				if(BombConfig.enableNukeClouds) {
-					EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.missileRadius>>1);
+					EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.missileRadius>>1);
 				}
 			}
 			this.setDead();

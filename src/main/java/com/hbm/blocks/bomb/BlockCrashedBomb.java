@@ -146,14 +146,14 @@ public class BlockCrashedBomb extends BlockEnumMeta<BlockCrashedBomb.EnumDudType
                 case NUKE -> {
                     world.spawnEntity(EntityNukeExplosionMK5.statFac(world, 35, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
                     if (BombConfig.enableNukeClouds) {
-                        EntityNukeTorex.statFac(world, pos.getX() + 0.5, pos.getY() + 5, pos.getZ() + 0.5, 35);
+                        EntityNukeTorex.statFacStandard(world, pos.getX() + 0.5, pos.getY() + 5, pos.getZ() + 0.5, 35);
                     }
                 }
                 case SALTED -> {
                     world.spawnEntity(
                             EntityNukeExplosionMK5.statFac(world, 25, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5).moreFallout(25));
                     if (BombConfig.enableNukeClouds) {
-                        EntityNukeTorex.statFac(world, pos.getX() + 0.5, pos.getY() + 5, pos.getZ() + 0.5, 25);
+                        EntityNukeTorex.statFacStandard(world, pos.getX() + 0.5, pos.getY() + 5, pos.getZ() + 0.5, 25);
                     }
                 }
             }

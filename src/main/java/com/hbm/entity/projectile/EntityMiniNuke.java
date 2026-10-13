@@ -254,7 +254,7 @@ public class EntityMiniNuke extends Entity implements IProjectile {
                 if(rand.nextInt(100) == 0 || MainRegistry.polaroidID == 11){
                     EntityNukeTorex.statFacBale(world, posX, posY, posZ, BombConfig.fatmanRadius);
                 } else {
-                    EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.fatmanRadius);
+                    EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.fatmanRadius);
                 }
             }
         	this.setDead();
@@ -384,7 +384,7 @@ public class EntityMiniNuke extends Entity implements IProjectile {
                                 if(rand.nextInt(100) == 0 || MainRegistry.polaroidID == 11){
                                     EntityNukeTorex.statFacBale(world, posX, posY, posZ, BombConfig.fatmanRadius);
                                 } else {
-                                    EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.fatmanRadius);
+                                    EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.fatmanRadius);
                                 }
                             }
                         	this.setDead();

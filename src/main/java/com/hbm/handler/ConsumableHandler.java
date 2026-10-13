@@ -1,14 +1,12 @@
 package com.hbm.handler;
 
 import com.hbm.capability.HbmLivingProps;
-import com.hbm.config.VersatileConfig;
 import com.hbm.inventory.fluid.Fluids;
 import com.hbm.items.ModItems;
 import com.hbm.items.armor.JetpackFueledBase;
 import com.hbm.items.weapon.sedna.GunConfig;
 import com.hbm.items.weapon.sedna.ItemGunBaseNT;
 import com.hbm.lib.HBMSoundHandler;
-import com.hbm.lib.ModDamageSource;
 import com.hbm.potion.HbmPotion;
 import com.hbm.util.ItemStackUtil;
 import net.minecraft.entity.EntityLivingBase;
@@ -34,9 +32,6 @@ public class ConsumableHandler {
     private static final Map<Item, TriConsumer<ItemStack, EntityPlayer, EntityLivingBase>> hitActions = new HashMap<>();
 
     static {
-        itemActions.put(ModItems.syringe_antidote, ConsumableHandler::handleAntidote);
-        itemActions.put(ModItems.syringe_awesome, ConsumableHandler::handleAwesomeSyringe);
-        itemActions.put(ModItems.syringe_poison, ConsumableHandler::handlePoisonSyringe);
         itemActions.put(ModItems.syringe_metal_stimpak, ConsumableHandler::handleMetalStimpak);
         itemActions.put(ModItems.syringe_metal_medx, ConsumableHandler::handleMetalMedX);
         itemActions.put(ModItems.syringe_metal_psycho, ConsumableHandler::handleMetalPsycho);
@@ -50,9 +45,6 @@ public class ConsumableHandler {
         itemActions.put(ModItems.syringe_mkunicorn, ConsumableHandler::handleMkUnicornSyringe);
         itemActions.put(ModItems.euphemium_stopper, ConsumableHandler::handleEupheriumStopper);
 
-        hitActions.put(ModItems.syringe_antidote, hitAction(ConsumableHandler::handleAntidote));
-        hitActions.put(ModItems.syringe_awesome, hitAction(ConsumableHandler::handleAwesomeSyringe));
-        hitActions.put(ModItems.syringe_poison, hitAction(ConsumableHandler::handlePoisonSyringe));
         hitActions.put(ModItems.syringe_metal_stimpak, hitAction(ConsumableHandler::handleMetalStimpak));
         hitActions.put(ModItems.syringe_metal_medx, hitAction(ConsumableHandler::handleMetalMedX));
         hitActions.put(ModItems.syringe_metal_psycho, hitAction(ConsumableHandler::handleMetalPsycho));
@@ -88,15 +80,6 @@ public class ConsumableHandler {
 
 
     //I wanted to handle this more uniformly, but that was fool's errand
-    private static void handleAntidote(final Context context) {
-        if (!VersatileConfig.hasPotionSickness(context.target)) {
-            context.target.clearActivePotions();
-            VersatileConfig.applyPotionSickness(context.target, 5);
-            context.playSound(HBMSoundHandler.syringeUse);
-            context.shrinkAndReplaceItem(ModItems.syringe_empty);
-        }
-    }
-
     private static void handleEupheriumStopper(final Context context) {
         context.addPotionEffects(
                 new PotionEffect(MobEffects.WEAKNESS, 30 * 20, 9),
@@ -105,33 +88,6 @@ public class ConsumableHandler {
         );
     }
 
-
-    private static void handleAwesomeSyringe(final Context context) {
-        context.addPotionEffects(
-                new PotionEffect(MobEffects.REGENERATION, 50 * 20, 9),
-                new PotionEffect(MobEffects.RESISTANCE, 50 * 20, 9),
-                new PotionEffect(MobEffects.FIRE_RESISTANCE, 50 * 20, 0),
-                new PotionEffect(MobEffects.STRENGTH, 50 * 20, 24),
-                new PotionEffect(MobEffects.HASTE, 50 * 20, 9),
-                new PotionEffect(MobEffects.SPEED, 50 * 20, 6),
-                new PotionEffect(MobEffects.JUMP_BOOST, 50 * 20, 9),
-                new PotionEffect(MobEffects.HEALTH_BOOST, 50 * 20, 9),
-                new PotionEffect(MobEffects.ABSORPTION, 50 * 20, 4),
-                new PotionEffect(MobEffects.NAUSEA, 5 * 20, 4)
-        );
-        context.playSound(HBMSoundHandler.syringeUse);
-        context.shrinkAndReplaceItem(ModItems.syringe_empty);
-    }
-
-    private static void handlePoisonSyringe(final Context context) {
-        context.playSound(HBMSoundHandler.syringeUse);
-        context.shrinkAndReplaceItem(ModItems.syringe_empty);
-        if (context.rand.nextInt(2) == 0) {
-            context.target.attackEntityFrom(ModDamageSource.euthanizedSelf, 30);
-        } else {
-            context.target.attackEntityFrom(ModDamageSource.euthanizedSelf2, 30);
-        }
-    }
 
     private static void handleMetalStimpak(final Context context) {
         context.target.heal(5);

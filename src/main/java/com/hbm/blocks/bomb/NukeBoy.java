@@ -9,6 +9,7 @@ import com.hbm.lib.InventoryHelper;
 import com.hbm.main.MainRegistry;
 import com.hbm.tileentity.bomb.TileEntityNukeBoy;
 import com.hbm.util.I18nUtil;
+import com.hbm.util.TrackerUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.BlockHorizontal;
@@ -93,7 +94,10 @@ public class NukeBoy extends BlockContainer implements IBomb {
 			world.spawnEntity(explosionMK5);
 
 			if(BombConfig.enableNukeClouds) {
-				EntityNukeTorex.statFac(world, x, y, z, BombConfig.boyRadius);
+				EntityNukeTorex torex = new EntityNukeTorex(world).setScale(1.5F);
+				torex.setPositionAndRotation(x + 0.5, y + 1, z + 0.5, 0, 0);
+				world.spawnEntity(torex);
+				TrackerUtil.setTrackingRange(world, torex, 1000);
 			}
 		}
 		return false;

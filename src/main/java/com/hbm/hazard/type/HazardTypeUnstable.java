@@ -57,7 +57,7 @@ public class HazardTypeUnstable implements IHazardType {
                 world.spawnEntity(EntityNukeExplosionMK5.statFac(world, radius, entity.posX, entity.posY, entity.posZ).setDetonator(entity));
 
                 if(BombConfig.enableNukeClouds) {
-                    EntityNukeTorex.statFac(world, entity.posX, entity.posY, entity.posZ, radius);
+                    EntityNukeTorex.statFacStandard(world, entity.posX, entity.posY, entity.posZ, radius);
                 }
                 world.playSound(null, entity.posX, entity.posY, entity.posZ, HBMSoundHandler.oldExplosion, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 entity.attackEntityFrom(ModDamageSource.nuclearBlast, 10000);
@@ -73,7 +73,7 @@ public class HazardTypeUnstable implements IHazardType {
                 world.spawnEntity(EntityNukeExplosionMK5.statFac(world, radius, itemEntity.posX, itemEntity.posY, itemEntity.posZ).setDetonator(thrower));
 
                 if(BombConfig.enableNukeClouds) {
-                    EntityNukeTorex.statFac(world, itemEntity.posX, itemEntity.posY, itemEntity.posZ, radius);
+                    EntityNukeTorex.statFacStandard(world, itemEntity.posX, itemEntity.posY, itemEntity.posZ, radius);
                 }
                 world.playSound(null, itemEntity.posX, itemEntity.posY, itemEntity.posZ, HBMSoundHandler.oldExplosion, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 itemEntity.attackEntityFrom(ModDamageSource.nuclearBlast, 10000);

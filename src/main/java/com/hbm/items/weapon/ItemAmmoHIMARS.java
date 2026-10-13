@@ -278,7 +278,7 @@ public class ItemAmmoHIMARS extends Item implements IMetaItemTesr {
             rocket.world.spawnEntity(
                 EntityNukeExplosionMK5.statFac(
                     rocket.world, 100, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z));
-            EntityNukeTorex.statFac(rocket.world, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z, 100);
+            EntityNukeTorex.statFacStandard(rocket.world, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z, 100);
           }
         };
 

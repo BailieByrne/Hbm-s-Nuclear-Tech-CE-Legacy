@@ -67,7 +67,7 @@ public EntityMissileTier4(World world) { super(world); }
 		public EntityMissileNuclear(World world, float x, float y, float z, int a, int b) { super(world, x, y, z, a, b); }
 		@Override public void onMissileImpact(RayTraceResult mop) {
 			WorldUtil.loadAndSpawnEntityInWorld(EntityNukeExplosionMK5.statFac(world, BombConfig.missileRadius, posX, posY, posZ).setDetonator(thrower));
-			EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.missileRadius);
+			EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.missileRadius);
 		}
 		@Override public ItemStack getDebrisRareDrop() { return new ItemStack(ModItems.warhead_nuclear); }
 		@Override public ItemStack getMissileItemForInfo() { return new ItemStack(ModItems.missile_nuclear); }
@@ -78,7 +78,7 @@ public EntityMissileTier4(World world) { super(world); }
 		public EntityMissileMirv(World world, float x, float y, float z, int a, int b) { super(world, x, y, z, a, b); }
 		@Override public void onMissileImpact(RayTraceResult mop) {
 			WorldUtil.loadAndSpawnEntityInWorld(EntityNukeExplosionMK5.statFac(world, BombConfig.missileRadius * 2, posX, posY, posZ).setDetonator(thrower));
-			EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.missileRadius * 2);
+			EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.missileRadius * 2);
 		}
 		@Override public List<ItemStack> getDebris() {
 			List<ItemStack> list = new ArrayList<ItemStack>();
@@ -110,7 +110,7 @@ public EntityMissileTier4(World world) { super(world); }
 		public EntityMissileDoomsday(World world, float x, float y, float z, int a, int b) { super(world, x, y, z, a, b); }
 		@Override public void onMissileImpact(RayTraceResult mop) {
 			WorldUtil.loadAndSpawnEntityInWorld(EntityNukeExplosionMK5.statFac(world, BombConfig.missileRadius * 2, posX, posY, posZ).moreFallout(100).setDetonator(thrower));
-			EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.missileRadius * 2);
+			EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.missileRadius * 2);
 		}
 		@Override public List<ItemStack> getDebris() { return null; }
 		@Override public ItemStack getDebrisRareDrop() { return null; }
@@ -123,7 +123,7 @@ public EntityMissileTier4(World world) { super(world); }
 		public EntityMissileDoomsdayRusted(World world, float x, float y, float z, int a, int b) { super(world, x, y, z, a, b); }
 		@Override public void onMissileImpact(RayTraceResult mop) {
 			WorldUtil.loadAndSpawnEntityInWorld(EntityNukeExplosionMK5.statFac(world, BombConfig.missileRadius, posX, posY, posZ).moreFallout(100).setDetonator(thrower));
-			EntityNukeTorex.statFac(world, posX, posY, posZ, BombConfig.missileRadius);
+			EntityNukeTorex.statFacStandard(world, posX, posY, posZ, BombConfig.missileRadius);
 		}
 		@Override public ItemStack getMissileItemForInfo() { return new ItemStack(ModItems.missile_doomsday_rusted); }
 	}

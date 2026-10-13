@@ -66,9 +66,19 @@ public class ContainerNukeCustom extends Container implements IAutoRoutingContai
 	}
 
 	@Override
-    public ItemStack transferStackInSlot(EntityPlayer player, int index)
-    {
-		return InventoryUtil.transferStack(this.inventorySlots, index, this.TRANSFER_STRATEGY, player);
+    public ItemStack transferStackInSlot(EntityPlayer player, int index) {
+        Slot slot = this.inventorySlots.get(index);
+        if (!slot.getHasStack()) return ItemStack.EMPTY;
+        ItemStack stack = slot.getStack();
+        ItemStack original = stack.copy();
+        boolean merged = index <= 26
+                ? InventoryUtil.mergeItemStack(this.inventorySlots, stack, 27, this.inventorySlots.size(), true)
+                : InventoryUtil.mergeItemStack(this.inventorySlots, stack, 0, 27, true);
+        if (!merged) return ItemStack.EMPTY;
+        if (stack.isEmpty()) slot.putStack(ItemStack.EMPTY);
+        else slot.onSlotChanged();
+        slot.onTake(player, stack);
+        return original;
     }
 
 	@Override

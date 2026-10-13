@@ -487,14 +487,14 @@ public final class StaticTesrBakedModels {
         bakeLegacyFacingModel(registry, atlas, ModBlocks.broadcaster_pc,
                 _ -> new ModelBroadcaster(),
                 new ResourceLocation(Tags.MODID, "models/deco/ModelBroadcaster"),
-                yawMap().meta(2, 0).meta(3, 180).meta(4, 90).meta(5, 270).build(),
+                yawMap().meta(2, 180).meta(3, 0).meta(4, 270).meta(5, 90).build(),
                 0.0F, (float) Math.toRadians(180.0D),
                 0.0F, 0.0F, 0.0F,
                 0.5F, 1.5F, 0.5F);
         bakeLegacyFacingModel(registry, atlas, ModBlocks.radiorec,
                 _ -> new ModelBroadcaster(),
                 new ResourceLocation(Tags.MODID, "models/deco/ModelRadioReceiver"),
-                yawMap().meta(2, 0).meta(3, 180).meta(4, 90).meta(5, 270).build(),
+                yawMap().meta(2, 180).meta(3, 0).meta(4, 270).meta(5, 90).build(),
                 0.0F, (float) Math.toRadians(180.0D),
                 0.0F, 0.0F, 0.0F,
                 0.5F, 1.5F, 0.5F);

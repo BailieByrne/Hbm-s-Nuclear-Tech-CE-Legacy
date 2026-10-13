@@ -1,6 +1,7 @@
 package com.hbm.items.weapon;
 
 import com.hbm.blocks.ModBlocks;
+import com.hbm.config.BombConfig;
 import com.hbm.entity.effect.EntityMist;
 import com.hbm.entity.effect.EntityNukeTorex;
 import com.hbm.entity.logic.EntityNukeExplosionMK5;
@@ -247,7 +248,7 @@ public class ItemAmmoArty extends Item implements IModelRegister {
         itemTypes[MINI_NUKE] = new ArtilleryShell("ammo_arty_mini_nuke", SpentCasing.COLOR_CASE_16INCH_NUKE) {
             public void onImpact(EntityArtilleryShell shell, RayTraceResult mop) {
                 shell.world.spawnEntity(EntityNukeExplosionMK5.statFac(shell.world, 20, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z));
-                EntityNukeTorex.statFac(shell.world, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z, 20);
+                EntityNukeTorex.statFacStandard(shell.world, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z, 20);
                 shell.setDead();
             }
         };
@@ -255,8 +256,8 @@ public class ItemAmmoArty extends Item implements IModelRegister {
         /* FULL NUKE */
         itemTypes[NUKE] = new ArtilleryShell("ammo_arty_nuke", SpentCasing.COLOR_CASE_16INCH_NUKE) {
             public void onImpact(EntityArtilleryShell shell, RayTraceResult mop) {
-                shell.world.spawnEntity(EntityNukeExplosionMK5.statFac(shell.world, 100, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z));
-                EntityNukeTorex.statFac(shell.world, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z, 100);
+                shell.world.spawnEntity(EntityNukeExplosionMK5.statFac(shell.world, BombConfig.missileRadius, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z));
+                EntityNukeTorex.statFacStandard(shell.world, mop.hitVec.x, mop.hitVec.y, mop.hitVec.z, BombConfig.missileRadius);
                 shell.setDead();
             }
         };

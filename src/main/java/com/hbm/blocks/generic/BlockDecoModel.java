@@ -25,6 +25,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -145,6 +147,22 @@ public class BlockDecoModel<E extends Enum<E>> extends BlockEnumMeta<E> implemen
     public @NotNull List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
         int meta = state.getValue(META) & 3;
         return Collections.singletonList(new ItemStack(Item.getItemFromBlock(this), 1, meta));
+    }
+
+    @Override
+    public @NotNull IBlockState withRotation(IBlockState state, Rotation rotation) {
+        int turns = switch (rotation) {
+            case CLOCKWISE_90 -> 1;
+            case CLOCKWISE_180 -> 2;
+            case COUNTERCLOCKWISE_90 -> 3;
+            default -> 0;
+        };
+        return state.withProperty(META, transformMeta(state.getValue(META), turns));
+    }
+
+    @Override
+    public @NotNull IBlockState withMirror(IBlockState state, Mirror mirror) {
+        return state.withProperty(META, INBTBlockTransformable.mirrorMetaDecoModelHigh(state.getValue(META), mirror));
     }
 
     @Override

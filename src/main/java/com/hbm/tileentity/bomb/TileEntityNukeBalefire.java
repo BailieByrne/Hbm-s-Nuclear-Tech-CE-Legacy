@@ -134,7 +134,7 @@ public class TileEntityNukeBalefire extends TileEntityMachineBase implements ITi
 		} else bf.setDetonator(ModContext.DETONATOR_CONTEXT.get());
 		world.spawnEntity(bf);
 		if(BombConfig.enableNukeClouds) {
-			EntityNukeTorex.statFacBale(world, pos.getX() + 0.5, pos.getY() + 5, pos.getZ() + 0.5, 250F);
+			EntityNukeTorex.statFacBale(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 250F);
 		}
 	}
 

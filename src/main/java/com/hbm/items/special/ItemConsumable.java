@@ -53,13 +53,10 @@ public class ItemConsumable extends Item {
     }
     static public final Map<String, List<String>> tooltipMap = new HashMap<>();
     static {
-        tooltipMap.put("syringe_antidote", Collections.singletonList("Removes all potion effects"));
-        tooltipMap.put("syringe_awesome", Collections.singletonList("§2Every good effect for 50 seconds"));
         tooltipMap.put("syringe_metal_stimpak", Collections.singletonList("§aHeals 2.5 hearts"));
         tooltipMap.put("syringe_metal_medx", Collections.singletonList("§dResistance III for 4 minutes"));
         tooltipMap.put("syringe_metal_psycho", Arrays.asList("§dResistance I for 2 minutes", "§6Strength I for 2 minutes"));
         tooltipMap.put("syringe_metal_super", Arrays.asList("§aHeals 25 hearts", "§bSlowness I for 10 seconds"));
-        tooltipMap.put("syringe_poison", Collections.singletonList("Deadly"));
         tooltipMap.put("syringe_taint", Arrays.asList("§5Tainted I for 60 seconds", "§eNausea I for 5 seconds", "Cloud damage + taint = ghoulified effect"));
         tooltipMap.put("med_bag", Arrays.asList("§aFull heal, regardless of max health", "Removes negative effects"));
         tooltipMap.put("gas_mask_filter_mono", Collections.singletonList("Repairs worn monoxide mask"));

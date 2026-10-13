@@ -100,7 +100,7 @@ public class NukeMike extends BlockContainer implements IBomb {
 				mk5.detonator = mike.placerID;
 			world.spawnEntity(mk5);
 			if(BombConfig.enableNukeClouds) {
-				EntityNukeTorex.statFac(world, x + 0.5, y + 0.5, z + 0.5, r);
+				EntityNukeTorex.statFacStandard(world, x + 0.5, y + 0.5, z + 0.5, r);
 			}
 		}
 

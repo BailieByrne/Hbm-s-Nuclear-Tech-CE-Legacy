@@ -64,13 +64,13 @@ public class DetCord extends Block implements IBomb {
 			if(this == ModBlocks.det_n2) {
 				world.spawnEntity(EntityNukeExplosionMK5.statFacNoRad(world, (int)(BombConfig.n2Radius/12) * 5, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5).setDetonator(detonator));
 				if(BombConfig.enableNukeClouds) {
-					EntityNukeTorex.statFac(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, (int)(BombConfig.n2Radius/12) * 5);
+					EntityNukeTorex.statFacStandard(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, (int)(BombConfig.n2Radius/12) * 5);
 				}
 			}
 			if(this == ModBlocks.det_nuke) {
 				world.spawnEntity(EntityNukeExplosionMK5.statFac(world, BombConfig.missileRadius, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5).setDetonator(detonator));
 				if(BombConfig.enableNukeClouds) {
-					EntityNukeTorex.statFac(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, BombConfig.missileRadius);
+					EntityNukeTorex.statFacStandard(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, BombConfig.missileRadius);
 				}
 			}
 			if(this == ModBlocks.det_bale) {

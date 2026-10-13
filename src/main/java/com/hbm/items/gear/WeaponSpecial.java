@@ -142,7 +142,7 @@ public class WeaponSpecial extends ItemSword {
 				if(!world.isRemote) {
 					world.spawnEntity(EntityNukeExplosionMK5.statFac(world, 100, target.posX, target.posY, target.posZ).setDetonator(attacker));
 					if(BombConfig.enableNukeClouds) {
-						EntityNukeTorex.statFac(world, target.posX, target.posY, target.posZ, 100);
+						EntityNukeTorex.statFacStandard(world, target.posX, target.posY, target.posZ, 100);
 					}
 				}
 			}
